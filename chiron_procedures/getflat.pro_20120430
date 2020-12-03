@@ -1,0 +1,81 @@
+; Extract flat field, divide by median-smoothed
+; Inputs: summed flat field image, orders, extraction width
+; Output: extracted and normalized flat field [pixels,orders,3]
+; plane 1: flat plane 2: extracted quartz, plane 3: smoothed orders
+; Oct 24, 2011 AT
+;added redpar and plotting options. 20120412~MJG
+;
+function getflat, im, orc, xwid, redpar, im_arr=im_arr
+ 
+order = 6 ; polynomial order
+threshold = 0.1 ; min. signal relative to max in each order
+getsky,im,orc,sky = sky   ; subtract scattered light  
+
+if redpar.debug ge 2 then stop
+
+;********************** flatnorm le 2 ********************************
+if redpar.flatnorm eq 2 then begin
+imsz = size(im)
+nrow = imsz[2]
+flt = im
+smflt = im*0d
+	for j = 0, nrow-1 do begin      ;row by row
+	  s = flt[*, j]                         
+	  ss = median(s, 30)            ;median smooth the rows, original
+	  zeroes = where (ss eq 0., nz) ;make sure we don't divide by 0
+	  if nz ne 0 then ss[zeroes] = 1.       
+	  smflt[*, j] = ss              ; build smoothed flat              
+	endfor
+	tmp = flt/smflt                 ;divide by median smoothed flat to remove low frequencies
+    flat = dblarr(imsz[1],imsz[2],3)
+    sp=im
+endif ;flatnorm=2
+;********************** flatnorm le 2 ********************************
+
+
+
+;********************** flatnorm le 1 ********************************
+if redpar.flatnorm le 1 then begin
+   if ~keyword_set(im_arr) then stop, 'no im_arr'
+   imarrsz = size(im_arr) 
+   nobs=imarrsz[3]
+
+   for i=0,nobs-1 do begin
+        im_one=reform(im_arr[*,*,i])
+	getspec, im_one, orc, xwid, sp, redpar=redpar   
+        if i eq 0 then begin ;setup arrays
+           szsp = size(sp) & ncol = szsp[1] & nord = szsp[2] 
+           sparr = fltarr(ncol, nord, nobs)
+           norm_s = fltarr(ncol, nord, nobs) 
+        endif
+        sparr[*,*,i]=sp 
+   endfor 
+   flat = fltarr(ncol,nord,3)                      ; flat, smoothed flat, flat/sm
+   tmp = fltarr(ncol,nord)                         ; normalized median flat
+   ix = findgen(ncol)                              ; argument for polynomial
+
+   for l=0,nobs-1 do begin
+      for j = 0, nord-1 do begin ;row by row polynomial
+         s = sparr[*, j, l]          
+         strong = where(s ge threshold*max(s), nstrong) ; strong signal
+         if nstrong lt order+1 then stop, 'GETFLAT: No signal, stopping'
+         cf = poly_fit(ix[strong],s[strong],order, yfit=yfit) 
+         ss = poly(ix,cf)    
+         norm_s[*,j,l] = s / ss
+      endfor                    ; order
+   endfor                       ;obs
+   for j=0,nord-1 do for k=0,imarrsz[1]-1 do tmp[k,j]=median(norm_s[k,j,*])
+endif;flatnorm le 1
+;********************** flatnorm le 1 ********************************
+
+j = where(tmp lt 0.1, nneg)     ;don-t let the flat set weird values, they-re prob. cosmics
+if nneg gt 0 then tmp[j] = 1.              
+flat[*,*,0] = tmp
+flat[*,*,1] = tmp
+flat[*,*,2] = tmp
+
+
+if redpar.debug ge 2 then stop ; debugging 
+return, flat
+end   
+
