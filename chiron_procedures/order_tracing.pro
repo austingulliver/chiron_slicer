@@ -1,8 +1,23 @@
 
 
-
+  
 FUNCTION trace_all_orders, img, inital_order_peaks
+  ;+
+  ; :Description:
+  ;    Based on  initial positions which mark the middle of  an order (initial order peaks), it finds the gaussian by left order, find the peaks 
+  ;    repeats based on th peak foudn. Same for the right side of an order.
+  ;
+  ; :Params:
+  ;    img  : 2d image of the master flat  containning the orders ot be traced
+  ;    inital_order_peaks : Y initial positions found as peaks of all orders in the cross dispersion direction 
+  ;
+  ;
+  ;
+  ; :Author: J.Andres Lozano
+  ;-
 
+  
+  
   ;f1=image(img)
   ;subImg=img[ *, 75:115]
   ;Y =100
@@ -14,52 +29,48 @@ FUNCTION trace_all_orders, img, inital_order_peaks
   ;order_ys=LONARR(4112)
 
   order_ys = MAKE_ARRAY(N_ELEMENTS(inital_order_peaks), n_columns, /INTEGER, VALUE = 0) ; (#of Orders, # X Pixels  )
-
-  ;;;;;;;This can be improved to linear time
-
+                                                                                        ; Array that gets returned with all orders traced 
+  
   FOR i=0, N_ELEMENTS(inital_order_peaks)-1 DO BEGIN  ; Each peaks marks the begging of an order in the img
 
-    Y=long(inital_order_peaks[i])
+      Y=long(inital_order_peaks[i])
+  
+      order_ys[i,n_columns/2]=Y ; For the middle
+  
+      ; >> Left side of Order
+      ;----------------------.
+  
+      FOR X = n_columns/2, 1,-1  DO BEGIN    ; change to 4111
+  
+        back_X =X-1      
+  
+        if (Y le 1) or (Y ge n_rows-1 ) THEN BREAK ;if y=0 THEN WE ARE AT THE VERY EDGE OF THE IMAGE THEREFORE  part of the order is missing
+  
+        values= [ img[back_X, Y-1],img[back_X, Y ], img[back_X, Y+1] ]
+        max_neighbor = MAX(values, idx)
+  
+        Y = Y-1 +idx
+        order_ys[i,back_X]=Y
 
-    order_ys[i,n_columns/2]=Y ; For the middle
+       ENDFOR
 
-    ;For the first half
-
-    FOR X = n_columns/2, 1,-1  DO BEGIN    ; change to 4111
-
-      back_X =X-1
-
-      ;print,back_X
-      ;if  back_X eq 0 then stop,'yep'
-
-      if (Y le 1) or (Y ge n_rows-1 ) THEN BREAK ;if y=0 THEN WE ARE AT THE VERY EDGE OF THE IMAGE THEREFORE  part of the order is missing
-
-      values= [ img[back_X, Y-1],img[back_X, Y ], img[back_X, Y+1] ]
-      max_neighbor = MAX(values, idx)
-
-      Y = Y-1 +idx
-      order_ys[i,back_X]=Y
-
-
-
-    ENDFOR
-
-    Y=long(inital_order_peaks[i])
-
-    ;For the second half
-    FOR X=n_columns/2, n_columns-2  DO BEGIN
-
-      forward_X =X+1
-
-      if (Y le 1) or (Y ge n_rows-1 ) THEN BREAK ;if y=0 THEN WE ARE AT THE VERY EDGE OF THE IMAGE THEREFORE  THE ORDER ENDS AT THIS POINT  BECAUSE IS INCOMPLETE
-
-      values= [ img[forward_X, Y-1],img[forward_X, Y ], img[forward_X, Y+1] ]
-      max_neighbor = MAX(values, idx)
-
-      Y = Y-1 +idx
-      order_ys[i,forward_X]=Y
-
-    ENDFOR
+    
+        ; >> Right side of Order
+        ;-----------------------
+        Y=long(inital_order_peaks[i])    
+        FOR X=n_columns/2, n_columns-2  DO BEGIN
+    
+            forward_X =X+1
+      
+            if (Y le 1) or (Y ge n_rows-1 ) THEN BREAK ;if y=0 THEN WE ARE AT THE VERY EDGE OF THE IMAGE THEREFORE  THE ORDER ENDS AT THIS POINT  BECAUSE IS INCOMPLETE
+      
+            values= [ img[forward_X, Y-1],img[forward_X, Y ], img[forward_X, Y+1] ]
+            max_neighbor = MAX(values, idx)
+      
+            Y = Y-1 +idx
+            order_ys[i,forward_X]=Y
+    
+        ENDFOR
 
   ENDFOR
 
@@ -126,6 +137,16 @@ END
 
 
 
+;Summary:
+;       called from ctio_dord
+;       Main method calls  trace_all_orders and create Polynomial
+;Input:
+;      img:  2-D image of the master flat
+;      initial_order_peaks:
+;
+;Output:
+
+
 FUNCTION order_tracing, img, redpar
 
   
@@ -188,17 +209,29 @@ FUNCTION order_tracing, img, redpar
   
 
   ;Debugging : Plotting all  FITTED Orders
- ;DEBUG=1
+ DEBUG=0
   if debug gt 0 then begin
       
-      dummy = image(img)
-      
+      ;kernel = [ [0,1,0],[-1,0,1],[0,-1,0] ]
+
+      ;result = CONVOL(img, kernel,  /EDGE_ZERO)
+      ;dummy = image(img)
+      img2=img
       for ior = 0,nord-1 DO BEGIN
         x=findgen(n_columns)
         calculated_y=poly(x,orc(*,ior))
-        p1=plot(calculated_y ,color='red',/overplot)
+        
+        
+        img2[x,calculated_y] = 0d
+        ;p1=plot(calculated_y ,color='red',/overplot)
       endfor
+      
+       dir= redpar.rootdir +redpar.debugging + 'order_tracing_master_flat.fits'
+       writefits, dir, img2
+      
   endif
+ 
+ 
 
 
 

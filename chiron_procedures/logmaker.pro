@@ -24,10 +24,11 @@ end
 ; -added archiving of old logs and noarchive keyword 201106 ~MJG
 ; -increased space for objnm and propid to accommodate queue observers ~MJG
 ; -made it search for the 'chiyymmdd' prefix before using the 'qa##' prefix 20110920 ~MJG
-;-
+; 12-12-2020 J.Lozano Make procedure Windows Compatible 
 
 
-; JL:  e.g of  procedure calling -- >  logmaker, '181103', date='181103'
+
+; JL:  e.g of  procedure calling -- > logmaker, '181103', date='181103', /nofoc
 
 pro logmaker, rawdir, $
 override = override, $
@@ -53,8 +54,8 @@ if host eq 'ctimac1.ctio.noao.edu' then begin
   
   
 endif else if  host eq 'Drius22' then begin
-  rawpath = 'C:\Users\mrstu\Desktop\School\research_Physics\yale_software\chiron/raw/mir7/'
-  logpath = 'C:\Users\mrstu\Desktop\School\research_Physics\yale_software\chiron/tous/mir7/logsheets/'+yyyy+'/'
+  rawpath = 'C:\Users\mrstu\idlworkspace_yalecalibration\chiron\raw\mir7\'
+  logpath = 'C:\Users\mrstu\idlworkspace_yalecalibration\chiron\tous\mir7\logsheets\'+yyyy+'\'
 endif else begin
 
   rawpath = '/nfs/morgan/chiron/raw/mir7/'
@@ -112,14 +113,14 @@ print, 'the prefix after is: ', prefix
 ;stop
 ; make sure that the files we found are formatted like: qa04.nnnn.fits or qa04_nnnn.fits
 ; useful if there are observations that don't belong to us in the rawdir 
-    obFiles = where(stregex(allFitsFiles,'/'+prefix+'\.([0-9]+)\.fits$',/BOOLEAN))
+    obFiles = where(stregex(allFitsFiles,'\'+prefix+'\.([0-9]+)\.fits$',/BOOLEAN))
     if ( n_elements(obFiles) eq 0 ) then begin
     	print, 'No files found with name format "/' + prefix + '\.([0-9]+)\.fits$"'
     	stop
     endif
     obs_file = allFitsFiles[obFiles]
     nobs = n_elements(obs_file)
-    print, 'nobs is: ', nobs
+    print, 'Number of Observations, nobs, is: ', nobs
     
 ; FIND THE STARTING NUMBER FOR TONIGHT'S OBSERVATIONS
 	first_num = stregex(obs_file[0],"([0-9]+)\.fits$",/EXTRACT,/SUBEXPR)

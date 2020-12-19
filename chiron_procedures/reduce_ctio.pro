@@ -112,26 +112,29 @@ if redpar.debug ge 1 then stop, 'REDUCE_CTIO: press .C to continue'
 PRINT, ''
 PRINT, ''
 print, " REDUCE-CTIO :           >>> Creating MasterFlat <<<   "
-       ;************************************ CREATE/ RESTORE Master Flat
-       name = redpar.rootdir+redpar.flatdir+prefix+mode+'.sum'          
-       
-       if keyword_set(flatset) then begin
-          ;if redpar.debug then stop, 'REDUCE_CTIO: debug stop before flats, .c to continue'
-          ADDFLAT, flatfnames,sum, redpar, im_arr,do_mean=redpar.do_mean  ; crunch the flats (if redpar.flatnorm=0 then sum = wtd mean)               Creation of MASTER FLAT
-          
-          if (size(sum))[0] lt 2 then stop ; no data!
-          wdsk, sum, name, /new ;Writting Master Flat to memory       
-          print, 'REDUCE_CTIO: Master Flat successfuly created & stored in '+name  
-          
-          
-         ;if redpar.debug then stop, 'Debug stop after flats, .c to continue'
-       endif else begin
-         print, 'REDUCE_CTIO: Using previously saved flat '+name 
-         rdsk, sum, name, 1  ; get existing flat from disk
-         bin = redpar.binnings[modeidx] ; set correct binning for order definition
-         redpar.binning = [fix(strmid(bin,0,1)), fix(strmid(bin,2,1))]
-         print, 'REDUCE_CTIO: The file restored has a binning of ', redpar.binning
-       endelse
+
+;##################################################
+;##### Create / Restore Master Flat ###############
+;##################################################
+ name = redpar.rootdir+redpar.flatdir+prefix+mode+'.sum'          
+ 
+ if keyword_set(flatset) then begin
+      ;if redpar.debug then stop, 'REDUCE_CTIO: debug stop before flats, .c to continue'
+      ADDFLAT, flatfnames,sum, redpar, im_arr,do_mean=redpar.do_mean  ; crunch the flats (if redpar.flatnorm=0 then sum = wtd mean)               Creation of MASTER FLAT
+             ; output : sum [#pixelsX, #pixelsY] , it returns bias substracted master flat image 
+      if (size(sum))[0] lt 2 then stop ; no data!
+      wdsk, sum, name, /new ;Writting Master Flat to memory       
+      print, 'REDUCE_CTIO: Master Flat successfuly created & stored in '+name     
+  
+ endif else begin
+     print, 'REDUCE_CTIO: Using previously saved flat '+name 
+     check_if_exist = FILE_TEST(name)
+     if check_if_exist eq 0 then stop, 'ERROR: You set the parameter flat_from_scrath=0 but there is no previous master flat for this nigth. Change flat_from_scrath=0 and run again'
+     rdsk, sum, name, 1  ; get existing flat from disk
+     bin = redpar.binnings[modeidx] ; set correct binning for order definition
+     redpar.binning = [fix(strmid(bin,0,1)), fix(strmid(bin,2,1))]
+     print, 'REDUCE_CTIO: The file restored has a binning of ', redpar.binning
+ endelse
 
 
 
@@ -152,7 +155,7 @@ print, " REDUCE-CTIO :           >>> Order Tracing <<<   "
 ;##############  Trace the Orders #################
 ;##################################################
  
-;Order Tracing is applied to the just found Master Flat 'sum'
+;Order ared traced wrt to the Master Flat 'sum'
 
 ;SLICERFLAT=1 means use narrow slit to define slicer order locations
 if redpar.slicerflat eq 0 or mode ne 'slicer' then begin
@@ -196,36 +199,63 @@ endelse
 ;##################################################
 ;##############  Get Flat Field   #################
 ;##################################################
+;  Modifed to account for "flatting" taking place before and after  extraction 
 
 xwid = redpar.xwids[modeidx]
-;if redpar.debug then stop, 'REDUCE_CTIO: debug stop before getting flat' 
-flat = getflat(sum, orc, xwid, redpar, im_arr=im_arr) ; Master Flat gets input into this method 
-              ;sum (input) Master Flat found as as a MEAN or MEDIAN of im_arr
-              ;im_arr (input) images used to create Master Flat
-              ;flat (output)  Cube-form: extracted spectrum from master flat where  [*,*,0] : Flat Spectrum /Smoothed
-              ;                                                                     [*,*,1] : Flat Spectrum        
-              ;                                                                     [*,*,2] : Smoothed Spectrum          
-              ;xwid (input) Order width: For e.g. 12 for slicer    
-              
-             
 
-name = redpar.rootdir+redpar.flatdir+prefix+mode+'.flat'
-fitsname = redpar.rootdir+redpar.flatdir+prefix+mode+'flat.fits'
-wdsk, flat, name, /new
-rdsk2fits, filename=fitsname, data = flat
+if (redpar.flatnorm eq 0) then begin 
+    ff=1.0 ; Dividing stellar img by 1 will make no difference
+    print, 'REDUCE_CTIO: The Spectrum is not being flattend '
 
-;used to write fits for further analysis 
-;writefits, 'C:\Users\mrstu\Desktop\School\research_Physics\yale_software\chiron\files_sent_dr_gulliver\181103_smooth_master_flat.fits', flat
-print, 'REDUCE_CTIO: a Cube-extracted Master Flat (Flat/Smoothed, Flat, Smoothed ) was  stored as '+fitsname 
-ff = flat[*,*,1] ; the actual flat
+  
+ 
+endif else if (redpar.flatnorm eq 1) or (redpar.flatnorm eq 3) then begin 
+  ; Spectrum gets flattend AFTER extraction
+  
+
+    
+    ;if redpar.debug then stop, 'REDUCE_CTIO: debug stop before getting flat' 
+    flat = getflat(sum, orc, xwid, redpar, im_arr=im_arr) ; Master Flat gets input into this method 
+                  ;sum (input) Master Flat found as as a MEAN or MEDIAN of im_arr
+                  ;im_arr (input) images used to create Master Flat
+                  ;flat (output)  Cube-form: extracted spectrum from master flat where  [*,*,0] : Flat Spectrum /Smoothed
+                  ;                                                                     [*,*,1] : Flat Spectrum        
+                  ;                                                                     [*,*,2] : Smoothed Spectrum          
+                  ;xwid (input) Order width: For e.g. 12 for slicer    
+                  
+                 
+    
+    name = redpar.rootdir+redpar.flatdir+prefix+mode+'.flat'
+    fitsname = redpar.rootdir+redpar.flatdir+prefix+mode+'flat.fits'
+    wdsk, flat, name, /new
+    rdsk2fits, filename=fitsname, data = flat
+    
+    ;used to write fits for further analysis 
+    ;writefits, 'C:\Users\mrstu\Desktop\School\research_Physics\yale_software\chiron\files_sent_dr_gulliver\181103_smooth_master_flat.fits', flat
+    print, 'REDUCE_CTIO: The stellar spectrum is flattend, AFTER extraction.'
+    print, 'REDUCE_CTIO: a Cube-extracted Master Flat (Flat/Smoothed, Flat, Smoothed ) was  stored as '+fitsname 
+    ff = flat[*,*,1] ; the actual flat
+
+endif else if (redpar.flatnorm eq 2) or (redpar.flatnorm eq 4)  then begin
+  ; Spectrum gets flattend BEFORE extraction. By the time we get stellar image we divide it by the flat 
+
+  
+  ff=sum ; 
+  
+  print, 'REDUCE_CTIO: The stellar images are beign divided by the flat, BEFORE extraction.'
+  
+  
+
+endif else stop, 'ERROR:  The parameter flatnorm (in the ctio.par file )  must be number from 0 to 4'
+
+
+
+
+
 
 
 
 if redpar.debug ge 2 then stop, 'Debug stop after flat field, .c to continue'
-
-
-
-
 
 
 
@@ -237,7 +267,7 @@ if keyword_set(thar) then begin
 		numthar=n_elements(threc)
 	 	FOR i=0,numthar-1 do begin
 	   		redpar.seqnum = strt(threcnums[i])
-  			CTIO_SPEC,prefix,thspfnames[i], thoutfnames[i],redpar, orc,xwid=xwid, flat=ff , /thar
+  			CTIO_SPEC,prefix,thspfnames[i], thoutfnames[i],redpar, orc,xwid=xwid , /thar
   	 	           ; prefix(input) :
   	 	           ; thspfnames[i] (input)
 	 	ENDFOR
@@ -251,7 +281,7 @@ endif
 
 
 ;##################################################
-;##############  Reduce Stellar    #################
+;##############  Reduce Stellar    ################
 ;##################################################
 
 if redpar.debug gt 1 then STOP

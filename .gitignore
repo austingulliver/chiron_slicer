@@ -18,3 +18,7 @@ all_yale_files/*
 idl_packages/
 *.project
 previous_thid_ignore/
+*.tgz
+/cfitsio-3.49/
+/chiron/various_resources/
+chiron/debugging/

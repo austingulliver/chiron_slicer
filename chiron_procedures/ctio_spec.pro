@@ -51,6 +51,12 @@ print,'CTIO_SPEC: Raw File      >>',spfname
 
 ; Read the image file
 im = getimage(spfname, redpar, header=head)  
+
+
+
+
+
+
 if (size(im))[0] lt 2 then begin
    print, 'CTIO_SPEC: Image is not found. Returning from CTIO_SPEC.'
    stop
@@ -63,11 +69,17 @@ szf = size(flat)
 ncolf = szf[1]				;# columns in image
 nrowf = szf[2]				;# rows in image
 
-if ncol ne ncolf  then begin
-  print, 'CTIO_SPEC: HALT! Your image is not the same size as your flat!'
-  stop
+if  keyword_Set(flat) and (ncol ne ncolf ) and ((redpar.flatnorm ne 0) )  then begin
+  stop, 'CTIO_SPEC: HALT! Your image is not the same size as your flat!'
+
 endif
 
+;*******************************************************
+;   Flat Fielding  BEFORE extraction
+;*******************************************************
+if  keyword_Set(flat) and  ( (redpar.flatnorm eq 0) or (redpar.flatnorm eq 2) or (redpar.flatnorm eq 4) ) then begin
+  im = double(im)/flat
+endif
 
 
 
@@ -88,7 +100,7 @@ if keyword_set(thar) then begin
     
 endif else begin
     ; Stellar Spectrum
-    ;getspec, im, orc, xwid, spec, gain=redpar.gain, ron=redpar.ron, redpar = redpar, cosmics=cosmics, optspec=optspec, diff=replace, sky=sky
+    ;getspec, im, orc, xwid, spec, gain=redpar.gain, ron=redpar.ron, redpar = redpar, cosmics=cosmics, optspec=optspec, diff=replace, sky=sky ;  APPLYINH CR 
     getspec, im, orc, xwid, spec, gain=redpar.gain, ron=redpar.ron, redpar = redpar, optspec=optspec, diff=replace, sky=sky
     
 endelse
@@ -105,20 +117,15 @@ spec_o = spec ;save the original spec
 
 
 
-if redpar.debug ge 1 then begin
-    print, '***********************************************'
-    print, 'RIGHT BEFORE FLAT-FIELDING...'
-    print, '***********************************************'
-    stop, ' '
+
+ ;*******************************************************
+ ;   Flat Fielding  AFTER extraction
+ ;*******************************************************
+
+if keyword_Set(flat)  and ( (redpar.flatnorm eq 1) or (redpar.flatnorm eq 3) ) then begin
+   spec = double(spec)/flat   
 endif
 
-
-
- ;*******************************************************
- ;   Flat Fielding 
- ;*******************************************************
-     
-if keyword_set(flat) and redpar.flatnorm eq 1 then spec = double(spec)/flat else print, 'CTIO_SPEC: WARNING: no flat-field correction!'
 
 specsz = size(spec)
 nords = specsz[2]

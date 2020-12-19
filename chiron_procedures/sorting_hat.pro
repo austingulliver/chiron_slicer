@@ -297,12 +297,20 @@ if keyword_set(reduce) then begin
         		;#####################################################
             ;################## Actual Reduction #################
             ;##################################################### 
-        		reduce_ctio, redpar, mode, flatset=flatset, star=star, thar=thar, date=night, /combine_stellar ; Actual reduction code 
-        		           ;flatset : array containning the file numbers ONLY of quartz/flat files
-        		           ;thar : "   "    "                            ONLY thar and iodine files
-        		           ;start: "   "   "                             ONLY  start itself 
+            if redpar.flat_from_scratch eq 0 then begin
+                  reduce_ctio, redpar, mode, star=star, thar=thar, date=night, /combine_stellar ; Since not flatset passed then it will try to restore master flat for the presetn night            
+                  
+            endif else if redpar.flat_from_scratch eq 1 then begin
+                  reduce_ctio, redpar, mode, flatset=flatset, star=star, thar=thar, date=night, /combine_stellar ; Actual reduction code
+                  ;flatset : array containning the file numbers ONLY of quartz/flat files
+                  ;thar : "   "    "                            ONLY thar and iodine files
+                  ;start: "   "   "                             ONLY  start itself
+            
+              
+            endif else stop, 'ERROR : The parameter flat_from_scratch in ctio.par must be either 1 or 0 '
+        		
     		endif ;n_modes > 0
-  endif  ;reduce
+ endif  ;reduce
 
   
 
@@ -496,7 +504,7 @@ if keyword_set(iod2fits) then begin
       rdsk,spectra_all_stellar,path_mst_stellar,1   ; Reading previously saved spectra (intensities only)
       rdsk,hd,path_mst_stellar,2        ; Reading header of file above
       sz=size(spectra_all_stellar)  &   ncol=sz[1]    &    nord=sz[2]
-      spec=fltarr(2,ncol,nord)      
+      spec=dblarr(2,ncol,nord)      
       w = ww[0,*,*]                      ; Since we dealing wiht "master" we arbitrary choose 1st wavesolution  
       thidfile_name = thidfiles[0]       ; Used on Header 
       spec[0,*,*]=w                      ; Wavelengths for all oders
@@ -560,7 +568,7 @@ if keyword_set(iod2fits) then begin
             				rdsk,sp,file_path,1   ; Reading previously saved spectra (intensities only)
             				rdsk,hd,file_path,2   ; Reading header of file above
             				sz=size(sp)  &   ncol=sz[1]    &    nord=sz[2]
-            				spec=fltarr(2,ncol,nord)              				
+            				spec=dblarr(2,ncol,nord)              				
                        
                     ut0 = ut[x1[i]]
                     timediff = abs(ut0 - wavut)

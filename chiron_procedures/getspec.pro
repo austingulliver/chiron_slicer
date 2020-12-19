@@ -120,6 +120,12 @@ orcend(*,nord+1) = orchi
 if redpar.debug ge 2 then print,'GETSPEC: Extracting spectrum.'
 
 
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;; CR Removal         ;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
 if n_elements(sky) eq 0 then sky=im*0.
 if keyword_set(cosmics) then remove_cosmics, im, orc, xwd, sky, spec = optspec, cosmics = replace, mask = mask, fwhm = seeing, gain=gain, ron=ron
 
@@ -144,17 +150,30 @@ ytarr = dblarr(imsz[1], orcsz[2])
 !p.multi=[1,1,2]
 for onum=1,nord do begin				;loop thru orders
     ;extract counts/pixel
-    if keyword_set(redpar) then begin
+    ;if keyword_set(redpar) then begin
         ;add variable order width:
-        if redpar.slcrxtrawid[0] gt 0 and onum gt redpar.slcrxtrawid[1] and redpar.mode eq 1 then $
-        xwd = redpar.xwids[redpar.mode] + redpar.slcrxtrawid[0] else xwd = redpar.xwids[redpar.mode]
-      	getarc, im, orcend, onum, xwd, arc, pix, debug = redpar.debug, ybi, yti
+        ;if redpar.slcrxtrawid[0] gt 0 and onum gt redpar.slcrxtrawid[1] and redpar.mode eq 1 then $
+        ;xwd = redpar.xwids[redpar.mode] + redpar.slcrxtrawid[0] else xwd = redpar.xwids[redpar.mode]
+        
+        
+        
+
+        
+      ;	getarc, im, orcend, onum, xwd, arc, pix, debug = redpar.debug, ybi, yti
       	       ; Output --> arc : boxcar extracted pixels for corresponding order
       	       ;            pix : fractional number of pixels mashed in each for each pixel
       	
-      	for i=0, imsz[1]-1 do maskim[i,ybi[i]:yti[i]] += (255d - 255d / nord * onum)
+      	;for i=0, imsz[1]-1 do maskim[i,ybi[i]:yti[i]] += (255d - 255d / nord * onum)
       	
-    endif else getarc, im, orcend, onum, xwd, arc, pix, ybi, yti
+    ;endif else getarc, im, orcend, onum, xwd, arc, pix, ybi, yti
+    
+    ;Added to account for flattening BEFORE extraction
+    if  (redpar.flatnorm eq 2) or (redpar.flatnorm eq 4) then xwd=redpar.xwids[redpar.mode] -4 else xwd=redpar.xwids[redpar.mode]
+
+
+    getarc, im, orcend, onum, xwd, arc, pix, debug = redpar.debug, ybi, yti
+    
+    
     ybarr[*, onum-1] = ybi
     ytarr[*, onum-1] = yti
     ;store total counts
