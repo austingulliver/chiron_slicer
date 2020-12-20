@@ -91,9 +91,9 @@ endif else im_arr = im_arr1      ;When no normalization is applied
 
 
 if do_mean eq 1 then begin
-     flat_name='MEAN'
+     flat_name=' MEAN'
 endif else if  do_mean eq 0 then begin
-     flat_name = 'MEDIAN'
+     flat_name = ' MEDIAN'
 endif else stop, 'ERROR : The parameter do_mean must be either 1 or 0. Please change accordingly in ctio.par'
 
 print, 'ADDFLAT: Combining flats using the'+flat_name+' of all flats . Please wait ........'
