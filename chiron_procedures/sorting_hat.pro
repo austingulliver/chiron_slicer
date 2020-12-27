@@ -370,7 +370,7 @@ print, ' '
     	   
     	   ;Make  changes to WVC structure if needs    	   
     	   initwvc[2]=74. ;73.   ;Number of Orders
-    	   initwvc[3]=64;67. ; before kept as 65 ;Physical Order Base ; OBASE. Note this has to much with what is input into THID. 
+    	   initwvc[3]=64  ;67. ; before kept as 65 ;Physical Order Base ; OBASE. Note this has to much with what is input into THID. 
     	                      ;When adding  (Num of Ordes) + (Base Orders) =  Always 139 (Physically is 138 but addition does not account for obase )
     	   
     	   print, ' The  WVC structure MODIFIED passed into THID is: '
@@ -399,15 +399,15 @@ print, ' '
             			 stop
         		  endif else begin
       			 
-          			  auto_thid, t, initwvc, 6.0, 6.0, 0.3, thid, awin=6.0, maxres=0.6, /orev, redpar = redpar
+          			  ;auto_thid, t, initwvc, 6.0, 6.0, 0.3, thid, awin=6.0, maxres=0.6, /orev, redpar = redpar
           			  ;for fiber, narrow and regular slit modes:
           			  ;thid, t, 64., 64.*[8797d,8898d], wvc, thid, init=initwvc, /orev 
           			  
           			  
           			  ;UNCOMMENT THIS TO RUN THE STANDARD MODE OF THID.PRO
-          			  ;obase=64;64. ; before 65 CHANGE  ; obase (scalar) lowest order number in spectrum
-          			  ;mlam = 65.*[8662.4d,8761.9d] ; has to be modified for now treated as dummy because wvc is passed         			  
-          			  ;thid, t, obase, mlam, wvc, thid, init=initwvc, /orev             			
+          			  obase=64;64. ; before 65 CHANGE  ; obase (scalar) lowest order number in spectrum
+          			  mlam = 65.*[8662.4d,8761.9d] ; has to be modified for now treated as dummy because wvc is passed         			  
+          			  thid, t, obase, mlam, wvc, thid, init=initwvc, /orev             			
             			 
             			 
 

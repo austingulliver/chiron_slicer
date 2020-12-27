@@ -60,7 +60,7 @@ common thid_common, thid_order, thid_pixel, thid_maxordx, thid_maxordy
   if ipos1 ge 0 and ipos2 ge 0 then begin
     dir = strmid(call, ipos1, ipos2-ipos1+1)	;look in dir with thar.pro
   endif else begin
-    dir = 'C:\Users\mrstu\Desktop\School\research_Physics\yale_software\chiron\tous\mir7\thid/'     					;look in current directory. Fix usign redpair 
+    dir = 'C:\Users\mrstu\idlworkspace_yalecalibration\chiron\tous\mir7\thid\'     					;look in current directory. Fix usign redpair 
   endelse
 
 ;Internal parameters.
@@ -125,7 +125,7 @@ common thid_common, thid_order, thid_pixel, thid_maxordx, thid_maxordy
 
 ;Initial solution from existing 2D wavelength fit coefficients.
 
-    mkwave2,wave,init      ;pixel_offset=-3
+    mkwave2,wave,init ,pixel_offset=0
     ;mkwave, wave, init
     if keyword_set(orev) then wave = rotate(wave, 7)
 

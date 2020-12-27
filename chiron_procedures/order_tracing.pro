@@ -2,9 +2,20 @@
  ;; TO FIX : MAKE SURE POSITIONS PASSED ARE U VALUES NOT ROUNDED 
  
  
- FUNCTION find_next_y_peak,  x, y,img , order_width, order_number=ord_number  ; y is y without rounding
+ 
+ FUNCTION valdate_relative_mid_pixel, y_to_compare,absolute_order_center
+ 
+   comparison_dif = abs(y_to_compare - absolute_order_center)
+
+   allowed_pixels = 4
+   if comparison_dif gt allowed_pixels then  return,  double(y_to_compare)  else return, absolute_order_center
+ 
+ END  
+ 
+ PRO  find_next_y_peak,  x, y, img , order_width, order_number=ord_number,out_in_y_to_compare = out_in_y_to_compare , out_absolute_order_center, only_nearest_max ; y is y without rounding
    ;+
    ; :Description:
+   ;     We have to process been calculated in parallel. Nearest max and using gaussian 
    ;    
    ;
    ; :Params:
@@ -16,16 +27,36 @@
    ; :Author: J.Andres Lozano
    ;-
        
-       ;order_width =order_width +2        ; adding two. 1 at each side just so the Gaussian fits better  
-       values  = MAKE_ARRAY(order_width)     
-       middle_index =  round(y)           ; Only value that gets rounding E.g. 7.5->8  7.4->7       
+       
+   
+   ; This is only for comparison : nearest  maximum out of the next 3 pixels
+   ; ---------------------------
+   values_nearest= [ img[x, out_in_y_to_compare-1],img[x, out_in_y_to_compare ], img[x, out_in_y_to_compare+1] ]
+   max_neighbor = MAX(values_nearest, idx)
+
+   out_in_y_to_compare= out_in_y_to_compare-1 +idx ; This is the absolute Y 
+   
+   
+   
+   
+   ;Actual Algorithim 
+   ; ------------------
+   
+   if only_nearest_max eq 0 then begin
+    
+  
+       values  = MAKE_ARRAY(order_width)  
+       middle_index =  y    
+                ; Only value that gets rounding E.g. 7.5->8  7.4->7       
 
       
        if (order_width mod 2 eq  0) then begin ; If orderwidth is even : . Case for the slice mode
              
              ; >> Since even number of pixels then we need to find which values discard ;
-             end_bottom =  img [ x , y - round(order_width/2)]
-             end_top = img [x , y + round(order_width/2) ]
+             end_bottom =  img [ x , round(y - order_width/2)]
+             sz=size(img)
+             if round(y + order_width/2)  gt sz[2]-1 then used_y= sz[2]-1 else  used_y= round(y + order_width/2)
+             end_top = img [x , used_y ]
              ; We keep the one wiht the highest value
           
              if (end_top ge end_bottom) then keep_top = 1  else  keep_top = 0
@@ -36,12 +67,14 @@
                  if keep_top eq 1 then begin
                              img_y_index = round( i + middle_index - (order_width/2) - 1)  ; width/2 is int cause this is even case. We round just in case
                  endif else  img_y_index = round( i + middle_index - (order_width/2) )     ; keep the bottom
+                 
+                 img_y_index = img_y_index  < sz[2]-1
                  values[i]=  img (x,img_y_index)
              endfor
              
        endif else begin ; when is odd : then just get same number of pixel top and bottom          
              keep_top = -1 ; to identify this case later on 
-             pixels_num_extract= floor(order_width/2)          
+             pixels_num_extract= float( floor(order_width/2) )          
              for i=0 ,  order_width-1  do begin
                img_y_index = round( i + middle_index - pixels_num_extract )
                values[i]=  img (x,img_y_index)
@@ -50,7 +83,8 @@
        ; Either way I end up with populated values to be used in the gaussian
       
       
-      
+      ; 1 st try 
+      ;-----------------
        relative_pixels = indgen(n_elements(values ) ); starts from 0
        y_intensities = values
        
@@ -69,22 +103,30 @@
        ;plots debugging
        relative_order_center = out_coefficients[1]  ; RELATIVE x 
        
+       
+       
+       
+       
        if (relative_order_center ge order_width) or (relative_order_center < 1)  then  begin ; Gaussian fit not possible 3 peak is higher than the middle peak and algorithim gets confused
             
             
-            ; Check if they align with anomaly 
+            ; Check if they align with artifact
             ; --------------------------------
             artifact_x_lower =3385
             artifact_x_upper =3423
             if (ord_number ge 60 )and( (x  ge  artifact_x_lower ) and (x  le  artifact_x_upper ) )  then begin
               ; These are hard coded values for the artifact
               ; We return the same Y as the previous 
-              return,y              
+              out_absolute_order_center= y  
+              GOTO, skip_cause_artifact            
               
             endif
             
             ;print, '* ORDER_TRACING: Gaussian failed is returning a relative  value of : ' + string(relative_order_center)
             
+            
+            ; 2 nd try
+            ;-----------------
             ;Trying to force a gaussia-like shape by setting edges to equal min value 
             y_intensities[-1]=min_y
             y_intensities[-2]=min_y
@@ -99,8 +141,12 @@
             values_used= y_fit
             relative_order_center = out_coefficients[1]  ; RELATIVE x 
             
+            
+            
             if (relative_order_center ge order_width)  or (relative_order_center le 1)  then  begin
                
+               ; 3th  try
+              ;-----------------
                ;If it still fails then  we try with 2nd order polynomial rather than gaussian 
                cfit= POLY_FIT(relative_pixels, y_intensities, 2, yfit=y_fit ) ; 2nd order polymial
                
@@ -121,8 +167,7 @@
                  
                  relative_order_center = order_width/2.0
                  p1= plot(relative_pixels, y_intensities)
-                 p2= plot(relative_pixels, y_fit ,"r1D-" ,/overplot)
-                 
+                 p2= plot(relative_pixels, y_fit ,"r1D-" ,/overplot)              
                 
                 
                 
@@ -136,10 +181,14 @@
        endif
        
       
-       if keep_top eq -1 then  absolute_order_center = middle_index - pixels_num_extract +  relative_order_center       
-       if keep_top eq 1 then  absolute_order_center = middle_index -  (order_width/2) - 1 +  relative_order_center       
-       if keep_top eq 0 then  absolute_order_center = middle_index -  (order_width/2)  +  relative_order_center       
-       ;print, 'the value of the absolute_order_center is ' +string(absolute_order_center)
+       if keep_top eq -1 then  absolute_order_center = float( middle_index - pixels_num_extract +  relative_order_center  )      
+       if keep_top eq 1 then  absolute_order_center = float( middle_index -  (float(order_width)/2.0) - 1.0 +  relative_order_center   )    
+       if keep_top eq 0 then  absolute_order_center = float( middle_index -  (float(order_width)/2.0)  +  relative_order_center    )    
+       
+       
+       ; This is the last check. We know the nearest mas technique works 
+       ;out_absolute_order_center =valdate_relative_mid_pixel(out_in_y_to_compare,absolute_order_center )
+       out_absolute_order_center =absolute_order_center
        
        ;p1= plot(relative_pixels, y_intensities)
        ;p2= plot(relative_pixels, y_fit ,"r1D-" ,/overplot)
@@ -147,7 +196,11 @@
        
        ;stop, 'Seee how gaussian behaves . plt of actual values gaussian and peak '
        
-   return, absolute_order_center   ; It returns absolute Y postion 
+ ;  return, absolute_order_center   ; It returns absolute Y postion 
+      
+      skip_cause_artifact:  
+     
+    endif ;End not nearest max neighbor
 END
  
  
@@ -179,19 +232,21 @@ FUNCTION trace_all_orders, img, inital_order_peaks,redpar=redpar
 
   ;order_ys=LONARR(4112)
 
-  order_ys = MAKE_ARRAY(N_ELEMENTS(inital_order_peaks), n_columns, /INTEGER, VALUE = 0) ; (#of Orders, # X Pixels  )
+  order_ys = MAKE_ARRAY(N_ELEMENTS(inital_order_peaks), n_columns, /FLOAT, VALUE = 0) ; (#of Orders, # X Pixels  )
   
                                                                                         ; Array that gets returned with all orders traced 
   mode_index=redpar.mode
-  order_width =redpar.xwids[mode_index]
+  order_width =redpar.xwids[mode_index] 
  
   
   FOR i=0, N_ELEMENTS(inital_order_peaks)-1 DO BEGIN  ; Each peak marks the begging of an order in the img. For a given order 
       
       print, ' - - - --  -  ORDER : '+STRING(i)
-      Y=long(inital_order_peaks[i])
+      Y=inital_order_peaks[i]
   
       order_ys[i,round(n_columns/2)]=Y ; For the middle
+      
+      only_nearest_max =1 
   
       ; >> Left side of Order
       ;----------------------.
@@ -203,14 +258,20 @@ FUNCTION trace_all_orders, img, inital_order_peaks,redpar=redpar
           if (Y le 1) or (Y ge n_rows-1 ) THEN BREAK ;if y=0 THEN WE ARE AT THE VERY EDGE OF THE IMAGE THEREFORE  part of the order is missing
     
           ; find values to be used in gaussian 
-          Y = find_next_y_peak( back_X, Y, img , order_width,order_number=i  ) ; The y for back_X. Ouput : absolute Y position  
+          
+          if  (X eq round(n_columns/2) ) then compare_Y = round(Y); just to state the first value
+           
+          find_next_y_peak, back_X, Y, img , order_width,order_number=i,out_in_y_to_compare = compare_Y,  out_absolute_order_center, only_nearest_max ; The y for back_X. Ouput : absolute Y position  
+           ;output compare_Y and Y
                
+          
           
           
           ;values= [ img[back_X, Y-1],img[back_X, Y ], img[back_X, Y+1] ]          
           ;max_neighbor = MAX(values, idx)    
           ;Y = Y-1 +idx
           
+          if only_nearest_max eq 1 then  Y=compare_Y else Y=out_absolute_order_center
           order_ys[i,back_X]=Y
   
        ENDFOR
@@ -218,7 +279,7 @@ FUNCTION trace_all_orders, img, inital_order_peaks,redpar=redpar
     
         ; >> Right side of Order
         ;-----------------------
-        Y=long(inital_order_peaks[i])    
+        Y=inital_order_peaks[i]   
         FOR X=n_columns/2, n_columns-2  DO BEGIN
     
             forward_X =X+1
@@ -229,8 +290,14 @@ FUNCTION trace_all_orders, img, inital_order_peaks,redpar=redpar
             ;max_neighbor = MAX(values, idx)
       
             ;Y = Y-1 +idx
-            Y = find_next_y_peak( forward_X, Y, img , order_width, order_number=i  ) ; The y for back_X. Ouput : absolute Y position
+            if  (X eq round(n_columns/2) )  then compare_Y = Y; just to state the first value    
+             
             
+            find_next_y_peak, forward_X, Y, img , order_width, order_number=i,out_in_y_to_compare = compare_Y,  out_absolute_order_center, only_nearest_max 
+            
+            if only_nearest_max eq 1 then  Y=compare_Y else Y=out_absolute_order_center
+              
+                
             
             order_ys[i,forward_X]=Y
     
@@ -338,15 +405,20 @@ FUNCTION order_tracing, img, redpar
 
 
   ;Debugging : Plotting all Orders by value found in tracing
-  debug=1
+  debug=0
   if debug gt 0 then begin
       p1=plot(traced_orders[0,*] )
       for i= 1, nord-1 do begin
           p1=plot(traced_orders[i,*], /overplot)
-      endfor    
+      endfor  
+   debug=0
+     
   endif
   
-  stop, 'Check quality of plot 
+  
+  
+  
+
  
 
 
@@ -377,25 +449,42 @@ FUNCTION order_tracing, img, redpar
   
 
   ;Debugging : Plotting all  FITTED Orders
- DEBUG=0
+debug = 0
   if debug gt 0 then begin
       
       ;kernel = [ [0,1,0],[-1,0,1],[0,-1,0] ]
 
       ;result = CONVOL(img, kernel,  /EDGE_ZERO)
       ;dummy = image(img)
-      img2=img
-      for ior = 0,nord-1 DO BEGIN
-        x=findgen(n_columns)
-        calculated_y=poly(x,orc(*,ior))
-        
-        
-        img2[x,calculated_y] = 0d
+      ;img2=img
+      ;for ior = 0,nord-1 DO BEGIN
+       ; x=findgen(n_columns)
+        ;calculated_y=poly(x,orc(*,ior))       
+        ;img2[x,calculated_y] = 0d
         ;p1=plot(calculated_y ,color='red',/overplot)
-      endfor
+      ;endfor
       
-       dir= redpar.rootdir +redpar.debugging + 'order_tracing_master_flat.fits'
-       writefits, dir, img2
+       ;dir= redpar.rootdir +redpar.debugging + 'order_tracing_master_flat.fits'
+       ;writefits, dir, img2
+       
+       
+       
+
+       ; Plots for 1 red, 1midle and 1 blue orders:
+       x=indgen(n_elements(traced_orders[0,*]))
+       pa= plot( x,traced_orders[5,*] ,SYMBOL= 'dot',SYM_THICK=3, LINESTYLE= 6, TITLE= 'Indexed Order 5 -  Red Order' )
+       calculated_y=poly(x,orc(*,5))   
+       pa= plot( x,calculated_y ,COLOR= 'red', /overplot)       
+           
+       pb= plot( x,traced_orders[35,*] ,SYMBOL= 'dot',LINESTYLE= 6, SYM_THICK=3, TITLE= 'Indexed Order 35 -  Middle Order' )
+       calculated_y=poly(x,orc(*,35))
+       pa= plot( x,calculated_y ,COLOR= 'red', /overplot)
+       
+       
+       
+       pc= plot( x,traced_orders[70,*] ,SYMBOL= 'dot',SYM_THICK=3,LINESTYLE= 6, TITLE= 'Indexed Order 70 -  Middle Order' )
+       calculated_y=poly(x,orc(*,70))
+       pa= plot( x,calculated_y ,COLOR= 'red', /overplot)
       
   endif
  
