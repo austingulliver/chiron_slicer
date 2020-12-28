@@ -128,10 +128,10 @@
             ; 2 nd try
             ;-----------------
             ;Trying to force a gaussia-like shape by setting edges to equal min value 
-            y_intensities[-1]=min_y
-            y_intensities[-2]=min_y
-            y_intensities[0]=min_y
-            y_intensities[1]=min_y
+            ;y_intensities[-1]=min_y
+            ;y_intensities[-2]=min_y
+            ;y_intensities[0]=min_y
+            ;y_intensities[1]=min_y
             
             
             ; now try again 
@@ -163,11 +163,11 @@
                  print, 'It failed after changing edges values  + fitting 2nd order polynomial . Values used are : '
                  print,y_intensities
 
-                 STOP, '* ORDER_TRACING: EVERYHTING FAILED  is returning a relative  value of : ' + string(relative_order_center)
+                 ;STOP, '* ORDER_TRACING: EVERYHTING FAILED  is returning a relative  value of : ' + string(relative_order_center)
                  
                  relative_order_center = order_width/2.0
-                 p1= plot(relative_pixels, y_intensities)
-                 p2= plot(relative_pixels, y_fit ,"r1D-" ,/overplot)              
+                 ;p1= plot(relative_pixels, y_intensities)
+                 ;p2= plot(relative_pixels, y_fit ,"r1D-" ,/overplot)              
                 
                 
                 
@@ -246,7 +246,7 @@ FUNCTION trace_all_orders, img, inital_order_peaks,redpar=redpar
   
       order_ys[i,round(n_columns/2)]=Y ; For the middle
       
-      only_nearest_max =1 
+      only_nearest_max =0
   
       ; >> Left side of Order
       ;----------------------.
@@ -405,7 +405,7 @@ FUNCTION order_tracing, img, redpar
 
 
   ;Debugging : Plotting all Orders by value found in tracing
-  debug=0
+  debug=1
   if debug gt 0 then begin
       p1=plot(traced_orders[0,*] )
       for i= 1, nord-1 do begin
@@ -449,7 +449,7 @@ FUNCTION order_tracing, img, redpar
   
 
   ;Debugging : Plotting all  FITTED Orders
-debug = 0
+debug = 1
   if debug gt 0 then begin
       
       ;kernel = [ [0,1,0],[-1,0,1],[0,-1,0] ]
@@ -492,6 +492,6 @@ debug = 0
 
 
 
-
+   stop, "forced stop delete this "
    RETURN, orc
 end

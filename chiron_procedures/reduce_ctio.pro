@@ -117,6 +117,8 @@ print, " REDUCE-CTIO :           >>> Creating MasterFlat <<<   "
 ;##### Create / Restore Master Flat ###############
 ;##################################################
  name = redpar.rootdir+redpar.flatdir+prefix+mode+'.sum'          
+
+ 
  
  if keyword_set(flatset) then begin
       ;if redpar.debug then stop, 'REDUCE_CTIO: debug stop before flats, .c to continue'
@@ -156,6 +158,19 @@ print, " REDUCE-CTIO :           >>> Order Tracing <<<   "
 ;##################################################
  
 ;Order ared traced wrt to the Master Flat 'sum'
+
+
+
+; If want to user master stellar rather than master flat : Assuming master flat  exists already
+trace_order_w_stellar=1
+if trace_order_w_stellar  eq 1 then begin
+   msrt_dir= redpar.rootdir + redpar.rawdir +redpar.date+ "\"+"chi"+ redpar.date+".mstr_stellar.fits" 
+   mst_stellar_image = readfits(msrt_dir)
+   sum = mst_stellar_image
+endif
+
+
+
 
 ;SLICERFLAT=1 means use narrow slit to define slicer order locations
 if redpar.slicerflat eq 0 or mode ne 'slicer' then begin
