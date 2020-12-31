@@ -417,6 +417,21 @@ FUNCTION order_tracing, img, redpar
   
   
   
+  debug =0
+  if debug gt 0 then begin
+    ; DELETE THIS AFTER USED 
+    
+    indexOrder = 37
+    ;Plotting the individual Order
+    zGauss =indgen(4112)
+    xGauss = indgen(4112)
+    yGauss =traced_orders[indexOrder,*]
+    
+     pGauss  =SURFACE(zGauss,xGauss,yGauss,STYLE=0, COLOR='blue',THICK=6,/overplot)
+  endif
+  
+  
+  
   
 
  
@@ -449,7 +464,7 @@ FUNCTION order_tracing, img, redpar
   
 
   ;Debugging : Plotting all  FITTED Orders
-debug = 1
+debug =0
   if debug gt 0 then begin
       
       ;kernel = [ [0,1,0],[-1,0,1],[0,-1,0] ]
@@ -469,22 +484,29 @@ debug = 1
        
        
        
-
+       ;Uncomment this for plot 1 order in the red, middle and blue
        ; Plots for 1 red, 1midle and 1 blue orders:
-       x=indgen(n_elements(traced_orders[0,*]))
-       pa= plot( x,traced_orders[5,*] ,SYMBOL= 'dot',SYM_THICK=3, LINESTYLE= 6, TITLE= 'Indexed Order 5 -  Red Order' )
-       calculated_y=poly(x,orc(*,5))   
-       pa= plot( x,calculated_y ,COLOR= 'red', /overplot)       
+       ;x=indgen(n_elements(traced_orders[0,*]))
+       ;pa= plot( x,traced_orders[5,*] ,SYMBOL= 'dot',SYM_THICK=3, LINESTYLE= 6, TITLE= 'Indexed Order 5 -  Red Order' )
+       ;calculated_y=poly(x,orc(*,5))   
+       ;pa= plot( x,calculated_y ,COLOR= 'red', /overplot)       
            
-       pb= plot( x,traced_orders[35,*] ,SYMBOL= 'dot',LINESTYLE= 6, SYM_THICK=3, TITLE= 'Indexed Order 35 -  Middle Order' )
-       calculated_y=poly(x,orc(*,35))
-       pa= plot( x,calculated_y ,COLOR= 'red', /overplot)
+       ;pb= plot( x,traced_orders[35,*] ,SYMBOL= 'dot',LINESTYLE= 6, SYM_THICK=3, TITLE= 'Indexed Order 35 -  Middle Order' )
+       ;calculated_y=poly(x,orc(*,35))
+       ;pa= plot( x,calculated_y ,COLOR= 'red', /overplot) 
+       
+       
+       ;pc= plot( x,traced_orders[70,*] ,SYMBOL= 'dot',SYM_THICK=3,LINESTYLE= 6, TITLE= 'Indexed Order 70 -  Middle Order' )
+       ;calculated_y=poly(x,orc(*,70))
+       ;pa= plot( x,calculated_y ,COLOR= 'red', /overplot)
+       ;end of uncomment
+       
+       
+       ; Plotting 3D REPRESENTATION :
        
        
        
-       pc= plot( x,traced_orders[70,*] ,SYMBOL= 'dot',SYM_THICK=3,LINESTYLE= 6, TITLE= 'Indexed Order 70 -  Middle Order' )
-       calculated_y=poly(x,orc(*,70))
-       pa= plot( x,calculated_y ,COLOR= 'red', /overplot)
+       
       
   endif
  
