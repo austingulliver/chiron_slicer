@@ -190,7 +190,7 @@ extracted=size( spec )
 num_pixel_extracted = extracted[1]
 num_orders_extracted =  extracted[2]
 
-print, 'CTIO_SPEC: Extracted spectrum has '+string(num_pixel_extracted) +' pixels and ' +string(num_orders_extracted) +' orders.'
+print, 'CTIO_SPEC: Extracted spectrum has '+strtrim(string(num_pixel_extracted),1) +' pixels and ' +strtrim(string(num_orders_extracted),1) +' orders.'
 print, ''
 
 spec=rotate(spec,2) ; Spectrum get rotated  

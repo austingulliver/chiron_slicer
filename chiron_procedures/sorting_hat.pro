@@ -298,10 +298,10 @@ if keyword_set(reduce) then begin
             ;################## Actual Reduction #################
             ;##################################################### 
             if redpar.flat_from_scratch eq 0 then begin
-                  reduce_ctio, redpar, mode, star=star, thar=thar, date=night, /combine_stellar ; Since not flatset passed then it will try to restore master flat for the presetn night            
+                  reduce_ctio, redpar, mode, star=star, thar=thar, date=night, combine_stellar=combine_stellar ; Since not flatset passed then it will try to restore master flat for the presetn night            
                   
             endif else if redpar.flat_from_scratch eq 1 then begin
-                  reduce_ctio, redpar, mode, flatset=flatset, star=star, thar=thar, date=night, /combine_stellar ; Actual reduction code
+                  reduce_ctio, redpar, mode, flatset=flatset, star=star, thar=thar, date=night, combine_stellar=combine_stellar ; Actual reduction code
                   ;flatset : array containning the file numbers ONLY of quartz/flat files
                   ;thar : "   "    "                            ONLY thar and iodine files
                   ;start: "   "   "                             ONLY  start itself
@@ -362,10 +362,10 @@ print, ' '
     	   endelse ; thar_soln  
 
          
-    	   print, ' WVC structure restored is  : '
-    	   print, ' ------------------------------------------------------- '
-    	   print,   initwvc
-    	   print, ' ------------------------------------------------------- '
+;    	   print, ' WVC structure restored is  : '
+;    	   print, ' ------------------------------------------------------- '
+;    	   print,   initwvc
+;    	   print, ' ------------------------------------------------------- '
 
     	   
     	   ;Make  changes to WVC structure if needs    	   
@@ -373,7 +373,7 @@ print, ' '
     	   initwvc[3]=64  ;67. ; before kept as 65 ;Physical Order Base ; OBASE. Note this has to much with what is input into THID. 
     	                      ;When adding  (Num of Ordes) + (Base Orders) =  Always 139 (Physically is 138 but addition does not account for obase )
     	   
-    	   print, ' The  WVC structure MODIFIED passed into THID is: '
+    	   print, ' Data used for wavelength calibration ( Thid ): '
     	   print, ' ------------------------------------------------------- '
     	   print, 'Number of columns : ' +string(initwvc[1])
     	   print, 'Number of order : ' +string(initwvc[2])
@@ -382,6 +382,17 @@ print, ' '
     	   print, initwvc[10:*]    	   
     	   print, ' ------------------------------------------------------- '
     	          	   
+    	          	   
+    	   ;Find reference pixel from 2017 
+    	   ;------------------------------ 
+    	   dir_2017= redpar.rootdir + redpar.iodspecdir+  '171218\achi171218.1003'
+    	   ref_pixel_2017 = find_ref_peak(dir_2017) ; returns an array with three elements
+                                            	   ; peak 1 : found withint the range  r1=[ 600, 800 ]
+                                            	   ; peak 2 : found withint the range  r2=[1975,2050]
+                                            	   ; peak 3 : found withint the range  r3=[3820,3920]
+    	         	   
+    	   
+    	   
     	   !p.multi=[0,1,1]    	   
     	   for i=0,num_thar-1 do begin ; For each ThAr file encountered 
     	        
@@ -399,7 +410,24 @@ print, ' '
             			 stop
         		  endif else begin
       			 
-          			  ;auto_thid, t, initwvc, 6.0, 6.0, 0.3, thid, awin=6.0, maxres=0.6, /orev, redpar = redpar
+      			      
+      			      
+      			      ; Finds if there is any pixel shifted wrt to 171218. It's wrt to 2017 since 
+      			      ; this is the first wavelength solution that we found
+      			      ;---------------------------------------------------------------------------
+      			      current_dir = redpar.rootdir + redpar.iodspecdir+ redpar.imdir + 'achi'+redpar.date + '.'+thar[i]
+      			      current_ref_pixel = find_ref_peak(current_dir) 
+
+      			      pixel_offset =  mean( [ref_pixel_2017[0]-current_ref_pixel [0] , ref_pixel_2017[1]-current_ref_pixel [1], ref_pixel_2017[2]-current_ref_pixel [2]  ] ) ;  ref_pixel_2017 -current_ref_pixel 
+      			     
+      			      
+      			      
+      			      try_again:
+      			      print, ' * The shift found is ' +string(pixel_offset) + ' between the current ThAr and the one from 2017'
+
+
+      			      
+          			  auto_thid, t, initwvc, 6.0, 6.0, 0.3, thid, awin=6.0, maxres=0.6, /orev, redpar = redpar, pixel_offset=pixel_offset
           			  ;for fiber, narrow and regular slit modes:
           			  ;thid, t, 64., 64.*[8797d,8898d], wvc, thid, init=initwvc, /orev 
           			  
@@ -407,13 +435,30 @@ print, ' '
           			  ;UNCOMMENT THIS TO RUN THE STANDARD MODE OF THID.PRO
           			  obase=64;64. ; before 65 CHANGE  ; obase (scalar) lowest order number in spectrum
           			  mlam = 65.*[8662.4d,8761.9d] ; has to be modified for now treated as dummy because wvc is passed         			  
-          			  thid, t, obase, mlam, wvc, thid, init=initwvc, /orev             			
+          			  ;thid, t, obase, mlam, wvc, thid, init=initwvc, /orev             			
             			 
             			 
 
-          			  if thid.nlin lt 700d then begin            			  
+          			  if thid.nlin lt 700d then begin         
+          			     print, 'SORTING_HAT: Not enough lines found in the recent wavelenght calibration '            			  
             			   print, 'SORTING_HAT: Lines found :  '+strt(thid.nlin)
-            			   stop, 'ERROR : Thid.pro did not work as expected.  INTERVENTION NEEDED!'            			   
+            			   ; IF fails I want to see the img myself
+            			   rdsk,sp_2017,dir_2017,1
+            			   rdsk,sp_current,current_dir,1
+            			   p1=plot(sp_current[*,0],  title ='Black is current, Blue is 2017')
+            			   p2=plot( sp_2017[*,0],color='blue',linestyle=2,   /overplot)
+            			   B = ''
+            			   ; Read input from the terminal:
+            			   READ, B, PROMPT='Do you want to try again? If YES insert pixel number if not then press x : '
+            			   if B eq 'x' then begin 
+            			     stop, 'ERROR : Thid.pro did not work as expected.  INTERVENTION NEEDED!'   
+            			   endif else  begin
+            			     pixel_offset = fix(B)
+            			     GOTO, try_again
+            			     
+            			     
+            			   endelse
+            			            			   
           			  endif else begin
           			     print, 'SORTING_HAT: Thid.pro successfully identified '+strt(thid.nlin) + ' lines. '
           			  endelse
@@ -445,7 +490,7 @@ endif ; getthid
 
 print, ' '
 print, ' '
-print, ' SORTING-HAT : -------------------------------End Wavelength Calibration '
+print, 'SORTING-HAT : -------------------------------End Wavelength Calibration '
 
 
 
@@ -458,12 +503,14 @@ print, ' SORTING-HAT : -------------------------------End Wavelength Calibration
 ;###############################################################
 ;######### Write FITS files for reduced data ####################
 ;###############################################################
-
+PRINT, ' '
+print, 'SORTING-HAT:                    >>> Writing files on disk <<< '
+print, ' '
 
 if keyword_set(iod2fits) then begin
      
      
-     x1=where(bin eq redpar.binnings[modeidx] and slit eq redpar.modes[modeidx] and objnm ne 'junk' and objnm ne 'dark' and objnm ne 'focus' and objnm ne 'bias',n_found)     
+     x1=where(bin eq redpar.binnings[modeidx] and (slit eq redpar.modes[modeidx]) and (objnm ne 'quartz') and (objnm ne 'iodine') and (objnm ne 'thar') and  (objnm ne 'junk') and (objnm ne 'dark') and (objnm ne 'focus') and (objnm ne 'bias'),n_found)          
      tharindx=where((objnm eq 'thar') and (bin eq redpar.binnings[modeidx]) and (slit eq redpar.modes[modeidx]),  num_thar)     
      
      
@@ -502,7 +549,7 @@ if keyword_set(iod2fits) then begin
       
       path_mst_stellar= iodspec_path+pretag+run+'mstr_stellar'     
       rdsk,spectra_all_stellar,path_mst_stellar,1   ; Reading previously saved spectra (intensities only)
-      rdsk,hd,path_mst_stellar,2        ; Reading header of file above
+      rdsk,hd,path_mst_stellar,2                    ; Reading header of file above
       sz=size(spectra_all_stellar)  &   ncol=sz[1]    &    nord=sz[2]
       spec=dblarr(2,ncol,nord)      
       w = ww[0,*,*]                      ; Since we dealing wiht "master" we arbitrary choose 1st wavesolution  
@@ -533,7 +580,7 @@ if keyword_set(iod2fits) then begin
 
       ;now change the NAXIS and NAXISn values to reflect the reduced data:
       specsz = size(spec)
-      fxaddpar, hd, 'OBJECT', 'master_stellar', 'This file was produced by combining '+ string (n_found)+ ' stellar images. '
+      ;fxaddpar, hd, 'OBJECT', 'master_stellar', 'This file was produced by combining '+ string (n_found)+ ' stellar images. '   ; This statment is replaced within reduce_ctio.pro
       fxaddpar, hd, 'NAXIS', specsz[0], 'Number of data axes'
       fxaddpar, hd, 'NAXIS1', specsz[1], 'Axis 1 length: 0=wavelength, 1=spectrum'
       fxaddpar, hd, 'NAXIS2', specsz[2], 'Axis 2 length: extracted pixels along each echelle order'
@@ -578,7 +625,7 @@ if keyword_set(iod2fits) then begin
                     
             				spec[0,*,*]=w          				     ; Wavelengths for all oders
             				spec[1,*,*]=sp                     ; Intensities for all orders (Spectrum )
-            				outfile=pretag+run+'.fits' ; Final fits file name.  
+            				outfile=pretag+run+ strtrim(string(obnm[i]),1)+ '.fits' ; Final fits file name.  
             				
             				
             				
@@ -613,7 +660,7 @@ if keyword_set(iod2fits) then begin
             				
             				
             				writefits,fits_path+outfile, spec,hd
-            				print, 'SORTING_HAT:  Writing: ', outfile, ' ', strt(i/(n_found - 1d)*1d2),'% complete.'
+            				print, 'SORTING_HAT:  Writing: ', outfile, '      >> ', strt(i/(n_found - 1d)*1d2),'% complete.'
             				;*******************************************************
             				
             				

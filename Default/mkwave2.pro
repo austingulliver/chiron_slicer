@@ -93,7 +93,7 @@ print,  'pixel offset is  :'  +string(pixel_offset)
 
 
 
-  ;1)>> Build column indicies/100.0 for polynomial construction.
+  ;1)>> Build column indicies/1000.0 for polynomial construction.
   if col1 lt 0 then col1 = 0                    ;begin in first col
   if col2 lt 0 then col2 = long(ncol) - 1       ;build to last column
   len = col2 - col1 + 1                         ;desired number of columns
@@ -120,9 +120,10 @@ print,  'pixel offset is  :'  +string(pixel_offset)
       order = (obeg + i) / 100d0      ;current order
       nlc = dblarr(len)               ;init n*lambda column piece
       
-      
-      ;This has been modified to allow for displacement of pixels IF number of coeff in x is 6      
-      if coldeg eq 6 then begin        
+      ; Creating the X^6 + .....+ X part of the Polynomial.  x--> Pixels
+      ; --------------------------------------------------------
+        
+      if coldeg eq 6 then begin  ; Correction of pixel only applies if 6th order poly in x is applied.      
            nlc= ((ic^6 )*coeff(6) )  + ((ic^5 )*coeff(5) )   + ((ic^4 )*coeff(4) )  +  ((ic^3 )*coeff(3) ) +  ((ic^2 )*coeff(2))  + ( (ic+(pixel_offset/1000d0))*coeff(1) )         
       endif else begin
           for j=coldeg,1,-1 do begin        ;loop back thru col coeffs
@@ -130,6 +131,10 @@ print,  'pixel offset is  :'  +string(pixel_offset)
           endfor        
       endelse      
     
+    
+    
+      ; Creating the Y^6 + ..... +Y part of the Polynomial.  y--> Real Order Number
+      ; --------------------------------------------------------
       
       nlo = dblarr(len)                         ;init n*lambda order piece
       for j=coldeg+orddeg,coldeg+1,-1 do begin  ;loop back thru order coeffs

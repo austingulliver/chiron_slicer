@@ -61,7 +61,9 @@ recnums = strt(star, f='(I4.4)')  ; convert to string with leading zeros
 spnums = prefix + recnums
 spfnames = indir + prefix + recnums +'.fits' ; string array of spectrum(STARS) file names   
 outprefix = redpar.prefix_tag +  prefix
-outfnames= outdir + outprefix  + recnums  ; 
+outfnames= outdir + outprefix  + recnums  
+
+
     
 ; Order-Finding Exposure: strong exposure, such as iodine or bright star(B star)
 if order_ind ge 0 then begin ; NOTour case coming from sorting_hat (guess: We will do the order tracing wrt to the master flat)
@@ -161,13 +163,37 @@ print, " REDUCE-CTIO :           >>> Order Tracing <<<   "
 
 
 
-; If want to user master stellar rather than master flat : Assuming master flat  exists already
-trace_order_w_stellar=1
-if trace_order_w_stellar  eq 1 then begin
-   msrt_dir= redpar.rootdir + redpar.rawdir +redpar.date+ "\"+"chi"+ redpar.date+".mstr_stellar.fits" 
-   mst_stellar_image = readfits(msrt_dir)
-   sum = mst_stellar_image
-endif
+; If want to use master stellar rather than master flat : Assuming master flat  exists already
+; Implement what to use : stellar, master stellar or img/ stellar 
+; Only use 2 and 3  if /combine is active ( doing master stellar)!!!!!!!
+
+; Never  implemented cause proved to be worse off when img/flat 
+;img_tracing_option = 3
+; 1 : Use master flat :default
+; 2 : Use master stellar 
+; 3 : User the master Stellar / master Flat
+
+
+;if img_tracing_option  gt 1 then begin 
+;  
+;    msrt_dir= redpar.rootdir + redpar.rawdir +redpar.date+ "\"+"chi"+ redpar.date+".mstr_stellar.fits"
+;    ;mst_stellar_image = readfits(msrt_dir)  ; HAS TO BE FIXED !!!!!     
+;    mst_stellar_image = getimage(msrt_dir, redpar, header=header)
+;    
+;    
+;    if img_tracing_option eq 2 then order_tracing_img = mst_stellar_image
+;    
+;    if img_tracing_option eq 3 then begin
+;      print, "sanity check "
+;      order_tracing_img = mst_stellar_image / sum  
+;      stop, 'check dimension match'  
+;    endif
+;
+;  
+;endif 
+
+  
+
 
 
 
@@ -176,16 +202,26 @@ endif
 if redpar.slicerflat eq 0 or mode ne 'slicer' then begin
   	print, 'REDUCE_CTIO : Creating a -->NEW<-- Order tracing from scratch'
   	
-  	if order_ind ge 0 then begin ; If a default order file was passed as param
-  	  ctio_dord, ordfname, redpar, orc, ome 
-  	endif else ctio_dord, ordfname, redpar, orc, ome, image=sum  ; this is our case(no order definition passed as param)
-  	                                 ;sum : crunched flat passed as param
-  	                                 ;ordfname is passed empty and instead iamge param is passed
-  	                                ; orc :(output)(array (# coeffs , # orders))] coefficients from the polynomial fits to the order peaks
-  	name = redpar.rootdir+redpar.orderdir+prefix+mode+'.orc'
-  	wdsk, orc, name, /new
-  	print, 'REDUCE_CTIO: Order Coefficients are stored as '+name  
-  	;         if redpar.debug then stop, 'Debug stop after order location, .c to continue'
+  	if (redpar.use_prev_tracing eq 1 ) then begin
+          	   dirn =redpar.rootdir+redpar.orderdir+prefix+mode +'.orc'
+          	   print, 'REDUCE_CTIO: Order Coefficients are getting  RE-STORED from '+dirn
+          	   rdsk, orc, dirn, 1
+
+  	endif else begin
+      	       if order_ind ge 0 then begin ; If a default order file was passed as param
+                    ctio_dord, ordfname, redpar, orc, ome
+          	  endif else ctio_dord, ordfname, redpar, orc, ome, image=sum  ; this is our case(no order definition passed as param)
+          	  ;sum : crunched flat passed as param
+          	  ;ordfname is passed empty and instead iamge param is passed
+          	  ; orc :(output)(array (# coeffs , # orders))] coefficients from the polynomial fits to the order peaks
+          	  name = redpar.rootdir+redpar.orderdir+prefix+mode+'.orc'
+          	  wdsk, orc, name, /new
+          	  print, 'REDUCE_CTIO: Order Coefficients are stored as '+name
+          	  ;         if redpar.debug then stop, 'Debug stop after order location, .c to continue'
+  	endelse
+
+  	
+  	
 endif else begin
   	
   	print, 'REDUCE_CTIO: Order tracing got restored from :'
@@ -304,7 +340,8 @@ if redpar.debug gt 1 then STOP
 
 if keyword_set(combine_stellar) then begin
       
-      ; just to find dimenesion of img
+      print, 'REDUCE_CTIO: * Please wait... ( Master Stellar is getting created)'
+      ; >> find dimenesions of img
       im_ref = double(readfits( spfnames[0])) 
       sz = size(im_ref)
       n_col = sz[1]          ;# columns in image
@@ -320,12 +357,23 @@ if keyword_set(combine_stellar) then begin
       ENDFOR
       
       
-      ; Need to alter header , now taking the last header 
+      nsize = size(data_cube)
+      combined_files= nsize[3]
+      combined_files = strtrim(string(combined_files), 1)
+      
+     
+      
+      
+      ;  >> Need to alter header , now taking the last header 
       master_stellar = mean(data_cube, /double, dimen=3)    
       fname_master_stellar = indir + prefix +'mstr_stellar.fits'    
       out_mast_stellar= outdir + outprefix +'mstr_stellar'  
       
-      sxaddpar, hd, 'OBJECT', 'master_stellar', 'This image is produced by finding of all stellar images'
+      ; >> Creating ranges of file used to append to Header      
+      range_files= make_range_from_vector(star)      
+      
+      history_str = 'This file is a master stellar produced by combining ' + strtrim(string(combined_files),1)+ ' files: '+range_files
+      sxaddpar, hd, 'HISTORY', history_str
       writefits,  fname_master_stellar, master_stellar, hd           
       CTIO_SPEC,prefix,fname_master_stellar,out_mast_stellar,redpar, orc, xwid=xwid, flat=ff     
   

@@ -31,11 +31,13 @@
 ;11-11-2020  Update by Jorge Lozano
 
 pro getarc,im,orc,onum,awid,arc,pix,hotpix=hotpix, debug = debug, ybi, yti
-  
+   
    if n_params() lt 5 then begin
       print,'syntax: getarc,im,orc,onum,awid,arc[,pix]'
       retall
    endif
+   
+   ;print, 'GETARC : Orders are getting extracted using BOXCAR. Number of pixels extract in the Cross-Dispersion : ' +strtrim(string(awid),1)
   
    if awid le 0 then message,'GETARC: Arc width must be positive - aborting.' 
   

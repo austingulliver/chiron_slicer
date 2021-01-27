@@ -6,7 +6,6 @@
  FUNCTION valdate_relative_mid_pixel, y_to_compare,absolute_order_center
  
    comparison_dif = abs(y_to_compare - absolute_order_center)
-
    allowed_pixels = 4
    if comparison_dif gt allowed_pixels then  return,  double(y_to_compare)  else return, absolute_order_center
  
@@ -105,7 +104,7 @@
        
        
        
-       
+        
        
        if (relative_order_center ge order_width) or (relative_order_center < 1)  then  begin ; Gaussian fit not possible 3 peak is higher than the middle peak and algorithim gets confused
             
@@ -128,9 +127,9 @@
             ; 2 nd try
             ;-----------------
             ;Trying to force a gaussia-like shape by setting edges to equal min value 
-            ;y_intensities[-1]=min_y
+            y_intensities[-1]=min_y
             ;y_intensities[-2]=min_y
-            ;y_intensities[0]=min_y
+            y_intensities[0]=min_y
             ;y_intensities[1]=min_y
             
             
@@ -187,8 +186,8 @@
        
        
        ; This is the last check. We know the nearest mas technique works 
-       ;out_absolute_order_center =valdate_relative_mid_pixel(out_in_y_to_compare,absolute_order_center )
-       out_absolute_order_center =absolute_order_center
+       out_absolute_order_center =valdate_relative_mid_pixel(out_in_y_to_compare,absolute_order_center )
+       ;out_absolute_order_center =absolute_order_center
        
        ;p1= plot(relative_pixels, y_intensities)
        ;p2= plot(relative_pixels, y_fit ,"r1D-" ,/overplot)
@@ -265,8 +264,7 @@ FUNCTION trace_all_orders, img, inital_order_peaks,redpar=redpar
            ;output compare_Y and Y
                
           
-          
-          
+                  
           ;values= [ img[back_X, Y-1],img[back_X, Y ], img[back_X, Y+1] ]          
           ;max_neighbor = MAX(values, idx)    
           ;Y = Y-1 +idx
@@ -326,14 +324,14 @@ FUNCTION create_polynomial,img
   ;left_swath = aswa(*,nswa/4) ;  Do one at the time
   ;right_swath = aswa(*,3*nswa/4)
   ;swa = aswa(*,nswa/2)
-  iord=INDGEN(76)
+  iord=INDGEN(74)
   swa=img[2056,*]
 
   yy = [0,max(swa)]
 
   swa= swa
 
-  plot, swa  ; Used as shortcut to increase window size
+  plot, swa  ; Used as hack to increase window size
   stop, 'Make plot BIGGER before continue'
   plot, swa, /xsty, /ysty,  xtitle='Cross Dispersion Direction [Pixel]',   ytitle='Intesity in Central Swath'
 
@@ -362,13 +360,18 @@ FUNCTION create_polynomial,img
   PRINT, 'pkcoefs: [', strt(pkcoefs[0]), ',',  strt(pkcoefs[1]), ',',  strt(pkcoefs[2]), ',',  strt(pkcoefs[3]), ']'
   PRINT, '***********************************************'
 
-
+  
+  
+  stop, " *End of finding the new Polynomial. Copy/Paste polynomial, delete reference to this script and run again. "
   RETURN, xeye
 END
 
 
 
+
+
 ;Summary:
+;      ** Main Function **
 ;       called from ctio_dord
 ;       Main method calls  trace_all_orders and create Polynomial
 ;       Only optimized for slicer but can be applied to other modes with minor adjustments 
@@ -383,63 +386,76 @@ FUNCTION order_tracing, img, redpar
 
   
 
-  ; Definning Constants
+  ;------------------------------
+  ; >> Constants
+  ;------------------------------
   debug=redpar.debug
   flat= img
   img_size=size(flat)     ;size of image passed: e.g. Master Flat
   n_columns=img_size[1]   ;number of cols in image
   n_rows= img_size[2]     ;number of rows in image  
-  nord = redpar.nords ; total number of orders
-  iord = findgen(nord) ; Generated Orders in range [0,nord]
+  nord = redpar.nords     ;total number of orders
+  iord = findgen(nord)    ;Generated Orders in range [0,nord]
   orcdeg = 4.          ;polymial degree to fit order locations : Note increasing orcdeg initially decreases the fit residuals (ome)
   ;BUT  eventually loss of  precision begins increasing the errors again.MAKE SURE RESIDUALS DECREASE.
   mmfrac = 0.05       ;maximum fraction missing peaks allowed. Only Up to 5% of the spectrum can be missing.
   maxome = 10.        ;max allowable mean pixel error in orcs. Previous = 2 i ---------------------NEEDS IMPLEMENTATION 
-  pkcoefs =redpar.pkcoefs_slicer   ;' These polynomial will be used later          
+ 
+  
+  
+  
+  
+  
+  
+  ;------------------------------
+  ; >> Find Middle-Y reference points
+  ;------------------------------  
+  ;dummy = create_polynomial(img)  ; To find new polynomial  if needed
+  pkcoefs =redpar.pkcoefs_slicer  ; This polynomial was found using function "create_polynomial"
   y_peaks = poly(iord,pkcoefs) 
 
 
- 
-  ;Trcaing all Order : Returns 2-D array [iord,n_columns] where values are the Y image index for the corresponding n_column
+
+
+
+  ;------------------------------
+  ; >> Traces all Orders 
+  ;------------------------------ 
+  ;Returns 2-D array [iord,n_columns] where values are the Y image index for the corresponding n_column
   traced_orders = trace_all_orders(flat, y_peaks,redpar=redpar)
 
 
-  ;Debugging : Plotting all Orders by value found in tracing
-  debug=1
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+  ;------------------------------
+  ; >> Debugging
+  ;------------------------------
+   
   if debug gt 0 then begin
+    ;Plotting ALL Orders by values found in tracing
       p1=plot(traced_orders[0,*] )
       for i= 1, nord-1 do begin
           p1=plot(traced_orders[i,*], /overplot)
-      endfor  
-   debug=0
-     
+      endfor      
   endif
   
   
-  
-  debug =0
-  if debug gt 0 then begin
-    ; DELETE THIS AFTER USED 
-    
-    indexOrder = 37
-    ;Plotting the individual Order
-    zGauss =indgen(4112)
-    xGauss = indgen(4112)
-    yGauss =traced_orders[indexOrder,*]
-    
-     pGauss  =SURFACE(zGauss,xGauss,yGauss,STYLE=0, COLOR='blue',THICK=6,/overplot)
-  endif
-  
-  
-  
-  
-
- 
 
 
+  
+  
+  
+  
+  
+  ;------------------------------
+  ; >> Fitting each order
+  ;------------------------------
   orc= dblarr(orcdeg+1,nord) ; Initializing array to store polynomia of each order.
-  
-  ;Fitting each order
   FOR ior = 0,nord-1 DO BEGIN
 
     ;Checking if each order has enough points to be fitted
@@ -463,57 +479,55 @@ FUNCTION order_tracing, img, redpar
   ENDFOR
   
 
-  ;Debugging : Plotting all  FITTED Orders
-debug =0
-  if debug gt 0 then begin
-      
-      ;kernel = [ [0,1,0],[-1,0,1],[0,-1,0] ]
 
-      ;result = CONVOL(img, kernel,  /EDGE_ZERO)
-      ;dummy = image(img)
-      ;img2=img
-      ;for ior = 0,nord-1 DO BEGIN
-       ; x=findgen(n_columns)
-        ;calculated_y=poly(x,orc(*,ior))       
-        ;img2[x,calculated_y] = 0d
-        ;p1=plot(calculated_y ,color='red',/overplot)
-      ;endfor
-      
-       ;dir= redpar.rootdir +redpar.debugging + 'order_tracing_master_flat.fits'
-       ;writefits, dir, img2
-       
-       
-       
-       ;Uncomment this for plot 1 order in the red, middle and blue
-       ; Plots for 1 red, 1midle and 1 blue orders:
-       ;x=indgen(n_elements(traced_orders[0,*]))
-       ;pa= plot( x,traced_orders[5,*] ,SYMBOL= 'dot',SYM_THICK=3, LINESTYLE= 6, TITLE= 'Indexed Order 5 -  Red Order' )
-       ;calculated_y=poly(x,orc(*,5))   
-       ;pa= plot( x,calculated_y ,COLOR= 'red', /overplot)       
+
+
+
+
+  ;------------------------------
+  ; >> Debugging
+  ;------------------------------
+  
+  
+  if debug gt 0 then begin
+    ;  >> Plots FITTED orders on top of raw image
+    dummy = image(img)
+    img2=img
+    for ior = 0,nord-1 DO BEGIN
+      x=findgen(n_columns)
+      calculated_y=poly(x,orc(*,ior))
+      img2[x,calculated_y] = 0d
+      p1=plot(calculated_y ,color='red',/overplot)
+    endfor
+    dir= redpar.rootdir +redpar.debugging + 'order_tracing_master_flat_B.fits'
+    writefits, dir, img2
+
+  endif
+
+  if debug gt 0 then begin     
+    
+       ; >> Plots FIITED orders: 1 red, 1 in the midle and 1 blue order:
+       x=indgen(n_elements(traced_orders[0,*]))
+       pa= plot( x,traced_orders[5,*] ,SYMBOL= 'dot',SYM_THICK=3, LINESTYLE= 6, TITLE= 'Indexed Order 5 -  Red Order' )
+       calculated_y=poly(x,orc(*,5))   
+       pa= plot( x,calculated_y ,COLOR= 'red', /overplot)       
            
-       ;pb= plot( x,traced_orders[35,*] ,SYMBOL= 'dot',LINESTYLE= 6, SYM_THICK=3, TITLE= 'Indexed Order 35 -  Middle Order' )
-       ;calculated_y=poly(x,orc(*,35))
-       ;pa= plot( x,calculated_y ,COLOR= 'red', /overplot) 
+       pb= plot( x,traced_orders[35,*] ,SYMBOL= 'dot',LINESTYLE= 6, SYM_THICK=3, TITLE= 'Indexed Order 35 -  Middle Order' )
+       calculated_y=poly(x,orc(*,35))
+       pa= plot( x,calculated_y ,COLOR= 'red', /overplot) 
        
        
-       ;pc= plot( x,traced_orders[70,*] ,SYMBOL= 'dot',SYM_THICK=3,LINESTYLE= 6, TITLE= 'Indexed Order 70 -  Middle Order' )
-       ;calculated_y=poly(x,orc(*,70))
-       ;pa= plot( x,calculated_y ,COLOR= 'red', /overplot)
-       ;end of uncomment
-       
-       
-       ; Plotting 3D REPRESENTATION :
-       
-       
-       
-       
+       pc= plot( x,traced_orders[70,*] ,SYMBOL= 'dot',SYM_THICK=3,LINESTYLE= 6, TITLE= 'Indexed Order 70 -  Middle Order' )
+       calculated_y=poly(x,orc(*,70))
+       pa= plot( x,calculated_y ,COLOR= 'red', /overplot)
       
+                 
   endif
  
  
 
 
 
-   stop, "forced stop delete this "
+   ;stop, "forced stop delete this "
    RETURN, orc
 end

@@ -1,7 +1,7 @@
 pro auto_thid, spec, init, ordx, ordy, othresh, thid $
              , awin=awin, maxres=maxres, minamp=minamp $
              , nclip=nclip, plot=plot, orev=orev, $
-             kwnord = kwnord,redpar=redpar
+             kwnord = kwnord,redpar=redpar, pixel_offset= pixel_offset
 ;Automatically identify thorium lines in an extracted echelle spectrum
 ;of a thorium lamp, using a previous solution as an initial guess.
 ;
@@ -136,8 +136,9 @@ nord = specsz[2]
     s(*,i) = tmp
   endfor
 
-;Initial guess for wavelength scale.
-  mkwave, wave, init
+;Initial guess for wavelength scale. Altered to account for pixel shift 
+   mkwave2,wave,init ,pixel_offset=pixel_offset
+  ;mkwave, wave, init
   if keyword_set(orev) then wave = rotate(wave, 7)
 
 ; AT: match input wavelength to the actual binning (number of pixels)
