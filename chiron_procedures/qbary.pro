@@ -60,14 +60,18 @@ if datatype(jdUTC) ne 'DOU' then message,		$
   'JD should be double precision.  Expect Errors of 20 m/s!',/info
 jdt = total(jdUTC)              ; jdUTC can be double(2)
 
-;		CALCULATE BARYCENTRIC VELOCITY OF EARTH, in 2000 COORDS.
-;
+;		Calculate barycentric velocity of earth, in 2000 COORDS.
+;		-------------------------------------------
+
 timeconv,jdUTC,jdTDT,TDB=jdTDB  ; Convert to TDT & TDB timescales
 jplaneteph,'Earth','SSB',jdTDB,pos,Vorbday,barydir=barydir ; JPL Ephemeris takes TDB
 Vorb = Vorbday/secperday        ; Convert to AU/sec
 Vorbms = Vorb*autokm*1.d3       ; Convert to m/s 
 
-;		GET OBSERVATORY LATITUDE, LONGITUDE & HEIGHT
+
+
+;Get observatory latitude, longitude & height
+;-------------------------------------------
 ;
 if n_elements(obs) eq 0 then obs = 'ctio' else begin ; default site is ctio 1.5-m
     if strupcase(obs) ne 'CTIO' then message, /info, $
@@ -76,22 +80,39 @@ endelse
 obssite,obs,lat,lon,ht			; lat,lon in RADIANS,ht. in m
 height = ht/1000.d0				; Convert to km
 
-;  		CALC ROTATION VEL. OF OBSERVATORY, using Loc. App. Sid. Time
-;
+
+
+
+
+;Calc rotation vel. of observatory, using Loc. App. Sid. Time
+;-------------------------------------------
+
 local,jdt,-lon/!dtor,lmst,soltosid ; Local MEAN sidereal time
 LAST = lmst + eqeq				; APPERENT s.t.  (ignorning eeqdot!)
 ha = lmst - covec(0)            ;should this be covecp?  (in HOURS, not used in calcs)
 
 spinvel,lat,height,SOLtoSID,LAST,Vrot,obspos=obspos ; Vrot in KM/s obs in KM
 
-;  		COMPUTE MATRICIES OF NUTATION AND PRECESSION (N & P)
-;
+
+
+
+
+;  		Compute matricies of nutation and precession (N & P)
+; ----------------------------------------------------------
 jnutation,jdTDT,N,Ndot=Ndot,eqeq=eqeq,barydir=barydir
 precession,jdTDT,P
 R = P ## N				        ; R-matrix (tabulated in AA B47)
 
-;		PRECESS & NUTATE Vrot TO 2000, AND ADD TO Vorb (&convert to meters/s)
-;
+
+
+
+
+
+
+
+
+;		Precess & nutate vrot to 2000, and add to vorb (&convert to meters/s)
+; -----------------------------------------------------------------------
 ; Vrotms = (R ## Vrot + Rdot ## obspos/secperday) * 1.d3;infintesimmally mre precise.
 
 Vrotms = (R ## Vrot ) * 1.d3  
@@ -116,7 +137,15 @@ endif
 xyzp = xyz                      ; initialize [x,y,z]
 covecp = covec                  ; init. [ra,dec]
 
-;		CORRECT STAR POSITION FOR PROPER MOTION
+
+
+
+
+
+
+
+;		Correct star position for proper motion
+;--------------------------------------------
 if n_elements(pm) ne 0 then begin
     covecAD = advance(covecp,EPOCH,jdt,pm)
     raAD  = covecAD(0) * dtor * 15d0 ; 'Advanced' position
@@ -125,26 +154,57 @@ if n_elements(pm) ne 0 then begin
 endif else begin                ; 0 Prop. Motion Case
     xyzAD = xyzp
 endelse  
-;
-;		PROJECT TOTAL VELOCITY ONTO POSITION VECTOR
-;
+
+
+
+
+
+
+
+
+
+
+;		Project total velocity onto position vector
+;----------------------------------------------------
 VradialAD = total(vtot*xyzAD)   ; Classical bary. corr.
 
-;		CORRECT DOPPLER SHIFT FOR SPECIAL RELATIVITY
-;
+
+
+
+
+
+
+
+
+;		Correct doppler shift for special relativity
+;-------------------------------------------------
 Vabs = sqrt(total(Vtot^2))      ; Absolute topocentric vel
 Rvabs = Vabs^2/(2.d0*(c*1.d3)^2) ; SR ratio (time dilation)
 SR = Rvabs*c*1.d3               ; SR 'cz' in m/s
 
-;		CORRECT DOPPLER SHIFT FOR GENERAL RELATIVITY
-;
+
+
+
+
+
+
+
+
+;		Correct doppler shift for general relativity
+;---------------------------------------------------
 
 if slow then Rgr = jgrav_red(jdTDT,obspos/AUtoKM,barydir=barydir) else  $
   Rgr = jgrav_red(jdTDT,obspos/AUtoKM,barydir=barydir,/fast)	
 GR = Rgr*c*1.d3                 ; GR 'cz' in m/s
 
-;		ADD RELATIVISTIC & PARALLAX CORRECTIONS TO CLASSICAL DOPPLER SHIFT
-;
+
+
+
+
+
+
+;		Add relativistic & parallax corrections to classical doppler shift
+;---------------------------------------------------------------------
 cz = VradialAD + SR + GR        ; + Vparalax		   ; This is the end.
 
-end
+END

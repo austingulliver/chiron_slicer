@@ -1,8 +1,40 @@
-function find_spec_peak, datax, datay, $
+
+function find_noise_level, spectrum 
+    ; It finds the noise level assuming the noise is more-less constant at a given X value. Returns
+    ; a range (two x values) of where to expect that noise.
+    ; Spectrum given as intensity vs  pixel 
+    
+    len= n_elements(spectrum) -1
+    noise_peaks = list()
+
+    noise_vallies = list()
+    for i=1, n_elements(spectrum)-2 do begin
+       
+      if (  (spectrum[i-1] le spectrum[i]) AND (spectrum[i] ge spectrum[i+1])  ) then   noise_peaks.add, spectrum[i]
+      if (  (spectrum[i-1] ge spectrum[i]) AND (spectrum[i] le spectrum[i+1])  ) then   noise_vallies.add, spectrum[i]
+     
+    endfor
+    
+      noise_peaks= noise_peaks.toarray()
+      noise_vallies = noise_vallies.toarray()
+      
+      y0 = MEDIAN(noise_vallies, /DOUBLE)
+      y1 = MEDIAN(noise_peaks, /DOUBLE)
+      
+      
+      ;Plotting (Testing purposes)
+      
+;      p0= plot(spectrum)
+      px0 = plot([0,len],[y0, y0], color='blue',thick =3, /overplot)
+      px0 = plot([0,len],[y1, y1], color='blue', thick=3, /overplot)
+;    
+    RETURN, [y0, y1]
+END
+
+
+function find_spec_peak, datax, datay,minima = minima
   ; adapted for emission spectra
 
-  ;keyword for minimum /minima
-  minima = minima
   ;set compile options
   compile_opt idl2
 
@@ -12,9 +44,12 @@ function find_spec_peak, datax, datay, $
 
   data_x = datax
   data_y = datay
+  
  ; p1=(data_y)
 
-  noise_level =median(data_y)
+  noise_level =find_noise_level(datay);median(data_y)
+  above_noise =7.0 ; The number of times the line has to be above noise level 
+  
   max_peak = max(data_y)
   delta_y = (1.0/100.0 ) *(max_peak - noise_level)
 
@@ -28,9 +63,13 @@ function find_spec_peak, datax, datay, $
 
   for i=1, n_elements(data_y)-2 do begin
     ;previous point less than i-th point and next point less than i-th point
-    if (  (data_y[i-1] lt data_y[i]) AND (data_y[i] gt data_y[i+1])  ) then  begin
-
-      if data_y[i] ge noise_level + delta_y then   max_points.add, i
+    if (  (data_y[i-1] le data_y[i]) AND (data_y[i] ge data_y[i+1])  ) then  begin
+      
+      
+      IF data_y[i] gt noise_level[1] + (( noise_level[1]- noise_level[0] )*above_noise )  then   max_points.add, i
+    
+      
+      
     endif
   endfor
 
@@ -66,7 +105,7 @@ END
 
 
 FUNCTION find_ref_peak ,abs_path
-;+
+;+              
 ; :Input:
 ; 
 ; :Output:
@@ -74,6 +113,8 @@ FUNCTION find_ref_peak ,abs_path
 ; :Summary:
 ;  Opens the achi files input (is not a fits a file, file contains spectrum in pixels),
 ;  ,applies and smoothing algorithim (moving avg of 3),  
+;  
+;  Ajusted to read the indexed order 70 (Blue Order)
 ;
 ;-
 
@@ -82,8 +123,10 @@ FUNCTION find_ref_peak ,abs_path
   ;Read file & smooth
   ;--------------------------------------------  
   rdsk,sp,abs_path,1
-  spec = REFORM(sp[*,0] )                 ; Get the first order only since we only need a reference 
+  spec = REFORM(sp[*,70] )                ; Get the first order only since we only need a reference  : Indexed Order 70
   smooth_spec= TS_SMOOTH(spec,3)          ; Moving avg only to smooth seems to influece more 
+  
+  p0 = plot(spec, LINESTYLE='-:', title ='ThAr -Indexed Order 70 (Blue order)' ); ,/overplot)
 
 
 
@@ -103,19 +146,22 @@ FUNCTION find_ref_peak ,abs_path
   ;                                              r1=[ 600, 800 ]  
   ;                                              r2=[1975,2050]
   ;                                              r3=[3820,3920]
-  ;p0 = (spec, /overplot )
-  r1=[600,800]         ; rough approximations
-  r2=[1975,2050]
-  r3=[3820,3920]
+  
+  r1=[995,1030]         ; rough approximations
+  r2=[1930,1955]
+  r3=[2550,2580]
+  r4=[3025,3060]
+  r5=[3430,3460]
   ref_pixel_1=list()
   ref_pixel_2=list()
   ref_pixel_3=list()
+  ref_pixel_4 =list()
+  ref_pixel_5=list()
   for i=0, n_elements(local_maxmin_index) -1 do begin
     
-    ;pl=scatter(local_maxmin_index[i] , spec [local_maxmin_index[i]] , /current, /over,   symbol = 'o', sym_color = 'b', sym_thick = 2)   
+    ;pl=scatterplot(local_maxmin_index[i] , spec [local_maxmin_index[i]] , /current, /over,   symbol = 'o', sym_color = 'b', sym_thick = 2)   
     
-    IF (local_maxmin_index[i] gt 600) AND (local_maxmin_index[i] lt 800) THEN BEGIN  ; 200 pixels confidence interval
-       
+    IF (local_maxmin_index[i] gt r1[0]) AND (local_maxmin_index[i] lt r1[1]) THEN BEGIN      
         ref_pixel_1.add, local_maxmin_index[i]  
     ENDIF 
     
@@ -127,6 +173,14 @@ FUNCTION find_ref_peak ,abs_path
         ref_pixel_3.add, local_maxmin_index[i]     
     ENDIF
     
+    IF (local_maxmin_index[i] gt r4[0]) AND (local_maxmin_index[i] LT r4[1]) THEN BEGIN
+      ref_pixel_4.add, local_maxmin_index[i]
+    ENDIF
+    
+    IF (local_maxmin_index[i] gt r5[0]) AND (local_maxmin_index[i] LT r5[1]) THEN BEGIN
+      ref_pixel_5.add, local_maxmin_index[i]
+    ENDIF
+    
   ENDFOR
 
   
@@ -135,6 +189,8 @@ FUNCTION find_ref_peak ,abs_path
   peak_1=validate_one_peak(ref_pixel_1,spec )
   peak_2=validate_one_peak(ref_pixel_2,spec )
   peak_3=validate_one_peak(ref_pixel_3,spec )
+  peak_4=validate_one_peak(ref_pixel_4,spec )
+  peak_5=validate_one_peak(ref_pixel_5,spec )
   
   
   ;Gaussian fitting 
@@ -143,36 +199,54 @@ FUNCTION find_ref_peak ,abs_path
   ;We fit a gaussian to obtain a better approximation of the peak shift
   
   
-  y_intensities = spec[peak_1-20: peak_1+20] 
-  relative_pixels= indgen(n_elements(y_intensities)) -20  
-  y_fit_1= gaussfit(relative_pixels, y_intensities, out_coefficients_1, NTERMS=3 ) ;, ESTIMATES=guess )
+  y_intensities = spec[peak_1-10: peak_1+10]  ; With of the windowd is defined emperically 
+  relative_pixels= indgen(n_elements(y_intensities)) -10
+  y_fit_1= gaussfit(relative_pixels, y_intensities, out_coefficients_1, NTERMS=4 ) ;, ESTIMATES=guess )
   
-  y_intensities = spec[peak_2-20: peak_2+20]
-  relative_pixels= indgen(n_elements(y_intensities)) -20   
-  y_fit_2= gaussfit(relative_pixels, y_intensities, out_coefficients_2, NTERMS=3 )
+  y_intensities = spec[peak_2-10: peak_2+10]
+  relative_pixels= indgen(n_elements(y_intensities)) -10 
+  y_fit_2= gaussfit(relative_pixels, y_intensities, out_coefficients_2, NTERMS=4 )
   
-  y_intensities = spec[peak_3-20: peak_3+20]
-  relative_pixels= indgen(n_elements(y_intensities)) -20
-  y_fit_3= gaussfit(relative_pixels, y_intensities, out_coefficients_3, NTERMS=3 )
+  y_intensities = spec[peak_3-10: peak_3+10]
+  relative_pixels= indgen(n_elements(y_intensities)) -10
+  y_fit_3= gaussfit(relative_pixels, y_intensities, out_coefficients_3, NTERMS=4 )
+  
+  y_intensities = spec[peak_4-10: peak_4+10]
+  relative_pixels= indgen(n_elements(y_intensities)) -10
+  y_fit_4= gaussfit(relative_pixels, y_intensities, out_coefficients_4, NTERMS=4 )
+  
+  y_intensities = spec[peak_5-10: peak_5+10]
+  relative_pixels= indgen(n_elements(y_intensities)) -10
+  y_fit_5= gaussfit(relative_pixels, y_intensities, out_coefficients_5, NTERMS=4 )
   
  
  
 
  
 ; if ps eq 1  then  p0 = plot(spec, LINESTYLE='-:' , THICK=2, /overplot) else p0 = plot(spec, LINESTYLE='-:' ,/overplot)
-; pixels= indgen(41) + (peak_1-20 )
-; pa = plot( pixels, y_fit_1 , /overplot, color = 'r', thick =1)  ;  symbol = 'o'
-; 
-; pixels= indgen(41) + (peak_2-20 )
-; pb = plot( pixels, y_fit_2 , /overplot, color = 'r', thick = 1) ;  symbol = 'o',
-; 
-; pixels= indgen(41) + (peak_3-20 )
-; pc = plot( pixels, y_fit_3 , /overplot , color = 'r', thick = 1) ; symbol = 'o',
+
+; p0 = plot(spec, LINESTYLE='-:' )
+ pixels= indgen(21) + (peak_1-10 )
+ pa = plot( pixels, y_fit_1 , /overplot, color = 'r', thick =1)  ;  symbol = 'o'
+ 
+ pixels= indgen(21) + (peak_2-10 )
+ pb = plot( pixels, y_fit_2 , /overplot, color = 'r', thick = 1) ;  symbol = 'o',
+ 
+ pixels= indgen(21) + (peak_3-10 )
+ pc = plot( pixels, y_fit_3 , /overplot , color = 'r', thick = 1) ; symbol = 'o',
+ 
+ pixels= indgen(21) + (peak_4-10 )
+ pc = plot( pixels, y_fit_4 , /overplot , color = 'r', thick = 1) ; symbol = 'o',
+ 
+ pixels= indgen(21) + (peak_5-10 )
+ pc = plot( pixels, y_fit_5 , /overplot , color = 'r', thick = 1) ; symbol = 'o',
 
 
  abs_pixel_a = peak_1 + out_coefficients_1[1]
  abs_pixel_b = peak_2+ out_coefficients_2[1]
  abs_pixel_c = peak_3 + out_coefficients_3[1]
+ abs_pixel_d = peak_4 + out_coefficients_4[1]
+ abs_pixel_e = peak_5 + out_coefficients_5[1]
  
 ; pa = scatter( abs_pixel_a, spec[abs_pixel_a] , /current, /over,   symbol = 'o', sym_color = 'r', sym_thick = 1)
 ; pb = scatter( abs_pixel_b, spec[abs_pixel_b] , /current, /over,   symbol = 'o', sym_color = 'r', sym_thick = 1) 
@@ -183,7 +257,7 @@ FUNCTION find_ref_peak ,abs_path
 
 
 
-RETURN, [abs_pixel_a,abs_pixel_b, abs_pixel_c ] ; Returns 3 pixels which are meant to be compared with another spectrum and 
+RETURN, [abs_pixel_a,abs_pixel_b, abs_pixel_c, abs_pixel_d, abs_pixel_e ] ; Returns 3 pixels which are meant to be compared with another spectrum and 
                                                 ; 
   
 END
@@ -193,12 +267,12 @@ END
 ;Sample Code for testing
 ;;---------------------------------- 
 ;
-;night= 171117
+night= 171117
 ;t= 'Comparison between 171218 and ' + strtrim(string(night))
 ;p = plot([0], [0], title=t) 
-;dir = 'C:\Users\mrstu\idlworkspace_yalecalibration\chiron\tous\mir7\iodspec\171218\achi171218.1003' ; Used as Reference 
-;ref_pixel_2017= find_ref_peak(dir, p=1) 
-
+dir = 'C:\Users\mrstu\idlworkspace_yalecalibration\chiron\tous\mir7\iodspec\171218\achi171218.1003' ; Used as Reference 
+ref_pixel_2017= find_ref_peak(dir ) ; ,p=1) 
+print, ref_pixel_2017
 ;
 ;
 ;comparedDir = 'C:\Users\mrstu\idlworkspace_yalecalibration\chiron\tous\mir7\iodspec\171117\achi171117.1003' ; Used as Reference
@@ -215,12 +289,16 @@ END
 
 ;
 
-; Sample Code for ting
+; Sample Code for thing
 ;-----------------------------------
-abs_path = 'C:\Users\mrstu\idlworkspace_yalecalibration\chiron\tous\mir7\iodspec\171218\achi171218.1003'
-rdsk,sp,abs_path,1
-spec = sp[*,*]
-p = PLOT(spec , TITLE='BLUE ORDER')
+;abs_path = 'C:\Users\mrstu\idlworkspace_yalecalibration\chiron\tous\mir7\iodspec\171218\achi171218.1003'
+;rdsk,sp,abs_path,1
+;spec = reform(sp[*,70])
+;answer = find_noise_level(spec)
+;spec = sp[*,60]
+;smooth_spec= TS_SMOOTH(spec,100)
+;p = PLOT(spec ,LINESTYLE='-:',  TITLE='Red Order 60')
+;p = PLOT(smooth_spec ,color='blue', TITLE='Red Order 60', /overplot)
 
 
 END 

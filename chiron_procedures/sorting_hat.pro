@@ -18,7 +18,7 @@
 ;	REDUCE: runs reduce_ctio (reduce and get thar soln before running iod2fits)
 ;          if running reduce, need to pass in array of flats
 ;
-;  IOD2FITS: matches thar solutions to correct observations and writes 
+; IOD2FITS: matches thar solutions to correct observations and writes 
 ;				in fits format skip is an array of obnm that don-t need 
 ;				fits files skip=['2268'] thar_soln is the wavelength array
 ;				soln (if a matching thar not taken this night)
@@ -200,8 +200,12 @@ createLogStructures,redpar,obnm,objnm
 ;###################################################################################
 
 ; This section was added with the objective to clean (get rid of CR) before the actual reduction takes place
-
-  
+; This section makes use of the IDL-Python bridge
+;PRINT, ' ' 
+;print, 'SORTING-HAT:                    >>> Cleaning CR <<< ' 
+;print, ' '                        '
+;
+;Pythonclean_cr_from_images( 'sirius','slicer' , '3 1')
 
   
 
@@ -418,7 +422,9 @@ print, ' '
       			      current_dir = redpar.rootdir + redpar.iodspecdir+ redpar.imdir + 'achi'+redpar.date + '.'+thar[i]
       			      current_ref_pixel = find_ref_peak(current_dir) 
 
-      			      pixel_offset =  mean( [ref_pixel_2017[0]-current_ref_pixel [0] , ref_pixel_2017[1]-current_ref_pixel [1], ref_pixel_2017[2]-current_ref_pixel [2]  ] ) ;  ref_pixel_2017 -current_ref_pixel 
+      			      pixel_offset =  mean( [ref_pixel_2017[0]-current_ref_pixel [0] , ref_pixel_2017[1]-current_ref_pixel [1], $
+      			                             ref_pixel_2017[2]-current_ref_pixel [2]  , ref_pixel_2017[3]-current_ref_pixel [3], $
+      			                              ref_pixel_2017[4]-current_ref_pixel [4]   ] ) ;  ref_pixel_2017 -current_ref_pixel 
       			     
       			      
       			      
@@ -448,6 +454,7 @@ print, ' '
             			   p1=plot(sp_current[*,0],  title ='Black is current, Blue is 2017')
             			   p2=plot( sp_2017[*,0],color='blue',linestyle=2,   /overplot)
             			   B = ''
+            			   print, 'SORTING_HAT: The Pixel shift failed to predict the shift maginitude. Try with the following integer values +/-5  ' 
             			   ; Read input from the terminal:
             			   READ, B, PROMPT='Do you want to try again? If YES insert pixel number if not then press x : '
             			   if B eq 'x' then begin 
