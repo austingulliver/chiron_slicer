@@ -25,8 +25,8 @@ function find_noise_level, spectrum
       ;Plotting (Testing purposes)
       
 ;      p0= plot(spectrum)
-      px0 = plot([0,len],[y0, y0], color='blue',thick =3, /overplot)
-      px0 = plot([0,len],[y1, y1], color='blue', thick=3, /overplot)
+;      px0 = plot([0,len],[y0, y0], color='blue',thick =3, /overplot)
+;      px0 = plot([0,len],[y1, y1], color='blue', thick=3, /overplot)
 ;    
     RETURN, [y0, y1]
 END
@@ -126,7 +126,7 @@ FUNCTION find_ref_peak ,abs_path
   spec = REFORM(sp[*,70] )                ; Get the first order only since we only need a reference  : Indexed Order 70
   smooth_spec= TS_SMOOTH(spec,3)          ; Moving avg only to smooth seems to influece more 
   
-  p0 = plot(spec, LINESTYLE='-:', title ='ThAr -Indexed Order 70 (Blue order)' ); ,/overplot)
+ ; p0 = plot(spec, LINESTYLE='-:', title ='ThAr -Indexed Order 70 (Blue order)' ); ,/overplot)
 
 
 
@@ -224,22 +224,22 @@ FUNCTION find_ref_peak ,abs_path
 
  
 ; if ps eq 1  then  p0 = plot(spec, LINESTYLE='-:' , THICK=2, /overplot) else p0 = plot(spec, LINESTYLE='-:' ,/overplot)
-
+; All of these plot are for testing purposes
 ; p0 = plot(spec, LINESTYLE='-:' )
- pixels= indgen(21) + (peak_1-10 )
- pa = plot( pixels, y_fit_1 , /overplot, color = 'r', thick =1)  ;  symbol = 'o'
- 
- pixels= indgen(21) + (peak_2-10 )
- pb = plot( pixels, y_fit_2 , /overplot, color = 'r', thick = 1) ;  symbol = 'o',
- 
- pixels= indgen(21) + (peak_3-10 )
- pc = plot( pixels, y_fit_3 , /overplot , color = 'r', thick = 1) ; symbol = 'o',
- 
- pixels= indgen(21) + (peak_4-10 )
- pc = plot( pixels, y_fit_4 , /overplot , color = 'r', thick = 1) ; symbol = 'o',
- 
- pixels= indgen(21) + (peak_5-10 )
- pc = plot( pixels, y_fit_5 , /overplot , color = 'r', thick = 1) ; symbol = 'o',
+; pixels= indgen(21) + (peak_1-10 )
+; pa = plot( pixels, y_fit_1 , /overplot, color = 'r', thick =1)  ;  symbol = 'o'
+; 
+; pixels= indgen(21) + (peak_2-10 )
+; pb = plot( pixels, y_fit_2 , /overplot, color = 'r', thick = 1) ;  symbol = 'o',
+; 
+; pixels= indgen(21) + (peak_3-10 )
+; pc = plot( pixels, y_fit_3 , /overplot , color = 'r', thick = 1) ; symbol = 'o',
+; 
+; pixels= indgen(21) + (peak_4-10 )
+; pc = plot( pixels, y_fit_4 , /overplot , color = 'r', thick = 1) ; symbol = 'o',
+; 
+; pixels= indgen(21) + (peak_5-10 )
+; pc = plot( pixels, y_fit_5 , /overplot , color = 'r', thick = 1) ; symbol = 'o',
 
 
  abs_pixel_a = peak_1 + out_coefficients_1[1]
@@ -267,12 +267,12 @@ END
 ;Sample Code for testing
 ;;---------------------------------- 
 ;
-night= 171117
-;t= 'Comparison between 171218 and ' + strtrim(string(night))
-;p = plot([0], [0], title=t) 
-dir = 'C:\Users\mrstu\idlworkspace_yalecalibration\chiron\tous\mir7\iodspec\171218\achi171218.1003' ; Used as Reference 
-ref_pixel_2017= find_ref_peak(dir ) ; ,p=1) 
-print, ref_pixel_2017
+;night= 171117
+;;t= 'Comparison between 171218 and ' + strtrim(string(night))
+;;p = plot([0], [0], title=t) 
+;dir = 'C:\Users\mrstu\idlworkspace_yalecalibration\chiron\tous\mir7\iodspec\171218\achi171218.1003' ; Used as Reference 
+;ref_pixel_2017= find_ref_peak(dir ) ; ,p=1) 
+;print, ref_pixel_2017
 ;
 ;
 ;comparedDir = 'C:\Users\mrstu\idlworkspace_yalecalibration\chiron\tous\mir7\iodspec\171117\achi171117.1003' ; Used as Reference
@@ -301,4 +301,4 @@ print, ref_pixel_2017
 ;p = PLOT(smooth_spec ,color='blue', TITLE='Red Order 60', /overplot)
 
 
-END 
+;END 
