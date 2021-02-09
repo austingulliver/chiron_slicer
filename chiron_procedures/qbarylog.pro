@@ -78,7 +78,7 @@ pro qbarylog,logfile, test=test, baryDir=baryDir, prefix=prefix , justtest=justt
     structFile = 'C:\Users\mrstu\idlworkspace_yalecalibration\chiron\tous\mir7\bary\ctio_st.sav'
     
     ; Verify that the neccessary files exist
-    print, 'file search '
+    
     if (n_elements(file_search(structFile)) eq 0) then message,structFile+ ' is missing.'
     if (n_elements(file_search(bcFile)) eq 0) then message,bcFile+ ' is missing.'
     
@@ -155,8 +155,7 @@ pro qbarylog,logfile, test=test, baryDir=baryDir, prefix=prefix , justtest=justt
     
     
     
-    
-    
+   
     
     ; Extrat date information from .log file header 
     ; ---------------------------------------------------
@@ -280,10 +279,16 @@ pro qbarylog,logfile, test=test, baryDir=baryDir, prefix=prefix , justtest=justt
     
     WHILE eof(logune) eq 0 do begin ;check for end of file (eof = 1)
             readf,logune,logline        ;read one line in the logsheet
-        
+            
+;            print, ''
+;            print, ''
+;            print, '>> The present line is : '
+;            print, logline
+            
         	 ;>> Read the first four entries on the line.
             recnum = strtrim(getwrd(logline[0],0),2)              ;Observation Number number        		
             log.object = strtrim(strupcase(getwrd(logline,1)),2)  ;Object name
+;            print,'Object name :' +string(log.object)
             if log.object eq 'LHS2627' then log.object = 'LHS2726'
             first2 = strupcase(strmid(log.object,0,2))            ;First 2 letters of the object name
             celltest = strtrim(strupcase(getwrd(logline,2)),2)    ;Iodine Cell Test (y/n)
@@ -293,19 +298,44 @@ pro qbarylog,logfile, test=test, baryDir=baryDir, prefix=prefix , justtest=justt
         
         	 ;>> Construct reduced filename
             filename = prefix + '.' + recnum
-        
+           
+          
+           
         	 ;>> Guarantee that this is really an observation of something useful. E.g. Header gets thrown away in here.
             IF ((celltest eq 'Y' or celltest eq 'N') and $   ; Was cell specified?
                (select(skiplist,log.object) ne 1)    and $   ; Not wide flat nor skiplist?
                 select(strindgen,recnum))            and $
                 (linelen gt 1)                  THEN BEGIN 
             
-                    if (celltest eq 'Y')            then  log.type='o' else log.type='t'                    
-                    if select(iodlist, log.object)  then  log.type='i' & log.object='iodine'                    
-                    if select(thorlist,log.object) then   log.type='u' & log.object='th-ar'                    
-                    if select(daylist, log.object)  then  log.type='s' & log.object='day_sky'                    
-                    if select(moonlist,log.object) then   log.type='o' & log.object='moon'                    
-                    if select(skylist, log.object)  then  log.type='u'        
+                    if (celltest eq 'Y')   then  log.type='o' else log.type='t'  
+;                    print, 'first'
+;                    print, string(log.object)   
+;                    print, string( select(iodlist, log.object) )     
+                               
+                    if select(iodlist, log.object)  then begin 
+                       log.type='i' & log.object='iodine'  
+;                       print,  'nooooooooooooooo'
+                    endif
+;                    print, log.type    
+;                    print, select(thorlist,log.object)  
+;                    print, string(log.object)    
+;                    print, '!word above should be thar'
+;                    
+                    
+                             
+                    if select(thorlist,log.object) then begin
+                      log.type='u' & log.object='th-ar'
+                    endif
+                                    
+                    if select(daylist, log.object)   then  begin
+                      log.type='s' & log.object='day_sky'
+                    endif
+                    if select(moonlist,log.object) then begin
+                        log.type='o' & log.object='moon'   
+                    endif                 
+                    if select(skylist, log.object) then begin 
+                        log.type='u'
+                    endif        
             
                     if temptest[0] ne -1 and log.type ne 't' then begin ; Error Trap
                         print,'****WARNING:  Possible Template Detected: '
@@ -352,7 +382,7 @@ pro qbarylog,logfile, test=test, baryDir=baryDir, prefix=prefix , justtest=justt
                     filename = filename
             
             
-            
+                    ;print, ' >> The type is : '+string(log.type)
                     ; >> Run BARYCENTRIC correction if type matches
                     IF select(['o','t'],log.type) then begin 
             
@@ -360,26 +390,49 @@ pro qbarylog,logfile, test=test, baryDir=baryDir, prefix=prefix , justtest=justt
                           ;                     coords, equinox, proper motion, parallax 
                           ;                      coords=[ra,dec], pm=[ra_motion, dec_motion]
               
-                         print,filename, ' ', log.object
+                         ;print,filename, ' ', log.object
                          if first2 ne 'MO' then begin
-                            if first2 ne 'HR' then begin ; SKIP Bright STARS, MOON (no B.C. for B*s)
-                               lookup,log.object,coords,epoch,pm,parlax,radvel,hip=hip,$
-                                      barydir=barydir,cat=cat,tyc=tyc
+                            ;if first2 ne 'HR' then begin ; SKIP Bright STARS, MOON (no B.C. for B*s). We have commented this since we are interested in Brigth stars 
+;                               lookup,log.object,coords,epoch,pm,parlax,radvel,hip=hip,$
+;                                      barydir=barydir,cat=cat,tyc=tyc
               
-                               if abs( coords(0)) eq 99.d0 then begin ;Logsheet star not found
-                                  coords = [0.d0,0.d0]                ;force ra and dec = 0. :no object found
-                                  pm     = [0.d0,0.d0]                ;dummy proper motion
-                                  epoch = 2000.d0                     ;dummy epoch
-                               endif else begin 
-                                  qbary,jdUTC,coords,epoch,czi,obs='ctio',pm = pm,$
-                                        barydir=barydir, ha=ha
+;                               if abs( coords(0)) eq 99.d0 then begin ;Logsheet star not found
+;                                  coords = [0.d0,0.d0]                ;force ra and dec = 0. :no object found
+;                                  pm     = [0.d0,0.d0]                ;dummy proper motion
+;                                  epoch = 2000.d0                     ;dummy epoch
+;                               endif else begin 
+                                
+                                 ; Input for qbary.pro
+                                 
+                                 coords=[6.7524492, -16.71611586]
+                                 ;print, 'coords : ' + string( coords) ; RA & DEC, in [hours,degrees] eg. [1.75,-15.9d]
+                                 
+                                 pm=[0.d0,0.d0] 
+                                 ;print, 'pm     : ' + string(pm)       ; proper motion [ra,dec] in ARCsec/year [optional]
+                                 
+                                 
+                                 
+                                 epoch=2000.d0
+;                                 print, 'epoch  : ' + string(epoch)                                 
+;                                 print, 'barydir: ' + string(barydir)   ; Barycentric directory
+;                                 print, 'jdUTC  : ' + string(jdUTC)    ; julian date (double precision) eg 2448489.3462d0 
+;                                 
+                                  qbary,jdUTC,coords,epoch,czi,obs='ctio',pm = pm,barydir=barydir, ha=ha
+                                        
+                                 ;Output of qbary.log
+;                                 print, 'ha : hour angle of observation '+string(ha)
+;                                 print, 'czi :relativistic redshift' +string(czi)
+                                 
+                            
+                                 
+                                  
                                         
                                         
                                   ; Further Step: remove secular accelartion       
-                                  cz = rm_secacc(czi,pm,parlax,mjd)
+                                  ;cz = rm_secacc(czi,pm,parlax,mjd)    ; uncomment this
                                   
-                               endelse
-                            endif             ; else print,'Skipping Bstar'
+                               ;endelse
+                            ;endif             ; else print,'Skipping Brigth Stars'
                          endif  ;skipping Moon
                     ENDIF   
             

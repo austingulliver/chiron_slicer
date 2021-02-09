@@ -59,11 +59,17 @@ m = [dxdt,dydt,dzdt]    ;  Velocity in Radians/ year
 
 ;       DETERMINE TIME LAPSE (T) AND NEW STELLAR POSITION
 ;
-jd2yr,jdnow,yearnow             ; convert JDnow to Years
+; These procedure were not found so I updated it with newer versions ~JL 
+;jd2yr,jdnow,yearnow             ; convert JDnow to Years
+caldat, jdnow, Month, Day, yearnow
+
 T =  yearnow - Epoch0           ; Lapse in years
+
 P = q + T*m                     ; X1 = X0 + V* dt (barycentric position)
-p = unit(P)                     ; Insure p is a unit vector
-radecp = polar(p)                               ; Convert to polar coords (radians)
+;p = unit(P)                     ; Insure p is a unit vector
+;radecp = polar(p)                               ; Convert to polar coords (radians)
+
+radecp = CV_COORD(FROM_RECT=P, /TO_POLAR)
 
 HrDeg = [radecp(0)/(15.d0*ddtor),radecp(1)/ddtor] ; Hours and Degrees
 return,HrDeg                    ; Same units as Radec

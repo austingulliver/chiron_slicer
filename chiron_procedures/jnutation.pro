@@ -36,7 +36,7 @@ endif
 
 N = reform([1,0,0,0,1,0,0,0,1],3,3) ;initiallize
 Ndot = dblarr(3,3) & eqeq = 0.d0 & eqDot = 0.d0	;init
-ephemeris = 'JPLEPH.405'
+ephemeris = 'C:\Users\mrstu\idlworkspace_yalecalibration\chiron_procedures\JPLEPH.405' ;JPLEPH.405 
 
 if vartype(jld) ne 'DOUBLE' then begin
     message,'Julian Date Must be specified DOUBLE precision',/info
@@ -73,8 +73,12 @@ epsdot = total(c * [0.d0,1.d0,2.d0*T,3.d0*T^2]/(RADtoSEC*century)) ; Deriv. wrt 
 ;   undefined.
 
 if n_elements(pinfo) eq 0 or n_elements(pdata) eq 0 then begin
+  
+    print, '>>got you !'
     jdrange = [jd-0.5d0,jd+0.5d0] ; Must feed ephem range over which to interp.
     jplephread, ephemeris, pinfo, pdata, jdrange
+    
+    
 endif
 
 jplephinterp, pinfo, pdata, jd, delpsi, deleps, dummy1 , delpsidot, delepsdot, $

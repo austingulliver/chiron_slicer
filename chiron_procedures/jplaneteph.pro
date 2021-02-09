@@ -14,9 +14,10 @@ target = strupcase(targ) & center = strupcase(cent)
 if target  eq 'SSB' then target = 'SOLARBARY'
 if center  eq 'SSB' then center = 'SOLARBARY'
 
-ephemeris = 'JPLEPH.405'
-if (findfile(ephemeris))(0) eq '' then message,ephemeris+' not found. Wrong directory?"
+ephemeris = 'C:\Users\mrstu\idlworkspace_yalecalibration\chiron_procedures\JPLEPH.405'
+if (file_test(ephemeris))(0) eq '' then stop,ephemeris+' not found. Wrong directory?'   ; Outdated; findfile(ephemeris)
 jdrange = [jdt-0.5d0,jdt+0.5d0]   ; Must feed ephem range over which to interp.
+
 
 jplephread, ephemeris, pinfo, pdata, jdrange
 

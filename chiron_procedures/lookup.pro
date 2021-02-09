@@ -122,7 +122,7 @@ pro lookup,name,coords,epoch,pm,prlax,radvel,raarr, decarr,hip=hip,$
     ; Next check to see if it is in  the alternate catalog
     ;-------------------------------------
     
-    if not found and (findfile(altcat))(0) ne '' then begin
+    if not found and (file_search(altcat))(0) ne '' then begin   ; findfile
         restore,altcat
         cmd = 'cat = '+altcatvar(0) ; just one cat for now.
         dummy = execute(cmd)
