@@ -123,10 +123,10 @@ FUNCTION find_ref_peak ,abs_path
   ;Read file & smooth
   ;--------------------------------------------  
   rdsk,sp,abs_path,1
-  spec = REFORM(sp[*,70] )                ; Get the first order only since we only need a reference  : Indexed Order 70
+  spec = REFORM(sp[*,-73] )                ; Get the first order only since we only need a reference  : Indexed Order 70
   smooth_spec= TS_SMOOTH(spec,3)          ; Moving avg only to smooth seems to influece more 
   
- ; p0 = plot(spec, LINESTYLE='-:', title ='ThAr -Indexed Order 70 (Blue order)' ); ,/overplot)
+ ;p0 = plot(spec, LINESTYLE='-:', title ='ThAr -Indexed Order  (Blue order)' ); ,/overplot)
 
 
 
@@ -147,11 +147,11 @@ FUNCTION find_ref_peak ,abs_path
   ;                                              r2=[1975,2050]
   ;                                              r3=[3820,3920]
   
-  r1=[995,1030]         ; rough approximations
-  r2=[1930,1955]
-  r3=[2550,2580]
-  r4=[3025,3060]
-  r5=[3430,3460]
+  r1=[2125,2174]         ; rough approximations
+  r2=[2240,2270]
+  r3=[2560,2590]
+  r4=[3160,3195]
+  r5=[3340,3380]
   ref_pixel_1=list()
   ref_pixel_2=list()
   ref_pixel_3=list()
@@ -199,24 +199,24 @@ FUNCTION find_ref_peak ,abs_path
   ;We fit a gaussian to obtain a better approximation of the peak shift
   
   
-  y_intensities = spec[peak_1-10: peak_1+10]  ; With of the windowd is defined emperically 
-  relative_pixels= indgen(n_elements(y_intensities)) -10
+  y_intensities = spec[peak_1-20: peak_1+20]  ; With of the windowd is defined emperically 
+  relative_pixels= indgen(n_elements(y_intensities)) -20
   y_fit_1= gaussfit(relative_pixels, y_intensities, out_coefficients_1, NTERMS=4 ) ;, ESTIMATES=guess )
   
-  y_intensities = spec[peak_2-10: peak_2+10]
-  relative_pixels= indgen(n_elements(y_intensities)) -10 
+  y_intensities = spec[peak_2-15: peak_2+15]
+  relative_pixels= indgen(n_elements(y_intensities)) -15 
   y_fit_2= gaussfit(relative_pixels, y_intensities, out_coefficients_2, NTERMS=4 )
   
-  y_intensities = spec[peak_3-10: peak_3+10]
-  relative_pixels= indgen(n_elements(y_intensities)) -10
+  y_intensities = spec[peak_3-15: peak_3+15]
+  relative_pixels= indgen(n_elements(y_intensities)) -15
   y_fit_3= gaussfit(relative_pixels, y_intensities, out_coefficients_3, NTERMS=4 )
   
-  y_intensities = spec[peak_4-10: peak_4+10]
-  relative_pixels= indgen(n_elements(y_intensities)) -10
+  y_intensities = spec[peak_4-15: peak_4+15]
+  relative_pixels= indgen(n_elements(y_intensities)) -15
   y_fit_4= gaussfit(relative_pixels, y_intensities, out_coefficients_4, NTERMS=4 )
   
-  y_intensities = spec[peak_5-10: peak_5+10]
-  relative_pixels= indgen(n_elements(y_intensities)) -10
+  y_intensities = spec[peak_5-15: peak_5+15]
+  relative_pixels= indgen(n_elements(y_intensities)) -15
   y_fit_5= gaussfit(relative_pixels, y_intensities, out_coefficients_5, NTERMS=4 )
   
  
@@ -226,19 +226,19 @@ FUNCTION find_ref_peak ,abs_path
 ; if ps eq 1  then  p0 = plot(spec, LINESTYLE='-:' , THICK=2, /overplot) else p0 = plot(spec, LINESTYLE='-:' ,/overplot)
 ; All of these plot are for testing purposes
 ; p0 = plot(spec, LINESTYLE='-:' )
-; pixels= indgen(21) + (peak_1-10 )
+; pixels= indgen(51) + (peak_1-20)
 ; pa = plot( pixels, y_fit_1 , /overplot, color = 'r', thick =1)  ;  symbol = 'o'
 ; 
-; pixels= indgen(21) + (peak_2-10 )
+; pixels= indgen(31) + (peak_2-15 )
 ; pb = plot( pixels, y_fit_2 , /overplot, color = 'r', thick = 1) ;  symbol = 'o',
 ; 
-; pixels= indgen(21) + (peak_3-10 )
+; pixels= indgen(31) + (peak_3-15 )
 ; pc = plot( pixels, y_fit_3 , /overplot , color = 'r', thick = 1) ; symbol = 'o',
 ; 
-; pixels= indgen(21) + (peak_4-10 )
+; pixels= indgen(31) + (peak_4-15 )
 ; pc = plot( pixels, y_fit_4 , /overplot , color = 'r', thick = 1) ; symbol = 'o',
 ; 
-; pixels= indgen(21) + (peak_5-10 )
+; pixels= indgen(31) + (peak_5-15 )
 ; pc = plot( pixels, y_fit_5 , /overplot , color = 'r', thick = 1) ; symbol = 'o',
 
 
@@ -273,7 +273,7 @@ END
 ;dir = 'C:\Users\mrstu\idlworkspace_yalecalibration\chiron\tous\mir7\iodspec\171218\achi171218.1003' ; Used as Reference 
 ;ref_pixel_2017= find_ref_peak(dir ) ; ,p=1) 
 ;print, ref_pixel_2017
-;
+
 ;
 ;comparedDir = 'C:\Users\mrstu\idlworkspace_yalecalibration\chiron\tous\mir7\iodspec\171117\achi171117.1003' ; Used as Reference
 ;current_ref_pixel= find_ref_peak(comparedDir, p=0)
