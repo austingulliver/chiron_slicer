@@ -71,7 +71,7 @@ pro qbarylog,logfile, test=test, baryDir=baryDir, prefix=prefix , justtest=justt
 
     if  n_elements(logfile) eq 0 then stop,  "qBaryLog:  No logfiles found to process.  Returning"    
     ; Handle parameter defaults & file paths
-    if ( ~ keyword_set(baryDir) ) then baryDir = '/tous/mir7/bary/'  ; DF revision Mar2012
+    if ( ~ keyword_set(baryDir) ) then baryDir = 'C:\Users\mrstu\idlworkspace_yalecalibration\chiron\tous\mir7\bary\'  ; DF revision Mar2012
     if ( keyword_set(test) ) then baryFile = 'qbcvel.test.ascii' else baryFile = 'qbcvel.ascii'
     
     bcFile = baryDir + baryFile
@@ -377,7 +377,7 @@ pro qbarylog,logfile, test=test, baryDir=baryDir, prefix=prefix , justtest=justt
                     len = (strlen(strtime))[0]
                     if len lt 9 then for jj=0,9-len-1 do strtime = strtime + ' '
                                             ;
-                    cz = 0.0d0 
+                    czi=0.0;cz = 0.0d0 
                     ha = 0.d0
                     filename = filename
             
@@ -389,7 +389,7 @@ pro qbarylog,logfile, test=test, baryDir=baryDir, prefix=prefix , justtest=justt
                           ;LOOKUP COORDINATES: lookup.pro takes starname (log.object) and finds
                           ;                     coords, equinox, proper motion, parallax 
                           ;                      coords=[ra,dec], pm=[ra_motion, dec_motion]
-              
+                         
                          ;print,filename, ' ', log.object
                          if first2 ne 'MO' then begin
                             ;if first2 ne 'HR' then begin ; SKIP Bright STARS, MOON (no B.C. for B*s). We have commented this since we are interested in Brigth stars 
@@ -441,7 +441,8 @@ pro qbarylog,logfile, test=test, baryDir=baryDir, prefix=prefix , justtest=justt
                 ;>> Print log to be created IF test
             
             		if ( keyword_set(test) ) then begin
-            			stcz = strtrim(string(cz),2)
+            			;stcz = strtrim(string(cz),2)
+            			stcz = strtrim(string(czi),2)
             			len = (strlen(stcz))[0]
             			if len lt 7 then for jj=0,7-len-1 do stcz = ' '+stcz
             			infoline = '|  '+filename+' |  '+obj+' |  '
@@ -457,7 +458,7 @@ pro qbarylog,logfile, test=test, baryDir=baryDir, prefix=prefix , justtest=justt
             		
                 temp[num].filename = filename
                 temp[num].object = log.object
-                temp[num].cz = cz
+                temp[num].cz = czi ;cz
                 temp[num].mjd = mjd
                 temp[num].ha = ha
                 temp[num].type = log.type

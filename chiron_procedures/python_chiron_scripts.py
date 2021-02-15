@@ -97,5 +97,9 @@ def clean_cr_from_images( target, mode, ccd_sum):
        
     print(" - - - - -  End of Script - - - - - -  ")
             
-    
- 
+
+
+print (mad_std('sssssss'))
+# def __init__():
+#     print(mad_std)
+

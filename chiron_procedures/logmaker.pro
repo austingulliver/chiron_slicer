@@ -24,7 +24,7 @@ end
 ; -added archiving of old logs and noarchive keyword 201106 ~MJG
 ; -increased space for objnm and propid to accommodate queue observers ~MJG
 ; -made it search for the 'chiyymmdd' prefix before using the 'qa##' prefix 20110920 ~MJG
-; 12-12-2020 J.Lozano Make procedure Windows Compatible 
+; 12-12-2020 J.Lozano Make procedure Windows Compatible + Addded compatabilty with enviroment variable CHIRON_PATH of paths. 
 
 
 
@@ -44,23 +44,38 @@ endif else begin
 yyyy = '20'+strmid(strt(rawdir),0,2)
 endelse
 
-spawn, 'hostname', host  
 
-print, "This is the actual directory : " +string(host)
+chi_path=getenv('CHIRON_PATH')  ;This must the absolute path where the directory chiron was placed
+                                ; E.g.  SETENV, 'CHIRON_PATH=.......\chiron'
+
+
+
+
+spawn, 'hostname', host 
+
+;print, "This is the actual directory : " +string(host)
 ;if strmid(host, 13,14, /reverse) eq 'astro.yale.edu' then pdir = '/tous'+pdir
-if host eq 'ctimac1.ctio.noao.edu' then begin
-  rawpath = '/mir7/raw/'
-  logpath = '/mir7/logsheets/'+yyyy+'/'
-  
-  
-endif else if  host eq 'Drius22' then begin
-  rawpath = 'C:\Users\mrstu\idlworkspace_yalecalibration\chiron\raw\mir7\'
-  logpath = 'C:\Users\mrstu\idlworkspace_yalecalibration\chiron\tous\mir7\logsheets\'+yyyy+'\'
-endif else begin
 
-  rawpath = '/nfs/morgan/chiron/raw/mir7/'
-  logpath = '/nfs/morgan/chiron/tous/mir7/logsheets/'+yyyy+'/'
+if strlen(chi_path)  ge 1 then begin
+    rawpath = chi_path.trim() + '\raw\mir7\'    
+    logpath = chi_path.trim() + '\tous\mir7\logsheets\'+yyyy+'\'
+endif else begin
+  
+    if host eq 'ctimac1.ctio.noao.edu' then begin
+        rawpath = '/mir7/raw/'
+        logpath = '/mir7/logsheets/'+yyyy+'/'
+    endif else if  host eq 'Drius22' then begin
+        rawpath = 'C:\Users\mrstu\idlworkspace_yalecalibration\chiron\raw\mir7\'
+        logpath = 'C:\Users\mrstu\idlworkspace_yalecalibration\chiron\tous\mir7\logsheets\'+yyyy+'\'
+    endif else begin
+        rawpath = '/nfs/morgan/chiron/raw/mir7/'
+        logpath = '/nfs/morgan/chiron/tous/mir7/logsheets/'+yyyy+'/'
+    endelse
+  
 endelse
+
+
+
 logname = logpath+rawdir+'.log'
 
 
@@ -81,12 +96,12 @@ logname = logpath+rawdir+'.log'
     	spawn, 'cp '+logname+' '+nextname(logpath+'archive/'+rawdir+'.log'+'_old', '')
 
 	;check for raw files 
-    allFitsFiles=File_Search(rawpath+rawdir+'/*.fits',count=nFiles)
+    allFitsFiles=File_Search(rawpath+rawdir+'/chi*.fits',count=nFiles)
     if nFiles eq 0 then begin
-       print, 'No files found with name format: ',rawpath+rawdir+'/*.fits'
+       print, 'LOGMAKER: No files found with name format: ',rawpath+rawdir+'\*.fits'
        stop
     endif
-    print, 'nFiles is: ', nFiles
+    print, 'LOGMAKER: Number of files found is: ', nFiles
     
 ;check prefix for labeling logsheet header and checking for missing files (end of program)
 
@@ -107,9 +122,9 @@ if ( ~keyword_set(prefix) || strt(prefix) eq '' ) then begin
 		endfor
 	endif
 endif else begin
-	print,"logmaker: Using '" + prefix + "' as the image prefix."
+	print,"LOGMAKER: Using '" + prefix + "' as the image prefix."
 endelse
-print, 'the prefix after is: ', prefix    
+ 
 ;stop
 ; make sure that the files we found are formatted like: qa04.nnnn.fits or qa04_nnnn.fits
 ; useful if there are observations that don't belong to us in the rawdir 
@@ -166,7 +181,7 @@ print, 'the prefix after is: ', prefix
 	endif else begin
 		date = date + '/' + strcompress(string(fix(endDay)),/rem)
 	endelse
-	print, 'date is: ', date
+	
 ; get information about the chip and controller 
 ;stop
 	runInfo = chip_geometry(obs_file[0],hdr=hd)
@@ -226,7 +241,16 @@ print, 'the prefix after is: ', prefix
     focpos = ''
     focfwhm = ''
     endelse
-    ;stop
+    
+    
+    ; Check dicrectory exists
+    ;-----------------------------4
+    command = 'IF exist '+logpath +' (echo alreadyThere ) ELSE (mkdir '+ logpath +' && echo createdDir)'   
+    SPAWN, command, windowsReply    ; This has to subtituted for the equivalent depending on the OS. 
+                                    ; Otherwise just create the year directory manually. E.g. ..\chiron\tous\mir7\logsheets\2021\
+                                 
+    if  windowsReply eq 'createdDir' then print, 'LOGMAKER: Directory ...\chiron\tous\mir7\'+yr+ '\ created in your behalf. '
+    
     
     
     

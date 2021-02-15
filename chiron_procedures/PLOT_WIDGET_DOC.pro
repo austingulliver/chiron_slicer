@@ -342,11 +342,12 @@ PRO PLOT_WIDGET_DOC
   ; Plot #1: In position #1 on the grid defined by LAYOUT
   
   
-  achiFileName=  'C:\Users\mrstu\idlworkspace_yalecalibration\chiron\debugging\comparing master files\master_stellars_171218\achi171218.mstr_stellar_40.fits
+  ;achiFileName=  'C:\Users\mrstu\idlworkspace_yalecalibration\chiron\debugging\comparing master files\master_stellars_171218\achi171218.mstr_stellar_40.fits
+  achiFileName=  'C:\Users\mrstu\idlworkspace_yalecalibration\chiron\tous\mir7\fitspec\210128\achi210128.mstr_stellar.fits'
   cubeachi=readfits(achiFileName)
   
    ;value = find_ref_points (cubeachi )
-  p=plot(cubeachi[0,*,*],cubeachi[1,*,*] , NAME = 'PLOT_WIDGET_DOC', /CURRENT , TITLE = ' * 40 added Spectra' )
+  p=plot(cubeachi[0,*,*],cubeachi[1,*,*] , NAME = 'PLOT_WIDGET_DOC', /CURRENT , TITLE = ' 210128' )
   
   
 ;  p=PLOT(DAY, PRECIP, NAME = 'PLOT_WIDGET_DOC', SYMBOL='o',  LINESTYLE='--', TITLE = 'Precipitation',   YTITLE = 'Inches', XTITLE= 'Day of Year', $

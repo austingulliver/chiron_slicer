@@ -74,7 +74,7 @@ epsdot = total(c * [0.d0,1.d0,2.d0*T,3.d0*T^2]/(RADtoSEC*century)) ; Deriv. wrt 
 
 if n_elements(pinfo) eq 0 or n_elements(pdata) eq 0 then begin
   
-    print, '>>got you !'
+    ;print, '>>got you !'
     jdrange = [jd-0.5d0,jd+0.5d0] ; Must feed ephem range over which to interp.
     jplephread, ephemeris, pinfo, pdata, jdrange
     

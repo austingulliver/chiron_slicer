@@ -125,10 +125,11 @@ if modeidx lt 0 then begin
 logpath = redpar.logdir+'20'+strmid(night, 0, 2)+'\'                ; 20+18(first 2 digits of my night)
 redpar.logdir=logpath
 logsheet = redpar.rootdir+logpath+night+'.log'
-
 iodspec_path = redpar.rootdir+redpar.iodspecdir+redpar.imdir
 fits_path = redpar.rootdir+redpar.fitsdir+redpar.imdir
 if ~file_test(fits_path) then spawn, 'mkdir '+fits_path
+if ~file_test(iodspec_path) then spawn, 'mkdir '+iodspec_path
+
 thid_path = redpar.rootdir+redpar.thidfiledir
 thid_path_dat =   redpar.rootdir+redpar.thiddir
 custom_thid_path = redpar.rootdir+redpar.customthidsol
@@ -190,26 +191,17 @@ ut = gettime(mdpt) ; floating-point hours, >24h in the morning
 
 ;-> Up to here: variables obnm,objnm, i2,mdpt ....  are vectors that contain data of log sheet 
 
-;Creats log structure which has information about files, used bellow 
+; >> Creates log structure which has information about files, used bellow 
+; -----------------------------------------------------------------------
 createLogStructures,redpar,obnm,objnm 
 
 
 
-;###################################################################################
-;################## CR Cleaning from : Biases + Flats + Stellar ####################
-;###################################################################################
 
-; This section was added with the objective to clean (get rid of CR) before the actual reduction takes place
-; This section makes use of the IDL-Python bridge
-;PRINT, ' ' 
-;print, 'SORTING-HAT:                    >>> Cleaning CR <<< ' 
-;print, ' '                        '
-;
-;Pythonclean_cr_from_images( 'sirius','slicer' , '3 1')
+
+
 
   
-
-
 
 
 
@@ -227,6 +219,22 @@ if keyword_set(reduce) then begin
     
         obnm1=obnm[xsl]     ; Fitlered for mode Observation number
         objnm1=objnm[xsl]   ; Filtered for mode Object name
+        
+        ;###################################################################################
+        ;################## CR Cleaning from : Biases + Flats + Stellar ####################
+        ;###################################################################################
+
+        ; This section was added with the objective to clean CR (get rid of CR) before the actual reduction takes place
+        ; This section makes use of the Python bridge. For more information read :https://www.l3harrisgeospatial.com/docs/python.html
+        clean_cr_before =0
+        if clean_cr_before eq 1 then begin 
+          PRINT, ' '
+          print, 'SORTING-HAT:                    >>> Cleaning CR <<< '
+          print, ' '          
+          clean_cr_py, redpar, log=log
+         
+        endif 
+        
         
        
         
