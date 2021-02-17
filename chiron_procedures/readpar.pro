@@ -1,6 +1,10 @@
-;------------------------------------------------
+
+; Notes:
+;       Reads parameters of ctio.par in a data structure
+; Input:
+;      String with directory of ctio.par file. 
 function readpar, file
-; Reads parameters in a structure
+
 
 
  line = ''
@@ -30,4 +34,4 @@ function readpar, file
   return, par
     
 end
-;-------------------------------------------------------
+

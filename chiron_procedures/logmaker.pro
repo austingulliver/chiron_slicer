@@ -244,7 +244,7 @@ endelse
     
     
     ; Check dicrectory exists
-    ;-----------------------------4
+    ;-----------------------------
     command = 'IF exist '+logpath +' (echo alreadyThere ) ELSE (mkdir '+ logpath +' && echo createdDir)'   
     SPAWN, command, windowsReply    ; This has to subtituted for the equivalent depending on the OS. 
                                     ; Otherwise just create the year directory manually. E.g. ..\chiron\tous\mir7\logsheets\2021\

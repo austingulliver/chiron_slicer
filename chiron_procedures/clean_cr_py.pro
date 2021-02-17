@@ -11,6 +11,11 @@
 pro clean_cosmic_rays, log, fileStructuresIdx, refStr
   compile_opt idl2
   
+  
+  ;####################################
+  ;#1) Constants to be used
+  ;####################################
+  
   print, 'CLEAN_CR_PY: Cleanning all Cosmic Rays from ' +refStr+ ' ....'
   print, ' '
   silent = 0
@@ -94,74 +99,55 @@ end
 ;        system + thefollowing libraries :  glob, astropy, numpy, datetime
 ;
 ;        E.g.   >> clean_cr_py ( 'sirius','slicer' , '3 1')
+;        
+;        If you want to change the threshold to pick CR then  change the value of limit_mad in clean_cosmic_rays
 ;
 ; :INPUT:
 ;        log : is a data sctructure built with information about each file
+;        redpar : Data structure contaning initial variables set to run the program
+;         
 ;
 ; :OUTPUT:
+;        *All files are overwritten with their clean version (no cosmic rays )  
+;        remove_cr :
+;        
+; :HISTORY :
+;        2021-15-02 : Written by J. Andres Lozano 
 ;
 ;
 ;-
-PRO clean_cr_py, redpar, log=log
+PRO clean_cr_py, redpar, log=log, remove_cr =remove_cr
   compile_opt idl2
 
-  ;  glob     = Python.Import('glob')
-  ;  fits     = Python.Import('astropy.io.fits')
-  ;  print, fits
-  ;  mad_std  = Python.Import('astropy.stats')
-  ;  print, mad_std.funcs.mad_std
-  ;  date     = Python.Import('datetime')
-
-
-
-
-  ;####################################
-  ;#1) Constants to be used
-  ;####################################
-
-
-
-
-  ;  raw_directory = redpar.rootdir +redpar.rawdir + redpar.imdir
-  ;  allRawFiles = raw_directory + redpar.prefix+ objectNumbers +'.fits' ; All Raw Files  absolute Paths
-
-
-
+ 
+  ; >> Parse binning string as needed.
+  binningRaw = redpar.binnings[redpar.mode]
+  bin1       = binningRaw.CharAt(0)
+  bin2       = binningRaw.CharAt(binningRaw.StrLen()-1)
+  binning    = bin1 +' '+bin2
+  ;print, log.filename + '< >'+log.object + '< >' +log.ccdsum +  '< >' +log.decker +'< >' +log.imgtype +'|            '
+  
   ;####################################
   ;#1) Create 3 lists: flats, biases and stellar
   ;####################################
-
-  binningRaw = redpar.binnings[redpar.mode]
-  bin1=  binningRaw.CharAt(0)
-  bin2= binningRaw.CharAt(binningRaw.StrLen()-1)
-  binning    = bin1 +' '+bin2
-
-
-  ;print, log.filename + '< >'+log.object + '< >' +log.ccdsum +  '< >' +log.decker +'< >' +log.imgtype +'|              '
-
+  
   flatsLogIdx   = where( (STRLOWCASE(strt(log.object)) eq 'quartz' ) and (strt(log.ccdsum) eq binning) and  (STRLOWCASE(strt(log.decker)) eq 'slicer')    , ctF)
   biasLogIdx    = where( (STRLOWCASE(strt(log.object)) eq 'bias'   ) and (strt(log.ccdsum) eq binning) and  (STRLOWCASE(strt(log.decker)) eq 'slicer')   ,ctB)
   objectsLogIdx = where( (STRLOWCASE(strt(log.imgtype)) eq 'object') and (strt(log.ccdsum) eq binning) and  (STRLOWCASE(strt(log.decker)) eq 'slicer')  , ctO )
 
-  ;  flatsStruct    = log[flatsLogIdx]
-  ;  biasStruct     = log[biasLogIdx]
-  ;  objectsStruct  = log[objectsLogIdx]
 
-  ;print, flatsStruct.filename + '  < >' +flatsStruct.ccdsum
+  
+  ;####################################
+  ;#1) Find cosmics Rays + Overwrite Files
+  ;####################################
 
   clean_cosmic_rays, log, flatsLogIdx,   'flats'
   clean_cosmic_rays, log, biasLogIdx,    'bias'
   clean_cosmic_rays, log, objectsLogIdx, 'stellar'
+  
+  remove_cr=remove_cr
 
-
-
-
-
-
-
-
-
-end
+END
 
 
 

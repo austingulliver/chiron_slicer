@@ -45,27 +45,30 @@
 ;  20110808 - structured  (AT)
 ;  20120419 - Modified to work with Torrent 4 amp readout. Added 1x1 binning as an option. ~MJG
 ;  20121023 - Added the ThAr filename to redpar to be written to the FITS header ~MJG
-;  20201201 - Modifed in multiples places. Check README.txt files
+;  20201201 - Various changes including Windoss compatability. Read summary paper   ~J. Andres Lozano
 ;-
 ;
 pro sorting_hat, night, run=run, iod2fits=iod2fits, reduce=reduce, $
 doppler=doppler, doptag=doptag, end_check=end_check, skip=skip, $
 thar_soln=thar_soln, getthid=getthid, mode = mode, obsnm=obsnm, $
-		bin11 = bin11, flatsonly=flatsonly, tharonly=tharonly, combine_stellar=combine_stellar
-
+bin11 = bin11, flatsonly=flatsonly, tharonly=tharonly, combine_stellar=combine_stellar, $
+remove_cr=remove_cr		
 
 angstrom = '!6!sA!r!u!9 %!6!n'
-ctparfn = !NULL
-spawn, 'cd', pwddir  ;Updated Windows command
 
 
+
+spawn, 'cd', pwddir  ;Updated to a Windows command
 case pwddir of
    '/home/matt/projects/CHIRON/QC': ctparfn = '/home/matt/projects/CHIRON/REDUCTION/ctio.par'
    '/home/matt/projects/CHIRON/REDUCTION': ctparfn = '/home/matt/projects/CHIRON/REDUCTION/ctio.par'
    '/tous/CHIRON/REDUCTION': ctparfn = '/tous/CHIRON/REDUCTION/ctio.par'
    '/tous/CHIRON/QC': ctparfn = '/tous/CHIRON/REDUCTION/ctio.par'
    '/nfs/morgan/chiron/idl/CHIRON/REDUCTION': ctparfn = '/nfs/morgan/chiron/idl/CHIRON/REDUCTION/ctio.par'
-   'C:\Users\mrstu': ctparfn = 'C:\Users\mrstu\idlworkspace_yalecalibration\chiron_procedures/ctio.par'
+   'C:\Users\mrstu': ctparfn = 'C:\Users\mrstu\idlworkspace_yalecalibration\chiron_procedures\ctio.par'
+    ELSE : ctparfn=!NULL 
+    ; E.g. 'your_current_directory': ctparfn = 'absolute_path_to_ctio.par'
+    ; Note: Let the program run. It will stop with the message bellow. Copy/Paste the printes direcotory in 'your_current_directory'
 endcase
 
 
@@ -191,7 +194,7 @@ ut = gettime(mdpt) ; floating-point hours, >24h in the morning
 
 ;-> Up to here: variables obnm,objnm, i2,mdpt ....  are vectors that contain data of log sheet 
 
-; >> Creates log structure which has information about files, used bellow 
+; >> Creates log structure which has information about ALL raw files. 
 ; -----------------------------------------------------------------------
 createLogStructures,redpar,obnm,objnm 
 
@@ -226,13 +229,13 @@ if keyword_set(reduce) then begin
 
         ; This section was added with the objective to clean CR (get rid of CR) before the actual reduction takes place
         ; This section makes use of the Python bridge. For more information read :https://www.l3harrisgeospatial.com/docs/python.html
-        clean_cr_before =0
-        if clean_cr_before eq 1 then begin 
+          ; FIX !!!!!!!!!!!!
+        if keyword_set(remove_cr) then begin 
           PRINT, ' '
           print, 'SORTING-HAT:                    >>> Cleaning CR <<< '
           print, ' '          
-          clean_cr_py, redpar, log=log
-         
+          clean_cr_py, redpar, log=log, remove_cr =remove_cr ; Returns remove_cr in case there were not enough files and 
+                                                             ; and LaCosmic has to run.          
         endif 
         
         
