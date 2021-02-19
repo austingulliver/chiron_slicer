@@ -522,16 +522,16 @@ ENDFOR          ; end direction loop
 
 
 ;TroubleShooting B
-for orderI=0, nord-1 do begin  
-print, 'FORDS: This is indexed order :'+string(orderI)
-peak_values = ords(*,orderI) ;  ords(isw,orderI)
-x_num= size(peak_values)
-x_num= x_num(1)
-;print, 'FORDS:  -> Confirm this value is 128 : the number of points to fit a givne order '+string(x_num)
-generated_x = INDGEN(x_num)
-plot = PLOT( generated_x , peak_values,   XTITLE= 'X-Pixles', YTITLE= 'Y-Pixels', TITLE='Trouble Shooting Orders B', /OVERPLOT)
-;;plot = SCATTERPLOT( generated_x , peak_values, SYMBOL='+',  XTITLE= 'X-Pixles', YTITLE-= 'Y-Pixels',TITLE='Troubleshooting Orders', OVERPLOT=1)
-endfor
+;for orderI=0, nord-1 do begin  
+;print, 'FORDS: This is indexed order :'+string(orderI)
+;peak_values = ords(*,orderI) ;  ords(isw,orderI)
+;x_num= size(peak_values)
+;x_num= x_num(1)
+;;print, 'FORDS:  -> Confirm this value is 128 : the number of points to fit a givne order '+string(x_num)
+;generated_x = INDGEN(x_num)
+;plot = PLOT( generated_x , peak_values,   XTITLE= 'X-Pixles', YTITLE= 'Y-Pixels', TITLE='Trouble Shooting Orders B', /OVERPLOT)
+;;;plot = SCATTERPLOT( generated_x , peak_values, SYMBOL='+',  XTITLE= 'X-Pixles', YTITLE-= 'Y-Pixels',TITLE='Troubleshooting Orders', OVERPLOT=1)
+;endfor
 
 ;;
 ;;End Added Trouble Shooting

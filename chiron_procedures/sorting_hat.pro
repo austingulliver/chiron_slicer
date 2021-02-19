@@ -229,13 +229,15 @@ if keyword_set(reduce) then begin
 
         ; This section was added with the objective to clean CR (get rid of CR) before the actual reduction takes place
         ; This section makes use of the Python bridge. For more information read :https://www.l3harrisgeospatial.com/docs/python.html
-          ; FIX !!!!!!!!!!!!
+        
         if keyword_set(remove_cr) then begin 
           PRINT, ' '
           print, 'SORTING-HAT:                    >>> Cleaning CR <<< '
           print, ' '          
-          clean_cr_py, redpar, log=log, remove_cr =remove_cr ; Returns remove_cr in case there were not enough files and 
-                                                             ; and LaCosmic has to run.          
+          remove_cr = clean_cr_py(redpar, log ) ; Returns remove_cr in case there were not enough files and 
+                                                             ; and LaCosmic has to run.    
+                                                ; If remove_cr = 1 then LaCosmic will remove the CR
+                                                ; If remove_cr = 1 then all files were cleaned or all files were already cleaned.      
         endif 
         
         
@@ -255,7 +257,7 @@ if keyword_set(reduce) then begin
                   			 if (~file_test(fname)) or (redpar.bias_from_scratch eq 1) then begin   
                   			        print, 'SORTING_HAT: Master Bias is getting created from scratch '
                       			    print, '                   ...3x1 normal...'
-                      				chi_masterbias, redpar = redpar, log = log, /bin31, /normal, do_mean=redpar.do_mean   ; Log gets restore
+                      				chi_masterbias, redpar = redpar, log = log, /bin31, /normal, master_bias=redpar.master_bias, remove_cr=remove_cr   ; Log gets restore
                       			  ;  print, '                   ...4x4 normal...'
                       				;chi_masterbias, redpar = redpar, log = log, /bin44, /normal, do_mean=redpar.do_mean 
                       			  ;  print, '                   ...1x1 normal...'
@@ -268,7 +270,7 @@ if keyword_set(reduce) then begin
               		  endif;nonfiber median bias frame check/make
               		  fnamef = redpar.rootdir+redpar.biasdir+ redpar.date+'_bin44_normal_medbias.dat'  ; If mode=fiber then try restore first : Inherited from Yale
               		  if ~file_test(fnamef)or (redpar.bias_from_scratch eq 1)  then begin
-              			     chi_masterbias, redpar = redpar, log = log, /bin44, /normal, do_mean=redpar.do_mean 
+              			     chi_masterbias, redpar = redpar, log = log, /bin44, /normal, master_bias=redpar.master_bias
               		  endif;fiber median bias frame check/make
               endif
             

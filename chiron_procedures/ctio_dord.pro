@@ -31,7 +31,7 @@ end
      endif
   endif
 
-  swid = 32    ;arbitrarr swath width, the number of columns desired in each swath. 
+  
 
 ;stop
 ;For SlICER mode we take a different approach. The other modes can be implemented in a similar Fashion but pkcoefs for each has to be found. 
@@ -40,6 +40,7 @@ dmode = strt(redpar.modes[redpar.mode])
 if dmode eq 'slicer' then begin
       orc = order_tracing( image,redpar) ;ome is not output so has no used for later code.  
 endif else begin
+      swid = 32    ;arbitrarr swath width, the number of columns desired in each swath. 
       fords,image,swid,orc, ome, redpar ;find order location coeffs
       ;orc (output)
       ;ome (output)

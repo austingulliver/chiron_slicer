@@ -159,44 +159,6 @@ print, " REDUCE-CTIO :           >>> Order Tracing <<<   "
 ;##############  Trace the Orders #################
 ;##################################################
  
-;Order ared traced wrt to the Master Flat 'sum'
-
-
-
-; If want to use master stellar rather than master flat : Assuming master flat  exists already
-; Implement what to use : stellar, master stellar or img/ stellar 
-; Only use 2 and 3  if /combine is active ( doing master stellar)!!!!!!!
-
-; Never  implemented cause proved to be worse off when img/flat 
-;img_tracing_option = 3
-; 1 : Use master flat :default
-; 2 : Use master stellar 
-; 3 : User the master Stellar / master Flat
-
-
-;if img_tracing_option  gt 1 then begin 
-;  
-;    msrt_dir= redpar.rootdir + redpar.rawdir +redpar.date+ "\"+"chi"+ redpar.date+".mstr_stellar.fits"
-;    ;mst_stellar_image = readfits(msrt_dir)  ; HAS TO BE FIXED !!!!!     
-;    mst_stellar_image = getimage(msrt_dir, redpar, header=header)
-;    
-;    
-;    if img_tracing_option eq 2 then order_tracing_img = mst_stellar_image
-;    
-;    if img_tracing_option eq 3 then begin
-;      print, "sanity check "
-;      order_tracing_img = mst_stellar_image / sum  
-;      stop, 'check dimension match'  
-;    endif
-;
-;  
-;endif 
-
-  
-
-
-
-
 
 ;SLICERFLAT=1 means use narrow slit to define slicer order locations
 if redpar.slicerflat eq 0 or mode ne 'slicer' then begin
@@ -277,9 +239,9 @@ endif else if (redpar.flatnorm eq 1) or (redpar.flatnorm eq 3) then begin
                  
     
     name = redpar.rootdir+redpar.flatdir+prefix+mode+'.flat'
-    fitsname = redpar.rootdir+redpar.flatdir+prefix+mode+'flat.fits'
+    fitsname = redpar.rootdir+redpar.flatdir+prefix+mode+'.flat.fits'
     wdsk, flat, name, /new
-    rdsk2fits, filename=fitsname, data = flat
+    rdsk2fits, filename=fitsname, data = flat ; Saves the same file but as the fits version 
     
     ;used to write fits for further analysis 
     ;writefits, 'C:\Users\mrstu\Desktop\School\research_Physics\yale_software\chiron\files_sent_dr_gulliver\181103_smooth_master_flat.fits', flat
@@ -372,7 +334,7 @@ if keyword_set(combine_stellar) then begin
       ; >> Creating ranges of file used to append to Header      
       range_files= make_range_from_vector(star)      
       
-      history_str = 'This file is a master stellar produced by combining ' + strtrim(string(combined_files),1)+ ' files: '+range_files
+      history_str = 'MASTER STELLAR made of' + strtrim(string(combined_files),2)+ ' files: '+range_files
       sxaddpar, hd, 'HISTORY', history_str
       writefits,  fname_master_stellar, master_stellar, hd           
       CTIO_SPEC,prefix,fname_master_stellar,out_mast_stellar,redpar, orc, xwid=xwid, flat=ff     
@@ -391,5 +353,5 @@ endelse
   
   
   
-print, 'REDUCE_CTIO: End of routine. Leaving now'  
+  
 end

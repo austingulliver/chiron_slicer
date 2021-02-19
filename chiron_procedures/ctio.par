@@ -67,6 +67,7 @@ debug: 0,                                              ; 1 in debug mode, with p
                                                        ;Once finished, copy the new best fit order locations to the "pkcoefs" tag above.
 
 use_prev_tracing:1,                                    ; If 1 then it used the previous order tracing stored. Only use if such file exist. Default value is 0
+master_bias:'median',                                  ; Can only take 2 string values 'median' or 'mean'. Used to calculate the mean/median of all bias files and create master bias.
 do_mean: 1,                                            ; If 0 then finds the MEDIAN to create the master bias and the master flat. If 1 then find MEAN Regardless files gets stored as ..medbias....
 flat_from_scratch: 0,                                  ; If 1 create the master flat from scratch every time program runs, if 0 then program restores existing file in memory for given night
 bias_from_scratch: 0}                                  ; If 1 Creates master bias from scratch regardless if such file exists already
