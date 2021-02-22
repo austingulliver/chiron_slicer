@@ -1,9 +1,17 @@
-pro qbarylog,logfile, test=test, baryDir=baryDir, prefix=prefix , justtest=justtest
-
+pro qbarylog,logfile, test=test, baryDir=baryDir, prefix=prefix , justtest=justtest, simbadStartName = simbadStartName
 ; PURPOSE: Calculate Barycentric Correction for Stellar spectra.
 ; 	    
 ; INPUT : 
-;        logfile -path of .log file created by logmaker.pro. Has to be absolute path form the working directory of just the absolute file (just to make sure)   
+;        logfile -path of .log file created by logmaker.pro.  Absolute Path 
+;        baryDir: Your barycentric directory  E.g. .....\tous\mir7\bary\ (include slash at the end.) or setup CHIRON_PATH
+;        
+;        simbadStartName  (string) : If set makes a request to SIMBAD   http://simbad.u-strasbg.fr/simbad/ 
+;                                    instead of looking for star information using LOOKUP.PRO;                       
+;                                :  String is the name of the star  
+;                                :  IF is not successful it might have been 'cause name of the start does not match Simbad's notation 
+;                                :  Do the search in  http://simbad.u-strasbg.fr/simbad/ and pass the name of the star in this variable 
+;        
+;          
 ; 	    
 ; OPTIONAL KEYWORDS:
 ;		JUSTTEST: Set this keyword if you want to just check to make sure
@@ -59,30 +67,59 @@ pro qbarylog,logfile, test=test, baryDir=baryDir, prefix=prefix , justtest=justt
     ;	added a few items to the ThAR and list of items to exclude.
     ;
     ;2021-Jan -31 - Jorge Lozano
-    ; Added comments - Understanding logic behind. 
-;
+    ; Added comments - Understanding logic behind + updated outadated methods. 
+;     Adjusted varibles to ommit secular acceleration correctio 
 ;NOTES:
     ;At least 1 log file is required
-;
+;   E.g. qbarylog, 'C:\Users\mrstu\idlworkspace_yalecalibration\chiron\tous\mir7\logsheets\2017\171218.log', prefix= 'chi' ,simbadStartName='Sirius'
 
 
     ; Validation + Setting paths + default variables
     ; ---------------------------------------------------
-
-    if  n_elements(logfile) eq 0 then stop,  "qBaryLog:  No logfiles found to process.  Returning"    
-    ; Handle parameter defaults & file paths
-    if ( ~ keyword_set(baryDir) ) then baryDir = 'C:\Users\mrstu\idlworkspace_yalecalibration\chiron\tous\mir7\bary\'  ; DF revision Mar2012
-    if ( keyword_set(test) ) then baryFile = 'qbcvel.test.ascii' else baryFile = 'qbcvel.ascii'
+    if  n_elements(logfile) eq 0 then stop,  "qBaryLog-ERROR:  No logfiles found to process." 
     
-    bcFile = baryDir + baryFile
-    structFile = 'C:\Users\mrstu\idlworkspace_yalecalibration\chiron\tous\mir7\bary\ctio_st.sav'
+    if  ~ keyword_set(baryDir)  then begin ; If path for barycentric direcotry is not pass and find path.
+          chi_path=getenv('CHIRON_PATH')   ; This must the absolute path where the directory chiron was placed
+                                           ; E.g.  SETENV, 'CHIRON_PATH=.......\chiron'
+          if strlen(chi_path)  ge 1 then begin
+            baryDir = chi_path.trim() + '\tous\mir7\bary\'
+            if ~file_test(baryDir) then spawn, 'mkdir ' + baryDir
+          endif else begin
+            spawn, 'hostname', host
+            if  host eq 'Drius22' then begin
+              baryDir = 'C:\Users\mrstu\idlworkspace_yalecalibration\chiron\tous\mir7\bary\'
+            endif else stop, ' Set up the environment variable CHIRON_PATH or add your path to the script list to continue.'
+          endelse      
+    endif ; Else baryDir was defined by user 
     
-    ; Verify that the neccessary files exist
     
-    if (n_elements(file_search(structFile)) eq 0) then message,structFile+ ' is missing.'
-    if (n_elements(file_search(bcFile)) eq 0) then message,bcFile+ ' is missing.'
     
-    ;Variable declarations:
+    ; >> Extract Date from .log file name
+    if STRPOS(logfile, '.log') ne -1 then begin
+      nightDate=strmid(logfile, STRPOS(logfile, '.log')-6,6 ) 
+    endif else STOP, 'The .log path must contain the extension .log   '
+    
+       
+    
+    
+    if ( keyword_set(test) ) then baryFile = nightDate+'.qbcvel.test.ascii' else baryFile = nightDate+'.qbcvel.ascii'    
+    bcFile = baryDir + baryFile    
+    structFile = baryDir+'ctio_st.sav' ;'This is a IDL variable containning info about observation ; 
+                                        ; Has two variables  CTIO and CAT 
+    
+    dummy=File_Search(bcFile,count=nFiles) ; Only checking for bcFile
+    if nFiles gt 0 then begin
+       answer=''
+       print,'Hey! this file already exists - are you sure you want'
+       read,' to overwrite? (y/n)', answer
+       if answer eq 'n' then stop else SPAWN, 'copy NUL '+bcFile
+    endif else SPAWN, 'copy NUL '+bcFile
+    
+    ; >> Verify that the neccessary files exist    
+    if (n_elements(file_search(structFile)) eq 0) then stop, structFile+ ' is missing.'
+    ;if (n_elements(file_search(bcFile)) eq 0) then message,bcFile+ ' is missing.'
+    
+    ;>> Variable declarations:
     noerror=1	& chk=''		& du=''		& dum=''	& dummy=''	&  req=''  
     log=''		& logline=''	& obtype='' & mid=''
     year=0		& month=0		& day=0		& hr=0		& sc=0		& epoch=0
@@ -99,22 +136,21 @@ pro qbarylog,logfile, test=test, baryDir=baryDir, prefix=prefix , justtest=justt
     months = { Jan: '01', Feb: '02', Mar: '03', Apr: '04', May: '05', Jun: '06', Jul: '07', Aug: '08', Sep: '09', Oct: '10', Nov: '11', Dec: '12' }
     monthTags = tag_names(months)
     
-    ;Define structures
+    ;>> Define structures
     maxsize = 5000                  ; 
     log = {log, object: '', hour: '', min: '', sec: '', type: ''}
     temp = {bcvel, filename:'', object:'', cz:0.d0, mjd:0.d0, ha:0.d0, type:''} ;Temporary structure for results
     temp = replicate(temp[0],maxsize)
     
     tempbcfile = strarr(maxsize)    ;temporary storage of ascii results: 200 lines
+    if ~keyword_set(simbadStartName) then simbadStartName= ''
+    alreadySimbad= 0                ; Use to check if simbad request was already made 
     
     print,'     *************************************************************'
     print,'     **      THE CTIO BARYCENTRIC CORRECTIONS PROGRAM           **'
-    print,'     **                                                         **'
-    print,'     ** You input:                                              **'
-    print,'     ** 		LOGSHEET: ' + logFile +               '           **'
-    print,'     **                                                         **'
-    print,'     ** Output to: '  +  bcfile  +      '                       **'
-    print,'     **                                                         **'
+    print,'     *************************************************************'                                         
+    print,'     Input Logsheet : ' + logFile 
+    print,'     Outout         : '  +  bcfile 
     print,'     *************************************************************'
     
     
@@ -136,21 +172,15 @@ pro qbarylog,logfile, test=test, baryDir=baryDir, prefix=prefix , justtest=justt
     logDir = logFileParts[1]
     logFile = logFileParts[2]    
     logfileorig = logfile    
-    print,'reading: ',logFileParts[0]
+    
     
     restore,structFile & cat = dum   ;Restore coord. structure
     
     ; spit out the file and grab the UT Date line
     ;tlogdir=STRMID(logdir, 1) 
     
-    spawn, "type " + logdir + logfile  , output  ;updated for Windows 
-    
-;    print, 'this is output'
-;    print, output
-    
-    
-    
-    output = cull(output)           ; remove any blank lines
+    spawn, "type " + logDir + logfile  , output  ;updated for Windows   : output is the content of the .log sheet  
+    output = cull(output)                        ; remove any blank lines  
     logline = (output(where(getwrds(output,0) eq 'UT')))[0] ; 1 element
     
     
@@ -274,7 +304,7 @@ pro qbarylog,logfile, test=test, baryDir=baryDir, prefix=prefix , justtest=justt
     
     
     
-    ;Loop through each line on the logsheet
+    ;Loop through each line of the logsheet
     ;--------------------------------------
     
     WHILE eof(logune) eq 0 do begin ;check for end of file (eof = 1)
@@ -307,26 +337,13 @@ pro qbarylog,logfile, test=test, baryDir=baryDir, prefix=prefix , justtest=justt
                 select(strindgen,recnum))            and $
                 (linelen gt 1)                  THEN BEGIN 
             
-                    if (celltest eq 'Y')   then  log.type='o' else log.type='t'  
-;                    print, 'first'
-;                    print, string(log.object)   
-;                    print, string( select(iodlist, log.object) )     
-                               
+                    if (celltest eq 'Y')   then  log.type='o' else log.type='t'           
                     if select(iodlist, log.object)  then begin 
-                       log.type='i' & log.object='iodine'  
-;                       print,  'nooooooooooooooo'
-                    endif
-;                    print, log.type    
-;                    print, select(thorlist,log.object)  
-;                    print, string(log.object)    
-;                    print, '!word above should be thar'
-;                    
-                    
-                             
+                       log.type='i' & log.object='iodine'  ;                       
+                    endif 
                     if select(thorlist,log.object) then begin
                       log.type='u' & log.object='th-ar'
                     endif
-                                    
                     if select(daylist, log.object)   then  begin
                       log.type='s' & log.object='day_sky'
                     endif
@@ -376,13 +393,12 @@ pro qbarylog,logfile, test=test, baryDir=baryDir, prefix=prefix , justtest=justt
                     strtime = strhour+':'+strminute+':'+strsecond
                     len = (strlen(strtime))[0]
                     if len lt 9 then for jj=0,9-len-1 do strtime = strtime + ' '
-                                            ;
+                                            
                     czi=0.0;cz = 0.0d0 
                     ha = 0.d0
                     filename = filename
-            
-            
-                    ;print, ' >> The type is : '+string(log.type)
+                        
+                   
                     ; >> Run BARYCENTRIC correction if type matches
                     IF select(['o','t'],log.type) then begin 
             
@@ -393,33 +409,70 @@ pro qbarylog,logfile, test=test, baryDir=baryDir, prefix=prefix , justtest=justt
                          ;print,filename, ' ', log.object
                          if first2 ne 'MO' then begin
                             ;if first2 ne 'HR' then begin ; SKIP Bright STARS, MOON (no B.C. for B*s). We have commented this since we are interested in Brigth stars 
-;                               lookup,log.object,coords,epoch,pm,parlax,radvel,hip=hip,$
-;                                      barydir=barydir,cat=cat,tyc=tyc
-              
-;                               if abs( coords(0)) eq 99.d0 then begin ;Logsheet star not found
-;                                  coords = [0.d0,0.d0]                ;force ra and dec = 0. :no object found
-;                                  pm     = [0.d0,0.d0]                ;dummy proper motion
-;                                  epoch = 2000.d0                     ;dummy epoch
-;                               endif else begin 
+                             
+                             
+                              ; ***********************************************
+                              ;  Search information needed for star
+                              ; ***********************************************
+                              
+                              if strlen(simbadStartName)  ge 1 then begin 
+                                 
+                                 if alreadySimbad eq 1 then  begin 
+                                    ; Since there is only 1 star per .log sheet this only needs to be called once after already run 
+                                    ; The same vairables ra, coords, pm, epoch will be stored and used
+                                 endif else begin
+                                   print, 'QBARYLOG:  Requesting start information to simbad '
+                                   QuerySimbad, simbadStartName , ra, dec, found=found
+                                   
+                                   if  found eq 0  then stop, 'QBARYLOG:  >>  The used star name '+strtrim(simbadStartName,2)+' was not found. Try looking up it here first: http://simbad.u-strasbg.fr/simbad/' 
+
+                                   ra= ra* (24.0/360.0)      ; Transformation from degrees to hours
+                                   coords = [ra,dec]
+                                   pm = [0.d0,0.d0]          ; dummy proper motion
+                                   epoch =2000.d0
+                                   alreadySimbad= 1
+                                   print, ''
+                                   print, ' Start Information used for Correction : '
+                                   print, '*****************************************************************'
+                                   print, 'coords : ' + string( coords) ; RA & DEC, in [hours,degrees] eg. [1.75,-15.9d]
+                                   print, 'pm     : ' + string(pm)       ; proper motion [ra,dec] in ARCsec/year [optional]
+                                   print, 'epoch  : ' + string(epoch)
+                                   print, '*****************************************************************'
+                                   print,  '' 
+                                   
+                                 endelse
+                               
+                                 
+                                 
+                               
+                              endif else begin ; Prior code Legacy          
+                                  
                                 
-                                 ; Input for qbary.pro
+                                   lookup,log.object,coords,epoch,pm,parlax,radvel,hip=hip,$
+                                          barydir=barydir,cat=cat,tyc=tyc
+                                   if abs( coords(0)) eq 99.d0 then begin ;Logsheet star not found
+                                      coords = [0.d0,0.d0]                ;force ra and dec = 0. :no object found
+                                      pm     = [0.d0,0.d0]                ;dummy proper motion
+                                      epoch = 2000.d0                     ;dummy epoch
+                                   endif 
+                                
+                                
+                              endelse
+
                                  
-                                 coords=[6.7524492, -16.71611586]
-                                 ;print, 'coords : ' + string( coords) ; RA & DEC, in [hours,degrees] eg. [1.75,-15.9d]
-                                 
-                                 pm=[0.d0,0.d0] 
-                                 ;print, 'pm     : ' + string(pm)       ; proper motion [ra,dec] in ARCsec/year [optional]
-                                 
-                                 
-                                 
-                                 epoch=2000.d0
+;                                >>Input for qbary.pro
+;                                 print, 'coords : ' + string( coords) ; RA & DEC, in [hours,degrees] eg. [1.75,-15.9d]
+;                                 print, 'pm     : ' + string(pm)       ; proper motion [ra,dec] in ARCsec/year [optional]
 ;                                 print, 'epoch  : ' + string(epoch)                                 
 ;                                 print, 'barydir: ' + string(barydir)   ; Barycentric directory
 ;                                 print, 'jdUTC  : ' + string(jdUTC)    ; julian date (double precision) eg 2448489.3462d0 
 ;                                 
+                                  ; ***********************************************
+                                  ;  Run Correction 
+                                  ; ***********************************************
                                   qbary,jdUTC,coords,epoch,czi,obs='ctio',pm = pm,barydir=barydir, ha=ha
                                         
-                                 ;Output of qbary.log
+;                                 >>Output of qbary.log
 ;                                 print, 'ha : hour angle of observation '+string(ha)
 ;                                 print, 'czi :relativistic redshift' +string(czi)
                                  
@@ -428,8 +481,10 @@ pro qbarylog,logfile, test=test, baryDir=baryDir, prefix=prefix , justtest=justt
                                   
                                         
                                         
-                                  ; Further Step: remove secular accelartion       
-                                  ;cz = rm_secacc(czi,pm,parlax,mjd)    ; uncomment this
+                                  ; ***********************************************
+                                  ;  Secular Acceleration 
+                                  ; ***********************************************      
+                                  ;cz = rm_secacc(czi,pm,parlax,mjd)    ; We are not interested in the seculaar acceleration UNCOMMENT otherwise + change reference from czi to cz (thorugh out whole script)
                                   
                                ;endelse
                             ;endif             ; else print,'Skipping Brigth Stars'
@@ -494,12 +549,18 @@ pro qbarylog,logfile, test=test, baryDir=baryDir, prefix=prefix , justtest=justt
     
     if strupcase(ans) eq 'Y' then begin
         get_lun,une                 ;get Logical Unit Number
-        openu,une,bcfile,/append    ;open bcvel file for writing
+        ;openu,une,bcfile,/append    ;open bcvel file for writing
+        openu,une,bcfile ;/append    ;open bcvel file for writing
     ;    form = '(A9,3X,A10,1X,D11.3,1X,D12.6,1X,F7.3,1X,A1)'; modified for
     ;            fn, object, cts, mjd, ha, type
         form = '(2X, A-16,A12, D12.3,D13.6,F8.3,A2)' ; long names
         
         print,'Printing results to '+bcfile+' ...'
+        printf,une,'-------------------------------------------------------------------------------------'
+        printf,une, ' NIGHT : '+nightDate
+        printf,une, ' Correction: c * z in [m/s].  (z = relativistic redshift)'
+        printf,une,' FileName              Object    Correction   ModJD         HA   fileType  
+        printf,une,'-------------------------------------------------------------------------------------'
         for j=0,num-1 do begin
             fn = temp[j].filename
             ob = temp[j].object

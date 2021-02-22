@@ -29,7 +29,7 @@ function readpar, file
   res = execute('par = '+tmps)  ; execute command, create structure
   close, unit 
   free_lun, unit  
-  print, 'READPAR: Variable are assigned default values from :', file
+  print, 'READPAR: Variables are assigned default values from :', file
 
   return, par
     

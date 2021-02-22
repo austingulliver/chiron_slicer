@@ -28,7 +28,7 @@ end
 
 
 
-; JL:  e.g of  procedure calling -- > logmaker, '181103', date='181103', /nofoc
+; JL:  e.g of  procedure calling -- > logmaker, '210208', date='210208', /nofoc, prefix='chi'
 
 pro logmaker, rawdir, $
 override = override, $
@@ -125,34 +125,36 @@ endif else begin
 	print,"LOGMAKER: Using '" + prefix + "' as the image prefix."
 endelse
  
-;stop
-; make sure that the files we found are formatted like: qa04.nnnn.fits or qa04_nnnn.fits
-; useful if there are observations that don't belong to us in the rawdir 
-    obFiles = where(stregex(allFitsFiles,'\'+prefix+'\.([0-9]+)\.fits$',/BOOLEAN))
-    if ( n_elements(obFiles) eq 0 ) then begin
-    	print, 'No files found with name format "/' + prefix + '\.([0-9]+)\.fits$"'
-    	stop
-    endif
+
+
+    
+    ;*****************************************
+    ; Validation for formatted files: qa04.nnnn.fits or qa04_nnnn.fits
+    ;*****************************************
+    ;obFiles = where(stregex(allFitsFiles,'\'+prefix+'\.([0-9]+)\.fits$',/BOOLEAN)) 
+    obFiles = where(stregex(allFitsFiles,'\'+prefix+'([0-9]+).([0-9]+).fits$',/BOOLEAN))  
+    if ( n_elements(obFiles) eq 0 ) then  stop,  'No files found with name format "/' + prefix + '\.([0-9]+)\.fits$"'
+   
     obs_file = allFitsFiles[obFiles]
     nobs = n_elements(obs_file)
     print, 'Number of Observations, nobs, is: ', nobs
     
-; FIND THE STARTING NUMBER FOR TONIGHT'S OBSERVATIONS
-	first_num = stregex(obs_file[0],"([0-9]+)\.fits$",/EXTRACT,/SUBEXPR)
-	first_num = first_num[1] ; just the number captured in the parens
+   ; FIND THE STARTING NUMBER FOR TONIGHT'S OBSERVATIONS
+	 first_num = stregex(obs_file[0],"([0-9]+)\.fits$",/EXTRACT,/SUBEXPR)
+	 first_num = first_num[1] ; just the number captured in the parens
    		
-; COLLECT SOME LOGSHEET INFORMATION FROM THE FITS HEADERS
-	hd = headfits(obs_file[0])		;info from first observation
-	hd2= headfits(obs_file[nobs-1])  ;info from final observation
+   ; COLLECT SOME LOGSHEET INFORMATION FROM THE FITS HEADERS
+  	hd = headfits(obs_file[0])		;info from first observation
+  	hd2= headfits(obs_file[nobs-1])  ;info from final observation
   
-; OBSERVER
-	observer=sxpar(hd, 'OBSERVER', count=m1) 
+    ; OBSERVER
+	  observer=sxpar(hd, 'OBSERVER', count=m1) 
     if m1 eq 0 then begin
-		observer = '               '
-		print,'***************************************************************'
-		print, 'Please edit the logsheet to add the observer name'
-		print,'***************************************************************'
-	endif
+  		observer = '               '
+  		print,'***************************************************************'
+  		print, 'Please edit the logsheet to add the observer name'
+  		print,'***************************************************************'
+  	endif
 
 ; DATE AND LOGFILE NAME  ;file creation date:
 	obsDate = sxpar(hd,'DATE',count=foundDate)
@@ -182,10 +184,13 @@ endelse
 		date = date + '/' + strcompress(string(fix(endDay)),/rem)
 	endelse
 	
-; get information about the chip and controller 
-;stop
+
+  ;*****************************************
+  ;information about the chip and controller 
+  ;*****************************************
+
 	runInfo = chip_geometry(obs_file[0],hdr=hd)
-;	stop
+
 	if ( runInfo.status eq 'error' || runInfo.controller eq 'unknown' ) then begin
 		print,"Unable to determine chip characteristics "
 		stop

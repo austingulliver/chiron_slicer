@@ -15,10 +15,13 @@ nerd = ''
 if  keyword_set(last) then blast = 1 else blast = 0
 N = n_elements(text)
 
+
+
 if N eq 0 then  wrds = getwrd(text,nth,mth,last=blast) else begin    
     wrds = strarr(N)
     for i=0L,N-1L do begin
-        nerd = getwrd(text(i),nth,mth,last=blast)
+   
+        nerd = getwrd(text[i],nth,mth,last=blast)
         wrds(i) = nerd ; werd werd werd! nerd is the werd.
     endfor
 endelse

@@ -389,7 +389,7 @@ FUNCTION order_tracing, img, redpar
   ;------------------------------
   ; >> Constants
   ;------------------------------
-  debug=redpar.debug
+  debug=1;redpar.debug
   flat= img
   img_size=size(flat)     ;size of image passed: e.g. Master Flat
   n_columns=img_size[1]   ;number of cols in image
@@ -441,7 +441,8 @@ FUNCTION order_tracing, img, redpar
       p1=plot(traced_orders[0,*] )
       for i= 1, nord-1 do begin
           p1=plot(traced_orders[i,*], /overplot)
-      endfor      
+      endfor  
+      stop, 'Type .cont to continue '    
   endif
   
   
@@ -499,9 +500,9 @@ FUNCTION order_tracing, img, redpar
       img2[x,calculated_y] = 0d
       p1=plot(calculated_y ,color='red',/overplot)
     endfor
-    dir= redpar.rootdir +redpar.debugging + 'order_tracing_master_flat_B.fits'
+    dir= redpar.rootdir +redpar.debugging + redpar.date+'.order_tracing_over_master_flat.fits'
     writefits, dir, img2
-
+    stop, 'Check for created file and Type .cont to continue ' 
   endif
 
   if debug gt 0 then begin     
@@ -517,9 +518,10 @@ FUNCTION order_tracing, img, redpar
        pa= plot( x,calculated_y ,COLOR= 'red', /overplot) 
        
        
-       pc= plot( x,traced_orders[70,*] ,SYMBOL= 'dot',SYM_THICK=3,LINESTYLE= 6, TITLE= 'Indexed Order 70 -  Middle Order' )
+       pc= plot( x,traced_orders[70,*] ,SYMBOL= 'dot',SYM_THICK=3,LINESTYLE= 6, TITLE= 'Indexed Order 70 -  Blue Order' )
        calculated_y=poly(x,orc(*,70))
        pa= plot( x,calculated_y ,COLOR= 'red', /overplot)
+       stop, 'Type .cont to continue ' 
       
                  
   endif

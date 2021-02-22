@@ -334,7 +334,7 @@ if keyword_set(combine_stellar) then begin
       ; >> Creating ranges of file used to append to Header      
       range_files= make_range_from_vector(star)      
       
-      history_str = 'MASTER STELLAR made of' + strtrim(string(combined_files),2)+ ' files: '+range_files
+      history_str = 'MASTER STELLAR made of ' + strtrim(string(combined_files),2)+ ' files: '+range_files
       sxaddpar, hd, 'HISTORY', history_str
       writefits,  fname_master_stellar, master_stellar, hd           
       CTIO_SPEC,prefix,fname_master_stellar,out_mast_stellar,redpar, orc, xwid=xwid, flat=ff     

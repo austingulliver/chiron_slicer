@@ -1,8 +1,10 @@
-;CHI_SPLICE:  It splices the extracted orders together
 ;
+; SUMMARY :
+;          It splices the extracted orders together
+; 
+; INPUT:
 ;
-;
-;
+; OUTPUT:
 ;
 
 
@@ -27,10 +29,19 @@ function chi_splice,date,file,k11=k11,trim=trim,scale=scale, $
     print,'*    TRIM:  def=[0,0]'
     return,0
   endif
-
+  
+  ;*****************************************
+  ; Initial Variables 
+  ;*****************************************
+  
+  
+  chdata= getenv('CHIRON_PATH')  ;This must the absolute path where the directory chiron was placed
+                                 ; E.g.  SETENV, 'CHIRON_PATH=.......\chiron'
+                                 
+  IF strlen(chdata) le 1 then stop,  'CHI_SPLICE: Set Env. variable CHIRON_PATH before continue. E.g SETENV, CHIRON_PATH=.......\chiron '
   if keyword_set(examine) then plt=1
   if keyword_set(plt) then gc,13
-  chdata= getenv('chirondata')
+  
 
   if not keyword_set(k11) then k11=190
 
@@ -45,7 +56,8 @@ function chi_splice,date,file,k11=k11,trim=trim,scale=scale, $
     end
   endcase
 
-  trimfile=chdata+'/cal/ch_deftrims.dat'
+  trimfile=chdata+'/tous/mir7/utils/chi_deftrims.dat'
+  
   i=0 & t1=0 & t2=0
   genrd,trimfile,i,t1,t2
   trims=intarr(2,75)
@@ -59,7 +71,12 @@ function chi_splice,date,file,k11=k11,trim=trim,scale=scale, $
     else: weight=1
   endcase
   if not keyword_set(cut) then cut=0
-
+  
+  
+  ;*****************************************
+  ; Collecting files 
+  ;*****************************************
+  
   case 1 of
     n_params() eq 2: l=chdata+'/'+date+'/xchi'+date+'.'+strtrim(file,2)
     n_params() eq 1: if strlen(date) gt 12 then l=date else begin
