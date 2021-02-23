@@ -14,14 +14,14 @@ imdir:   'yymmdd\',                                    ; yymmdd/ image directory
 date:   'yymmdd',                                      ; yymmdd/ image directory with raw night data (*)
 seqnum:   'flat',                                      ; the image sequence number (*)
 versiond:   'date',                                    ; systime when this file was created (*)
-versionn:   '3.0',                                     ; version of the reduction code
+versionn:   '4.0',                                      ; version of the reduction code
 prefix_tag: 'a',                                       ; added prefix for output filenames 
 prefix:  'chiyymmdd.',                                 ; file prefix (*)
-flatdir:  'tous\mir7\flats\',                          ; summed flat fields
-biasdir:  'tous\mir7\medbias\',                        ; median bias frames
-biasmode: 0,                                           ; 0: use median bias frame, 1: use median overscan row
+flatdir:  'tous\mir7\flats\',                          ; Output for summed flat fields
+biasdir:  'tous\mir7\master_bias\',                    ; Output directory  for median/mean bias frames
+biasmode: 0,                                           ; 0: use median/mean bias frame, 1: use median overscan row
 orderdir: 'tous\mir7\orders\',                         ; order locations
-barydir:  'tous\CHIRON\bary\',                         ; code for barycentric correction? 
+barydir:  'tous\mir7\bary\',                           ; Barycentric Correction Directory 
 xtrim: [0,0],                                          ;originally it was [0,3150]  trim along line (cross-dispersion direction), UNBINNED pixels
 ytrim: [0,0],                                          ; originally it was  [601,3800]   vertical trim (along disp.), UNBINNED pixels yt=2
 readmodes:  ['fast','normal'],                         ; readout modes
@@ -55,7 +55,7 @@ xwids: [8,12,8,5,18],                                  ; extraction width, binne
 slcrxtrawid: [2,26],                                   ;set the 0th element >0 to give an extra width to slicer orders of slcrxtrawid[0] 
 					               ;to the 1st slcrxtrawid[1] rows. This is a hack for lack of cross dispersion 
 dpks:  [0,-5,0,0,0],                                   ; peak shift for each mode, binned pixels  (OUTDATED)
-binnings: ['3x1','3x1','3x1','4x4', '1x1'],            ; binning in each mode, row x column
+binnings: ['3x1','3x1','3x1','4x4', '1x1'],            ; binning in each mode, row x column. The array elements match with order in modes variable
 debug: 0,                                              ; 1 in debug mode, with plots and stops
                                                        ;(*): denotes this value is set in sorting_hat by the options when calling it
                                                        ;DEBUG MODES1
@@ -70,5 +70,5 @@ use_prev_tracing:1,                                    ; If 1 then it used the p
 master_bias:'median',                                  ; Can only take 2 string values 'median' or 'mean'. Used to calculate the mean/median of all bias files and create master bias.
 do_mean: 1,                                            ; If 0 then finds the MEDIAN to create the master bias and the master flat. If 1 then find MEAN Regardless files gets stored as ..medbias....
 flat_from_scratch: 0,                                  ; If 1 create the master flat from scratch every time program runs, if 0 then program restores existing file in memory for given night
-bias_from_scratch: 0}                                  ; If 1 Creates master bias from scratch regardless if such file exists already
+bias_from_scratch: 1}                                  ; If 1 Creates master bias from scratch regardless if such file exists already
 
