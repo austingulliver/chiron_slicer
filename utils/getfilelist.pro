@@ -1,7 +1,24 @@
-;********************************************************************
+;
+; SUMMARY :
+;         get a list of files  and put names in filestr
+; 
+; INPUT: 
+; 
+;       prefix (string) : defines the prefix of the file name
+;       
+;
+; OUTPUT:
+; 
+; 
+; HISTORY :
+;         Original file rd_chiron.pro was taken from Proff. Walter
+;         Improved, make it compatible with current software. Various changes - J.Andres Lozano
+;         
+; E.g     l=getfilelist(pref+'*.'+strtrim(file0,2)+'.fits',nl)
+;     
 function getfilelist,name,nf,noversion=noversion,noext=noext, $
   full=full,helpme=helpme,direc=direc,nodirec=nodirec
-  ; get a list of files  and put names in filestr
+
   if keyword_set(helpme) then begin
     print,' '
     print,'* GETFILELIST = return string array of file names'

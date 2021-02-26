@@ -7,12 +7,16 @@
 ;         im_arr(*,*, #of flats)   :all flats in a CUBE form   IF Normalized option actived  -->
 ;                                                              If not normalized then flats are just Copy-Paste
 
-pro addflat, flatfiles, sum, redpar, im_arr, do_mean=do_mean
+pro addflat, flatfiles, sum, redpar, im_arr, do_mean=do_mean, masterFlatName=name
 
 compile_opt idl2
 
+
+debug = 1
+
+if strlen(name) le 1 then stop, 'ERROR: Please specify the name of the master flat ' 
 numwf=n_elements(flatfiles) & owidefiles = flatfiles
-print, "ADDFLAT: Master file combines  "+string(numwf) + ' files.'
+print, "ADDFLAT: Number of frames used to create master flat :  "+string(numwf) + ' files.'
 
 if redpar.flatnorm le 2 then print, "ADDFLAT: Flat files are NOT being normalized combining flats " else print,  "ADDFLAT: Flat files ARE normalized before combining flats"
 sum = 0
@@ -90,18 +94,13 @@ endif else im_arr = im_arr1      ;When no normalization is applied
 
 
 
-if do_mean eq 1 then begin
-     flat_name=' MEAN'
-endif else if  do_mean eq 0 then begin
-     flat_name = ' MEDIAN'
-endif else stop, 'ERROR : The parameter do_mean must be either 1 or 0. Please change accordingly in ctio.par'
 
-print, 'ADDFLAT: Combining flats using the'+flat_name+' of all flats . Please wait ........'
+print, 'ADDFLAT: Combining flats using the ' +redpar.master_flat+' of all flats . Please wait ........'
 
 sum = dblarr(nc,nr)
 for ncol=0,nc-1 do begin
   for nrow=0,nr-1 do begin
-       if do_mean eq 1 then begin
+       if redpar.master_flat eq 'mean' then begin
            sum[ncol,nrow]=mean(im_arr[ncol,nrow,*])
        endif else begin
            sum[ncol,nrow]=median(im_arr[ncol,nrow,*])
@@ -115,6 +114,17 @@ endfor
 badp = where(sum le 0, nbadp)   
 if nbadp gt 0 then     sum[badp] = 1.0           ;Flaggin all bad pixels within the img itself
 
+
+; >>  Save Master Flat in Memory  file 
+wdsk, sum, name, /new ; Writting Master Flat.
+print, 'REDUCE_CTIO: Master Flat frame  created & stored as :  '+name    
+
+if debug ge 1 then begin
+    MKHDR, flatHeader, sum
+    history_str1 = 'Master '+redpar.master_flat+' Flat frame made of ' + strtrim(string(numwf),2) + ' quartz frames' 
+    sxaddpar, flatHeader, 'HISTORY', history_str1    
+    writefits, name+'.fits' , sum, flatHeader
+endif
 
 
 

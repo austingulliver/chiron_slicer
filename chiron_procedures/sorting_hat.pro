@@ -265,14 +265,19 @@ if keyword_set(reduce) then begin
         ;#####################################################
     		        
     		        
-              if redpar.biasmode eq 0 then begin        		                          
+              if redpar.biasmode eq 0 then begin    ; Otherwise at the moment of getting each image the bias is reduced in other way    		                          
         		       
         		       binning = strtrim(string(redpar.binnings[modeidx]),2)
         		       masterBiasPath = redpar.rootdir+redpar.biasdir+ redpar.date+'_'+binning+'_'+ redpar.master_bias +'_bias.fits';Try to restore before creating from scrath             		 
               		;masterBiasPath = redpar.rootdir+redpar.biasdir+ redpar.date+'_bin31_normal_medbias.dat'               
-              		 
+              		
               		 if (~file_test(masterBiasPath)) or (redpar.bias_from_scratch eq 1) then begin  
               		       
+              		       PRINT, ''
+                  		   PRINT, ''
+                  		   print, " REDUCE-CTIO :           >>> Creating Master Bias <<<   "
+                  		   PRINT, ''
+                  		   PRINT, ''
               		           		  
               		      CASE binning OF               		          
               		          '3x1': chi_masterbias, redpar = redpar, log = log, /bin31, /normal, master_bias=redpar.master_bias ; If interested in the fast mode please change this to /fast or add a call the the CASE statement. 
@@ -326,10 +331,10 @@ if keyword_set(reduce) then begin
             ;################## Actual Reduction #################
             ;##################################################### 
             if redpar.flat_from_scratch eq 0 then begin
-                  reduce_ctio, redpar, mode, star=star, thar=thar, date=night, combine_stellar=combine_stellar ; Since not flatset passed then it will try to restore master flat for the presetn night            
+                  reduce_ctio, redpar, mode, star=star, thar=thar, date=night, combine_stellar=combine_stellar, mstr_stellar_name=mstr_stellar_name ; Since not flatset passed then it will try to restore master flat for the present night            
                   
             endif else if redpar.flat_from_scratch eq 1 then begin
-                  reduce_ctio, redpar, mode, flatset=flatset, star=star, thar=thar, date=night, combine_stellar=combine_stellar ; Actual reduction code
+                  reduce_ctio, redpar, mode, flatset=flatset, star=star, thar=thar, date=night, combine_stellar=combine_stellar, mstr_stellar_name=mstr_stellar_name ; Actual reduction code
                   ;flatset : array containning the file numbers ONLY of quartz/flat files
                   ;thar : "   "    "                            ONLY thar and iodine files
                   ;start: "   "   "                             ONLY  start itself
@@ -443,7 +448,7 @@ print, ' '
       			      ; Finds if there is any pixel shifted wrt to 171218. It's wrt to 2017 since 
       			      ; this is the first wavelength solution that we found
       			      ;---------------------------------------------------------------------------
-      			      current_dir = redpar.rootdir + redpar.iodspecdir+ redpar.imdir + 'achi'+redpar.date + '.'+thar[i]
+      			      current_dir = redpar.rootdir + redpar.iodspecdir+ redpar.imdir + redpar.prefix_tag+ redpar.prefix +thar[i]
       			      current_ref_pixel = find_ref_peak(current_dir) 
 
       			      pixel_offset =  mean( [ref_pixel_2017[0]-current_ref_pixel [0] , ref_pixel_2017[1]-current_ref_pixel [1], $
@@ -578,7 +583,8 @@ if keyword_set(iod2fits) then begin
      ;*******************************************************   
      if  keyword_set ( combine_stellar ) then  begin
       
-      path_mst_stellar= iodspec_path+pretag+run+'mstr_stellar'     
+      path_mst_stellar= iodspec_path+pretag+mstr_stellar_name
+         
       rdsk,spectra_all_stellar,path_mst_stellar,1   ; Reading previously saved spectra (intensities only)
       rdsk,hd,path_mst_stellar,2                    ; Reading header of file above
       sz=size(spectra_all_stellar)  &   ncol=sz[1]    &    nord=sz[2]
@@ -587,7 +593,8 @@ if keyword_set(iod2fits) then begin
       thidfile_name = thidfiles[0]       ; Used on Header 
       spec[0,*,*]=w                      ; Wavelengths for all oders
       spec[1,*,*]=spectra_all_stellar    ; Intensities for all orders (Spectrum )
-      outfile=pretag+run+'mstr_stellar.fits' ; Final fits file name.
+      
+      outfile=pretag+mstr_stellar_name+'.fits' ; Final fits file name.
       
       ;   Modifying "master" stellar  fits headers:
       ;*******************************************************

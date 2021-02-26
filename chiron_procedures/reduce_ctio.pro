@@ -1,5 +1,5 @@
 pro reduce_ctio,  redpar, mode, flatset=flatset, thar=thar, $                   
-   order_ind=order_ind,  star=star, date=date, combine_stellar=combine_stellar
+   order_ind=order_ind,  star=star, date=date, combine_stellar=combine_stellar, mstr_stellar_name= mstr_stellar_name
 
 ; Batch job to drive raw reduction for CTIO
 ; Based on 12-Mar-2011 DF revised for the e2v-4k chip 
@@ -15,6 +15,10 @@ pro reduce_ctio,  redpar, mode, flatset=flatset, thar=thar, $
 ; date: yymmdd (used to create directories)
 
 
+; output :
+;mstr_stellar_name (string) with the master stellar name used for  future reference, I created. 
+
+
 ;2. Prefix added to FITS headers:  
 prefix=redpar.prefix   ; e.g. 'chi111003'   
 if strpos(prefix,'.') lt 0 then prefix=prefix+'.' ; add the point
@@ -22,7 +26,7 @@ if strpos(prefix,'.') lt 0 then prefix=prefix+'.' ; add the point
 ; First check if all relevant input parameters are specified
 
 if ~keyword_set (order_ind) then begin
-     print, 'REDUCE_CTIO: ORDER definition is not given at input, use flat set as input instead'    ; is it using the master flat to trace the orders?
+     print, 'REDUCE_CTIO: ORDER definition is not given as input. Using Master Flat to trace the orders'    ; is it using the master flat to trace the orders?
      order_ind = -1
 endif 
 
@@ -114,30 +118,34 @@ if redpar.debug ge 1 then stop, 'REDUCE_CTIO: press .C to continue'
 PRINT, ''
 PRINT, ''
 print, " REDUCE-CTIO :           >>> Creating MasterFlat <<<   "
+PRINT, ''
+PRINT, ''
 
 ;##################################################
 ;##### Create / Restore Master Flat ###############
 ;##################################################
- name = redpar.rootdir+redpar.flatdir+prefix+mode+'.sum'          
+ name = redpar.rootdir+redpar.flatdir+prefix+mode+'.sum' 
+  
 
  
  
  if keyword_set(flatset) then begin
       ;if redpar.debug then stop, 'REDUCE_CTIO: debug stop before flats, .c to continue'
-      ADDFLAT, flatfnames,sum, redpar, im_arr,do_mean=redpar.do_mean  ; crunch the flats (if redpar.flatnorm=0 then sum = wtd mean)               Creation of MASTER FLAT
+      ADDFLAT, flatfnames,sum, redpar, im_arr,do_mean=redpar.do_mean, masterFlatName=name  ; crunch the flats (if redpar.flatnorm=0 then sum = wtd mean)               Creation of MASTER FLAT
              ; output : sum [#pixelsX, #pixelsY] , it returns bias substracted master flat image 
-      if (size(sum))[0] lt 2 then stop ; no data!
-      wdsk, sum, name, /new ;Writting Master Flat to memory       
-      print, 'REDUCE_CTIO: Master Flat successfuly created & stored in '+name     
+      if (size(sum))[0] lt 2 then stop,  '>> ERROR << : Master Flat was not produced' ; no data!          
+      
+       
   
  endif else begin
-     print, 'REDUCE_CTIO: Using previously saved flat '+name 
+     
      check_if_exist = FILE_TEST(name)
-     if check_if_exist eq 0 then stop, 'ERROR: You set the parameter flat_from_scrath=0 but there is no previous master flat for this nigth. Change flat_from_scrath=0 and run again'
+     if check_if_exist eq 0 then stop, 'ERROR: You set the parameter flat_from_scrath=0 but there is no previous master flat for this nigth. Change flat_from_scrath=1 in the CTIO.PAR file  and run again'
      rdsk, sum, name, 1  ; get existing flat from disk
      bin = redpar.binnings[modeidx] ; set correct binning for order definition
      redpar.binning = [fix(strmid(bin,0,1)), fix(strmid(bin,2,1))]
-     print, 'REDUCE_CTIO: The file restored has a binning of ', redpar.binning
+     print, 'REDUCE_CTIO: Master Flar read from disk: '+name 
+     print, 'REDUCE_CTIO: Master flat restored has a binning of ', redpar.binning
  endelse
 
 
@@ -218,7 +226,7 @@ xwid = redpar.xwids[modeidx]
 
 if (redpar.flatnorm eq 0) then begin 
     ff=1.0 ; Dividing stellar img by 1 will make no difference
-    print, 'REDUCE_CTIO: The Spectrum is not being flattend '
+    print, 'REDUCE_CTIO: The Spectrum is not  flattend '
 
   
  
@@ -228,6 +236,7 @@ endif else if (redpar.flatnorm eq 1) or (redpar.flatnorm eq 3) then begin
 
     
     ;if redpar.debug then stop, 'REDUCE_CTIO: debug stop before getting flat' 
+    
     flat = getflat(sum, orc, xwid, redpar, im_arr=im_arr) ; Master Flat gets input into this method 
                   ;sum (input) Master Flat found as as a MEAN or MEDIAN of im_arr
                   ;im_arr (input) images used to create Master Flat
@@ -241,16 +250,16 @@ endif else if (redpar.flatnorm eq 1) or (redpar.flatnorm eq 3) then begin
     name = redpar.rootdir+redpar.flatdir+prefix+mode+'.flat'
     fitsname = redpar.rootdir+redpar.flatdir+prefix+mode+'.flat.fits'
     wdsk, flat, name, /new
-    rdsk2fits, filename=fitsname, data = flat ; Saves the same file but as the fits version 
+    writefits, fitsname, flat ; Saves the same file but as the fits version 
     
-    ;used to write fits for further analysis 
-    ;writefits, 'C:\Users\mrstu\Desktop\School\research_Physics\yale_software\chiron\files_sent_dr_gulliver\181103_smooth_master_flat.fits', flat
+   
     print, 'REDUCE_CTIO: The stellar spectrum is flattend, AFTER extraction.'
     print, 'REDUCE_CTIO: a Cube-extracted Master Flat (Flat/Smoothed, Flat, Smoothed ) was  stored as '+fitsname 
     ff = flat[*,*,1] ; the actual flat
 
 endif else if (redpar.flatnorm eq 2) or (redpar.flatnorm eq 4)  then begin
-  ; Spectrum gets flattend BEFORE extraction. By the time we get stellar image we divide it by the flat 
+  ; Spectrum gets flattend BEFORE extraction. By the time we get to the  stellar image we divide it by the flat before we extract
+  ; the image produced by dividing the stellar by the flat 
 
   
   ff=sum ; 
@@ -328,15 +337,24 @@ if keyword_set(combine_stellar) then begin
       
       ;  >> Need to alter header , now taking the last header 
       master_stellar = mean(data_cube, /double, dimen=3)    
-      fname_master_stellar = indir + prefix +'mstr_stellar.fits'    
-      out_mast_stellar= outdir + outprefix +'mstr_stellar'  
+      
+      ;  Naming convention for the master stellar is  
+      ;  wmchiYYMMDD_XXX_LLL.fits   where the extra m stands for master 
+      ;  XXX corresponds to the observation number of the first exposure used to create  the master
+      ; stellar and LLL is the number of exposures used to create the master stellar. 
+      
+      mstr_stellar_name ='m'+prefix +recnums[0]+'_'+strtrim(string(n_elements(recnums)),2)
+      fname_master_stellar = indir + mstr_stellar_name+'.fits'    ; Saved in corresponding raw directory       
+      out_mast_stellar= outdir + redpar.prefix_tag+mstr_stellar_name
       
       ; >> Creating ranges of file used to append to Header      
       range_files= make_range_from_vector(star)      
       
-      history_str = 'MASTER STELLAR made of ' + strtrim(string(combined_files),2)+ ' files: '+range_files
+      history_str = 'MASTER STELLAR frame made of ' + strtrim(string(combined_files),2)+ ' files: '+range_files
       sxaddpar, hd, 'HISTORY', history_str
-      writefits,  fname_master_stellar, master_stellar, hd           
+      writefits,  fname_master_stellar, master_stellar, hd   
+      
+             
       CTIO_SPEC,prefix,fname_master_stellar,out_mast_stellar,redpar, orc, xwid=xwid, flat=ff     
   
 endif else begin

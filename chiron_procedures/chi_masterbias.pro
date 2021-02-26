@@ -6,9 +6,8 @@
 ;  PURPOSE: 
 ;    To create and store median/mean  bias frames for the various modes for 
 ;	 bias subtraction
+;	   The master created in here is wrt to the MEDIAN of the frame. Therefore its values will be close to 0.
 ;
-;  CATEGORY:
-;      CHIRON
 ;
 ;
 ;  INPUTS:
@@ -136,29 +135,29 @@ if bobsct ge 2 then begin
     ;Calculating mean/median bias :
     ;---------------------------
     if master_bias eq 'mean' then begin   
-        bobsMaster = mean(bcube, /double, dimen=3)          
+        bobMasterBias = mean(bcube, /double, dimen=3)          
     endif
     if master_bias eq 'median' then begin 
-        bobsMaster = median(bcube, /double, dimen=3)       
+        bobMasterBias = median(bcube, /double, dimen=3)       
     endif else stop, 'CHI_MASTERBIAS: >> ERROR << The variable master_bias can only be median or mean. Please change its value in the ctio.par file'
     
     ;Store master bias:
     ;---------------------------
     masterBiasPath = redpar.rootdir+redpar.biasdir+ redpar.date+'_'+binning+'_'+ redpar.master_bias +'_bias.fits'
-    MKHDR, biasHeader, bobsMaster
+    MKHDR, biasHeader, bobMasterBias
     history_str1 = 'Master Bias made of ' + strtrim(string(bobsct),2) + ' frames'
     history_str2 = 'Binning of individual bias frames : ' + binning
     history_str3 = 'Speed Mode of individual bias frames : ' + rdspd
     sxaddpar, biasHeader, 'HISTORY', history_str1
     sxaddpar, biasHeader, 'HISTORY', history_str2
     sxaddpar, biasHeader, 'HISTORY', history_str3
-    writefits, masterBiasPath, bobsMaster,biasHeader
+    writefits, masterBiasPath, bobMasterBias,biasHeader
     
     ;Legacy code
     ;fname = redpar.rootdir+redpar.biasdir+redpar.date+'_bin'+binsz+'_'+rdspd+'_medbias.dat'
     ;save, bobsmed, filename=fname
    
-    print, 'CHI_MASTERBIAS: Master bias stored : ', masterBiasPath
+    print, 'CHI_MASTERBIAS: Master bias stored as : ', masterBiasPath
     print, '  '
 endif else STOP, 'CHI_MASTERBIAS: >> ERROR << Master Bias was not created. Only '+strtrim(string(bobsct),2)+' bias frames found'
 

@@ -46,6 +46,11 @@ function getimage, file, redpar, header=header, geom=geom
 
 
 
+;#####################################################
+;##  2 Amplifiers
+;#####################################################
+
+
 if namps eq 2 then begin
 ; This code will work for two-amplifier mode only!
 ; no lower amps 
@@ -107,18 +112,30 @@ endif ;2 amps
       
       
       
+
+;#####################################################
+;##  4 Amplifiers
+;#####################################################
       
       
-if namps eq 4 then begin ; Number of amplifiers= 4
-	  
+if namps eq 4 then begin
+  
+     ;#####################################################
+     ;##  Use mean/median bias frame 
+     ;#####################################################	  
 	   if redpar.biasmode eq 0 then begin ; It substracts the trim + master bias
 		   ;If the median bias frame option is set in ctio.par use this method:
 		   rdspd = geom.readout_speed
 		   if strt(sxpar(header, 'CCDSUM')) eq '3 1' then binsz = '31'
 		   if strt(sxpar(header, 'CCDSUM')) eq '1 1' then binsz = '11'
 		   if strt(sxpar(header, 'CCDSUM')) eq '4 4' then binsz = '44'
-		   fname = redpar.rootdir+redpar.biasdir+redpar.date+'_bin'+binsz+'_'+strt(rdspd)+'_medbias.dat' ; Created in sorting_hat.pro. It restored var bobsmed
-		   restore, fname
+		   
+		   binning = strtrim(string(redpar.binnings[redpar.mode]),2)
+		   fname = redpar.rootdir+redpar.biasdir+ redpar.date+'_'+binning+'_'+ redpar.master_bias +'_bias.fits'
+		   
+		   bobMasterBias= readfits(fname)
+		   ;fname = redpar.rootdir+redpar.biasdir         +redpar.date+'_bin'+binsz+'_'+strt(rdspd)+'_medbias.dat' ; Created in sorting_hat.pro. It restored var bobMasterBias
+		   ;restore, fname
 		   
 		   
 		   ;First subtract the median overscan from each quadrant. This part floats around over the course of the night, 
@@ -140,7 +157,7 @@ if namps eq 4 then begin ; Number of amplifiers= 4
 		   im[idx[0]:idx[1], idx[2]:idx[3]] -=  median(im[geom.bias_trim.botright[0]:geom.bias_trim.botright[1], geom.bias_trim.botright[2]:geom.bias_trim.botright[3]])
 		   
 		   ;now subtract the median bias frame:
-		   im = im - bobsmed
+		   im = im - bobMasterBias
 		   ;print, "the size of the master bias being subtracted is :"
 		   ;print, size(bobsmed)
 		   ;print, 'size of the image after BIAS us susbtracted'
@@ -186,6 +203,10 @@ if namps eq 4 then begin ; Number of amplifiers= 4
       redpar.ron = sqrt(mean(ron2))  ; readout noise in ADU
 
 
+      ;#####################################################
+      ;##  Use median overscan row
+      ;#####################################################
+      
       if redpar.biasmode eq 1 then begin
       ; If the median overscan option is set in ctio.par, then subtract the bias using this method:
         	szimupl=size(imupleft)  &   szbupl=size(biasupleft) 
@@ -205,8 +226,9 @@ if namps eq 4 then begin ; Number of amplifiers= 4
         	for k=0,szimbotr[2]-1 do imbotright[*,k] = imbotright[*,k]- median(biasbotright[*,k])
       endif
       
-      
-      ; Non-linearity correction
+      ;#####################################################
+      ;##  Non-linearity correction
+      ;#####################################################  
       mode = where(strtrim(geom.readout_speed) eq redpar.readmodes, count) ; readout mode
       if count eq 0 then begin 
           print, 'Unknown readout mode! Return ZERO'
@@ -232,6 +254,10 @@ if namps eq 4 then begin ; Number of amplifiers= 4
          print, 'RON noise [upleft,upright, botleft, botright]: ', sqrt(ron2)
       endif
       
+      
+      ;#####################################################
+      ;##  Account for gain 
+      ;#####################################################
         gainupleft=redpar.gains[1,mode]  & gainupleft = gainupleft[0]
         gainupright=redpar.gains[2,mode]  & gainupright = gainupright[0]
         gainbotleft=redpar.gains[0,mode]  & gainbotleft = gainbotleft[0]
@@ -241,14 +267,15 @@ if namps eq 4 then begin ; Number of amplifiers= 4
         imupright=imupright*gainupright
         imbotleft=imbotleft*gainbotleft
         imbotright=imbotright*gainbotright
-      ;print, redpar.gains[*,mode]
-      ;stop
+
         im=[[imbotleft, imbotright],[imupleft, imupright]]  ; join the four parts
         
         ;print, "The image before FURTHER trimming :"
         ;print, size(im)
       
-      ; Trim the image?
+      ;#####################################################
+      ;##  Account for trimming 
+      ;#####################################################
        sz = size(im)
        if (redpar.xtrim[0] eq 0) and (redpar.xtrim[1] eq 0) then xtrim=[0,sz[1]-1] else xtrim=redpar.xtrim/geom.bin.row 
        if (redpar.ytrim[0] eq 0) and (redpar.ytrim[1] eq 0) then ytrim=[0,sz[2]-1] else ytrim=redpar.ytrim/geom.bin.col 
@@ -260,13 +287,9 @@ endif ;quad amp r/o
 
 ; remember the binning in redpar
   redpar.binning = [geom.bin.row, geom.bin.col]
-
- im=rotate(im,1) 	
-  
-  ;print, 'Dimensions of retrieved image is :'
-  ;print, size(im)	
-
-  return, im
+  im=rotate(im,1) 	
+   
+  RETURN , im
 
 end
   
