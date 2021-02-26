@@ -15,7 +15,6 @@ chiron/sent_by_email/
 *.thid
 /.metadata/
 all_yale_files/*
-idl_packages/
 *.project
 previous_thid_ignore/
 *.tgz
