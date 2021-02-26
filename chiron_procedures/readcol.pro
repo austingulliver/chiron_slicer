@@ -112,7 +112,7 @@ pro readcol,name,v1,v2,v3,v4,v5,v6,v7,v8,v9,v10,v11,v12,v13,v14,v15, $
 
 ; Get number of lines in file
 
-   nlines = NUMLINES( name )
+   nlines = FILE_LINES( name )
    if nlines LT 0 then return
 
    if keyword_set(DEBUG) then $
