@@ -140,8 +140,6 @@ custom_thid_path = redpar.rootdir+redpar.customthidsol
 pretag = redpar.prefix_tag
 
 
-print, redpar
-
 
 
 
