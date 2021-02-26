@@ -13,7 +13,6 @@ flatdir:  'tous\mir7\flats\',                          ; Output for summed flat 
 biasdir:  'tous\mir7\master_bias\',                    ; Output directory  for median/mean bias frames
 orderdir: 'tous\mir7\orders\',                         ; order locations
 barydir:  'tous\mir7\bary\',                           ; Barycentric Correction Directory 
-biasmode: 0,                                           ; 0: use median/mean bias frame, 1: use median overscan row
 rawdir: 'raw\mir7\',                                   ; raw files
 imdir:   'yymmdd\',                                    ; yymmdd/ image directory with raw night data (*)
 date:   'yymmdd',                                      ; yymmdd/ image directory with raw night data (*)
@@ -35,6 +34,7 @@ ron:   7.0,                                            ; RON estimate [ADU], to 
 gain:   1.0,                                           ; actual gain [el/adu] (*)
 binning: [1,1],             			       ; will contain actual binning [row,col] from the header (*)
 mode:  0,                      			       ; index of the actual mode (*)
+biasmode: 0,                                           ; 0: use median/mean bias frame, 1: use median overscan row
 flatnorm:  0,                  			       ;If 0 Master Flat is either the product of the MEAN or MEDIAN of all flats . If 1 then flat IS normalized  and then put back to normal before finding MEAN MEDIAN.               
                                                        ;       flatnorm Options:
                                                        ;       0. The master flat was NOT normalized before being calculated. Spectra are not flattened.
