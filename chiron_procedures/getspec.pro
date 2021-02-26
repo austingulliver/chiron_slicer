@@ -168,9 +168,9 @@ for onum=1,nord do begin				;loop thru orders
     ;endif else getarc, im, orcend, onum, xwd, arc, pix, ybi, yti
     
     ;Added to account for flattening BEFORE extraction
-    if  (redpar.flatnorm eq 2) or (redpar.flatnorm eq 4) then xwd=redpar.xwids[redpar.mode] -4 else xwd=redpar.xwids[redpar.mode]
-
-
+   
+    xwd = redpar.xwids[redpar.mode] -  redpar.pixel_not_extracted ; Set up this parameter in ctio.par    
+    ;print, 'GETSPEC: Extracting '+ strtrim(string(xwd),2) +' pixels in the cross dispersion direction.  '
     getarc, im, orcend, onum, xwd, arc, pix, debug = redpar.debug, ybi, yti
     
     

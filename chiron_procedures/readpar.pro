@@ -19,14 +19,19 @@ function readpar, file
   openr, unit, file, /get_lun
   while not eof(unit) do begin
     readf, unit, line
+    
     if strpos(line,';') eq -1 then tmps = tmps + ' ' + line  else tmps = tmps + ' ' + strmid(line,0,strpos(line,';'))
+    
     if strpos(line,'}') ne -1 then tmps = strcompress(strtrim(tmps,2))	
    
     
   endwhile      
   
+
+  
   print, ''
   res = execute('par = '+tmps)  ; execute command, create structure
+
   close, unit 
   free_lun, unit  
   print, 'READPAR: Variables are assigned default values from :', file

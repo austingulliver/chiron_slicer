@@ -58,6 +58,8 @@ angstrom = '!6!sA!r!u!9 %!6!n'
 
 
 
+
+
 spawn, 'cd', pwddir  ;Updated to a Windows command
 case pwddir of
    '/home/matt/projects/CHIRON/QC': ctparfn = '/home/matt/projects/CHIRON/REDUCTION/ctio.par'
@@ -85,6 +87,12 @@ if ctparfn eq !NULL then begin
   stop
 endif
 
+
+;#####################################################
+;### Read ctio.par + set  initial variables 
+;#####################################################
+
+
 redpar = readpar(ctparfn) ; Contains all parsed default values
 redpar.imdir = night+'\'  ; pass night into redpar
 redpar.date = night
@@ -105,24 +113,17 @@ endif ;run not specified
 
 
 if strpos(run,'.') lt 0 then run=run+'.' ; add the point
- redpar.prefix = run                     ; E.g chi181103
-
-
-;   Modes keyword
-if ~keyword_set(mode) then begin 
-    print, 'SORTING_HAT: MODE is not defined. Returning from sorting_hat'
-    return
-endif
+redpar.prefix = run                      ; E.g chiYYMMDD.
 
 
 
-modeidx = (where(mode eq redpar.modes))[0] ; which mode?
+if ~keyword_set(mode) then stop, 'SORTING_HAT: MODE is not defined. Returning from sorting_hat'
+modeidx = (where(mode eq redpar.modes))[0]   ; which mode?
 if keyword_set(bin11) then modeidx += 4
-redpar.mode = modeidx  ; pass current mode to other programs
-if modeidx lt 0 then begin
-    print, 'Error: unrecognized mode. Returning from sorting_hat'
-    return
- endif
+redpar.mode = modeidx                        ; pass current mode to other programs
+if modeidx lt 0 then  stop, 'SORTING_HAT: >> ERROR << unrecognized mode. Returning from sorting_hat'
+    
+
 
 ;logpath = redpar.rootdir+redpar.logdir+'20'+strmid(night, 0, 2)+'/'
 logpath = redpar.logdir+'20'+strmid(night, 0, 2)+'\'                ; 20+18(first 2 digits of my night)
@@ -138,10 +139,20 @@ thid_path_dat =   redpar.rootdir+redpar.thiddir
 custom_thid_path = redpar.rootdir+redpar.customthidsol
 pretag = redpar.prefix_tag
 
+
+print, redpar
+
+
+
+
+;#####################################################
+;### Read .log sheet + parse 
+;#####################################################
+
 readcol,logsheet, skip=9, obnm, objnm, i2, mdpt, exptm, bin, slit, f='(a5, a13, a4, a14, a8, a3, a6)'
 
 ;now to expand the quartz items in the logsheet:
-;print, 'obnm before is: ', obnm       ; These are all file numberas E.g. 1001  1002  .....
+;print, 'obnm before is: ', obnm       ; These are all file numbers E.g. 1001  1002  .....
    
 
 qcombs = where(strlen(obnm) gt 4)
@@ -194,9 +205,13 @@ ut = gettime(mdpt) ; floating-point hours, >24h in the morning
 
 ;-> Up to here: variables obnm,objnm, i2,mdpt ....  are vectors that contain data of log sheet 
 
-; >> Creates log structure which has information about ALL raw files. 
-; -----------------------------------------------------------------------
-createLogStructures,redpar,obnm,objnm 
+
+; 
+;#####################################################
+;### Creates log structure which has information about ALL raw files. 
+;#####################################################
+
+createLogStructures,redpar,obnm,objnm ; ,/doFromScratch   ; uncomment this for production 
 
 
 
@@ -249,34 +264,35 @@ if keyword_set(reduce) then begin
         ;################## Master Bias   ####################
         ;#####################################################
     		        
-              if redpar.biasmode eq 0 then begin        		  
-        		                          
-        		  
-              		  if redpar.modes[modeidx] ne 'fiber' then begin ;now create the median bias frames 
-                  			 fname = redpar.rootdir+redpar.biasdir+ redpar.date+'_bin31_normal_medbias.dat' ;Tries to restore before creating from scrath                   			  
-                  			 if (~file_test(fname)) or (redpar.bias_from_scratch eq 1) then begin   
-                  			        print, 'SORTING_HAT: Master Bias is getting created from scratch '
-                      			    print, '                   ...3x1 normal...'
-                      				chi_masterbias, redpar = redpar, log = log, /bin31, /normal, master_bias=redpar.master_bias, remove_cr=remove_cr   ; Log gets restore
-                      			  ;  print, '                   ...4x4 normal...'
-                      				;chi_masterbias, redpar = redpar, log = log, /bin44, /normal, do_mean=redpar.do_mean 
-                      			  ;  print, '                   ...1x1 normal...'
-                      				;chi_masterbias, redpar = redpar, log = log, /bin11, /normal, do_mean=redpar.do_mean  
-                      			  ;  print, '                   ...3x1 fast...'
-                      				;chi_masterbias, redpar = redpar, log = log, /bin31, /fast, do_mean=redpar.do_mean 
-                      			  ;  print, '                   ...1x1 fast...'
-                      				;chi_masterbias, redpar = redpar, log = log, /bin11, /fast,  do_mean=redpar.do_mean  
-                  			 endif
-              		  endif;nonfiber median bias frame check/make
-              		  fnamef = redpar.rootdir+redpar.biasdir+ redpar.date+'_bin44_normal_medbias.dat'  ; If mode=fiber then try restore first : Inherited from Yale
-              		  if ~file_test(fnamef)or (redpar.bias_from_scratch eq 1)  then begin
-              			     chi_masterbias, redpar = redpar, log = log, /bin44, /normal, master_bias=redpar.master_bias
-              		  endif;fiber median bias frame check/make
+    		        
+              if redpar.biasmode eq 0 then begin    ; Otherwise at the moment of getting each image the bias is reduced in other way    		                          
+        		       
+        		       binning = strtrim(string(redpar.binnings[modeidx]),2)
+        		       masterBiasPath = redpar.rootdir+redpar.biasdir+ redpar.date+'_'+binning+'_'+ redpar.master_bias +'_bias.fits';Try to restore before creating from scrath             		 
+              		;masterBiasPath = redpar.rootdir+redpar.biasdir+ redpar.date+'_bin31_normal_medbias.dat'               
+              		
+              		 if (~file_test(masterBiasPath)) or (redpar.bias_from_scratch eq 1) then begin  
+              		       
+              		       PRINT, ''
+                  		   PRINT, ''
+                  		   print, " REDUCE-CTIO :           >>> Creating Master Bias <<<   "
+                  		   PRINT, ''
+                  		   PRINT, ''
+              		           		  
+              		      CASE binning OF               		          
+              		          '3x1': chi_masterbias, redpar = redpar, log = log, /bin31, /normal, master_bias=redpar.master_bias ; If interested in the fast mode please change this to /fast or add a call the the CASE statement. 
+              		          '4x4': chi_masterbias, redpar = redpar, log = log, /bin44, /normal, master_bias=redpar.master_bias
+              		          '1x1': chi_masterbias, redpar = redpar, log = log, /bin11, /normal, master_bias=redpar.master_bias
+              		      ENDCASE             		    
+              	  endif
               endif
             
             
             
-            ;******************** Convert dash into range for logfile flat numbers
+            ;#####################################################
+            ;## Parse dash from .log  flat file obversation numbers 
+            ;#####################################################
+            
         		flatindx=where(objnm1 eq 'quartz',num_flat)   ;Gathering all quartz/flat files        
          		if num_flat gt 0 then begin 
             		  tmp=[0]
@@ -315,10 +331,10 @@ if keyword_set(reduce) then begin
             ;################## Actual Reduction #################
             ;##################################################### 
             if redpar.flat_from_scratch eq 0 then begin
-                  reduce_ctio, redpar, mode, star=star, thar=thar, date=night, combine_stellar=combine_stellar ; Since not flatset passed then it will try to restore master flat for the presetn night            
+                  reduce_ctio, redpar, mode, star=star, thar=thar, date=night, combine_stellar=combine_stellar, mstr_stellar_name=mstr_stellar_name ; Since not flatset passed then it will try to restore master flat for the present night            
                   
             endif else if redpar.flat_from_scratch eq 1 then begin
-                  reduce_ctio, redpar, mode, flatset=flatset, star=star, thar=thar, date=night, combine_stellar=combine_stellar ; Actual reduction code
+                  reduce_ctio, redpar, mode, flatset=flatset, star=star, thar=thar, date=night, combine_stellar=combine_stellar, mstr_stellar_name=mstr_stellar_name ; Actual reduction code
                   ;flatset : array containning the file numbers ONLY of quartz/flat files
                   ;thar : "   "    "                            ONLY thar and iodine files
                   ;start: "   "   "                             ONLY  start itself
@@ -432,7 +448,7 @@ print, ' '
       			      ; Finds if there is any pixel shifted wrt to 171218. It's wrt to 2017 since 
       			      ; this is the first wavelength solution that we found
       			      ;---------------------------------------------------------------------------
-      			      current_dir = redpar.rootdir + redpar.iodspecdir+ redpar.imdir + 'achi'+redpar.date + '.'+thar[i]
+      			      current_dir = redpar.rootdir + redpar.iodspecdir+ redpar.imdir + redpar.prefix_tag+ redpar.prefix +thar[i]
       			      current_ref_pixel = find_ref_peak(current_dir) 
 
       			      pixel_offset =  mean( [ref_pixel_2017[0]-current_ref_pixel [0] , ref_pixel_2017[1]-current_ref_pixel [1], $
@@ -567,7 +583,8 @@ if keyword_set(iod2fits) then begin
      ;*******************************************************   
      if  keyword_set ( combine_stellar ) then  begin
       
-      path_mst_stellar= iodspec_path+pretag+run+'mstr_stellar'     
+      path_mst_stellar= iodspec_path+pretag+mstr_stellar_name
+         
       rdsk,spectra_all_stellar,path_mst_stellar,1   ; Reading previously saved spectra (intensities only)
       rdsk,hd,path_mst_stellar,2                    ; Reading header of file above
       sz=size(spectra_all_stellar)  &   ncol=sz[1]    &    nord=sz[2]
@@ -576,7 +593,8 @@ if keyword_set(iod2fits) then begin
       thidfile_name = thidfiles[0]       ; Used on Header 
       spec[0,*,*]=w                      ; Wavelengths for all oders
       spec[1,*,*]=spectra_all_stellar    ; Intensities for all orders (Spectrum )
-      outfile=pretag+run+'mstr_stellar.fits' ; Final fits file name.
+      
+      outfile=pretag+mstr_stellar_name+'.fits' ; Final fits file name.
       
       ;   Modifying "master" stellar  fits headers:
       ;*******************************************************

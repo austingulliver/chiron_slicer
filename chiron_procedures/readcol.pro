@@ -158,6 +158,7 @@ pro readcol,name,v1,v2,v3,v4,v5,v6,v7,v8,v9,v10,v11,v12,v13,v14,v15, $
 
    k = 0L                                     ;Loop over output columns
    hex = bytarr(nfmt)
+   
    for i = 0L, nfmt-1 do begin
 
        fmt1 = gettok( frmt, ',' )
@@ -216,7 +217,8 @@ pro readcol,name,v1,v2,v3,v4,v5,v6,v7,v8,v9,v10,v11,v12,v13,v14,v15, $
        if ( idltype[i] NE 0 ) then begin       ;Expecting data?
 
           if ( idltype[i] NE 7 ) then begin    ;Check for valid numeric data
-             tst = strnumber(var,val,hex=hex[i])          ;Valid number?
+             ;tst = strnumber(var, val, hex=hex[i] )          ;Valid number?
+             tst = strnumber(var,val)          ;Valid number?
              if tst EQ 0 then begin            ;If not, skip this line
                  if not keyword_set(SILENT) then $ 
                       message,'Skipping Line ' + strtrim(skipline+j+1,2),/INF 
