@@ -20,4 +20,5 @@ previous_thid_ignore/
 *.tgz
 /cfitsio-3.49/
 /chiron/various_resources/
-chiron/debugging/
+chiron/debugging
+idl_packages/optspecextr-0.3.1/

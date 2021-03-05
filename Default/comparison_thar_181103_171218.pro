@@ -1,6 +1,12 @@
 
 
 
+t='o'
+if t eq 'm' then begin
+  print, 'got t'
+endif else if t eq 's' then begin
+  print, 'got not t'
+endif else print, ' else'
 
 ;Comparing ThAr files for 181103 and 171218
 

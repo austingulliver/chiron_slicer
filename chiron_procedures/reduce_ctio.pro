@@ -15,9 +15,9 @@ pro reduce_ctio,  redpar, mode, flatset=flatset, thar=thar, $
 ; date: yymmdd (used to create directories)
 
 
-; output :
-;mstr_stellar_name (string) with the master stellar name used for  future reference, I created. 
 
+;>> Define the number of pixels used in the cross dispersion direction for a given order.
+xwid = redpar.xwids[redpar.mode] -  redpar.pixel_not_extracted ; Set up this parameter in ctio.par
 
 ;2. Prefix added to FITS headers:  
 prefix=redpar.prefix   ; e.g. 'chi111003'   
@@ -131,7 +131,7 @@ PRINT, ''
  
  if keyword_set(flatset) then begin
       ;if redpar.debug then stop, 'REDUCE_CTIO: debug stop before flats, .c to continue'
-      ADDFLAT, flatfnames,sum, redpar, im_arr,do_mean=redpar.do_mean, masterFlatName=name  ; crunch the flats (if redpar.flatnorm=0 then sum = wtd mean)               Creation of MASTER FLAT
+      ADDFLAT, flatfnames,sum, redpar, im_arr, masterFlatName=name  ; crunch the flats (if redpar.flatnorm=0 then sum = wtd mean)               Creation of MASTER FLAT
              ; output : sum [#pixelsX, #pixelsY] , it returns bias substracted master flat image 
       if (size(sum))[0] lt 2 then stop,  '>> ERROR << : Master Flat was not produced' ; no data!          
       
@@ -222,7 +222,7 @@ endelse
 ;##################################################
 ;  Modifed to account for "flatting" taking place before and after  extraction 
 
-xwid = redpar.xwids[modeidx]
+
 
 if (redpar.flatnorm eq 0) then begin 
     ff=1.0 ; Dividing stellar img by 1 will make no difference
@@ -335,8 +335,16 @@ if keyword_set(combine_stellar) then begin
      
       
       
-      ;  >> Need to alter header , now taking the last header 
-      master_stellar = mean(data_cube, /double, dimen=3)    
+       
+      ;Calculating mean/median stellar :
+      ;---------------------------
+      if redpar.master_stellar eq 'mean' then begin
+        master_stellar = mean(data_cube, /double, dimen=3)
+      endif else if redpar.master_stellar eq 'median' then begin
+        master_stellar = median(data_cube, /double, dimen=3)
+      endif else stop, 'REDUCE_CTIO: >> ERROR << The variable master_stellar can only be median or mean. Please change its value in the ctio.par file'
+
+ 
       
       ;  Naming convention for the master stellar is  
       ;  wmchiYYMMDD_XXX_LLL.fits   where the extra m stands for master 
@@ -358,10 +366,10 @@ if keyword_set(combine_stellar) then begin
       CTIO_SPEC,prefix,fname_master_stellar,out_mast_stellar,redpar, orc, xwid=xwid, flat=ff     
   
 endif else begin
-  
-  
+      
+      
       FOR i=0,nrec-1 do begin
-          redpar.seqnum = recnums[i]
+          redpar.seqnum = recnums[i]   
           CTIO_SPEC,prefix,spfnames[i],outfnames[i],redpar, orc, xwid=xwid, flat=ff  ;put it back to remove CR /cosmics
       ENDFOR
   

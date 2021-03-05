@@ -2,9 +2,9 @@
 ; - Used for Boxcar Extraction 
 ; -This subroutine extracts a curved arc (arc) from an image array (im). The
 ;   curvature of the arc is determined from polynomial fit coefficients (orc)
-;   which usually trace the curvature of the echelle orders. The particular
+;   which traces the curvature of the echelle orders. The particular
 ;   arc to extract is specified by an order number (onum), which need not be
-;   integral. Positions of nonintegral orders are interpolated from surrounding
+;   integer. Positions of noninteger orders are interpolated from surrounding
 ;   orders.
 ; - Extracts one order at the time.
 ;   

@@ -21,8 +21,10 @@ versiond:   'date',                                    ; systime when this file 
 versionn:   '4.0',                                      ; version of the reduction code
 prefix_tag: 'w',                                       ; added prefix for output filenames w stands for wavelength calibrated 
 prefix:  'chiyymmdd.',                                 ; file prefix (*)
-xtrim: [0,0],                                          ;originally it was [0,3150]  trim along line (cross-dispersion direction), UNBINNED pixels
-ytrim: [0,0],                                          ; originally it was  [601,3800]   vertical trim (along disp.), UNBINNED pixels yt=2
+xtrim: [0,0],                                          ;originally it was [0,3150]  trim along line (cross-dispersion direction), UNBINNED pixels. If changed , possibly the number of orders
+                                                       ; extracted would also have to change
+ytrim: [0,0],                                          ; originally it was  [601,3800]  vertical trim (along disp.), UNBINNED pixels yt=2 . Notice that if these values are chagnes then 
+                                                       ; a new polynomial for the wavelength calibration has to be found
 readmodes:  ['fast','normal'],                         ; readout modes
 nlc: [[0, 0],[0, 0]],                                  ;non-linearity coefs. [left,right] in fast and normal
 gains: [[5.00,5.17,4.73,5.40], [1.309,1.283,1.266,1.259]], ; gain  [ [4*]fast, [4*]norm], el/ADU  corrected
@@ -35,7 +37,7 @@ gain:   1.0,                                           ; actual gain [el/adu] (*
 binning: [1,1],             			       ; will contain actual binning [row,col] from the header (*)
 mode:  0,                      			       ; index of the actual mode (*)
 biasmode: 0,                                           ; 0: use median/mean bias frame, 1: use median overscan row
-flatnorm:  0,                  			       ;If 0 Master Flat is either the product of the MEAN or MEDIAN of all flats . If 1 then flat IS normalized  and then put back to normal before finding MEAN MEDIAN.               
+flatnorm:  2,                  			       ;If 0 Master Flat is either the product of the MEAN or MEDIAN of all flats . If 1 then flat IS normalized  and then put back to normal before finding MEAN MEDIAN.               
                                                        ;       flatnorm Options:
                                                        ;       0. The master flat was NOT normalized before being calculated. Spectra are not flattened.
                                                        ;       1. The master flat was NOT normalized before being calculated. Spectra are flattened AFTER extraction.
@@ -65,12 +67,12 @@ debug: 0,                                              ; 1 in debug mode, with p
                                                        ;3. Stops in debugging locations. Plots to screen. Prints a lot. 
                                                        ;4. Everything. Run this when CHIRON has been modified to determine new order locations. 
                                                        ;Once finished, copy the new best fit order locations to the "pkcoefs" tag above.
-pixel_not_extracted: 4,                                ; Number of pixels no extracted from the default xwids for each mode. This must be an integer, even number 
-                                                       ; E.g. Slice has 12 pixels. If pixel_no_extracted:4 the pixels extracted are 8 (4 up-4 down)
+pixel_not_extracted: 0,                                ; Number of pixels no extracted from the default xwids for each mode. This must be an integer, even number 
+                                                       ; E.g. Slice has 12 pixels. If pixel_no_extracted:4 then pixels extracted are 8 (4 up-4 down)
 use_prev_tracing: 1,                                   ; If 1 then it used the previous order tracing stored. Only use if such file exist. Default value is 0
 master_bias:'median',                                  ; Can only take 2 string values 'median' or 'mean'. Used to calculate the mean/median of all bias frames and create master bias.
 master_flat:'median',                                  ; Can only take 2 string values 'median' or 'mean'. Used to calculate the mean/median of all flat frames and create master flat.
-do_mean: 1,                                            ; If 0 then finds the MEDIAN to create the master bias and the master flat. If 1 then find MEAN Regardless files gets stored as ..medbias....
-flat_from_scratch: 0,                                  ; If 1 create the master flat from scratch every time program runs, if 0 then program restores existing file in memory for given night
-bias_from_scratch: 0}                                  ; If 1 Creates master bias from scratch regardless if such file exists already
+master_stellar: 'mean',                                ; Can only take 2 string values 'median' or 'mean'. Used to calculate the mean/median of all stellar frames and create master master.
+flat_from_scratch: 1,                                  ; If 1 create the master flat from scratch every time program runs, if 0 then program restores existing file in memory for given night
+bias_from_scratch: 1}                                  ; If 1 Creates master bias from scratch regardless if such file exists already
 

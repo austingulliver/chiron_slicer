@@ -136,8 +136,7 @@ if bobsct ge 2 then begin
     ;---------------------------
     if master_bias eq 'mean' then begin   
         bobMasterBias = mean(bcube, /double, dimen=3)          
-    endif
-    if master_bias eq 'median' then begin 
+    endif else if master_bias eq 'median' then begin 
         bobMasterBias = median(bcube, /double, dimen=3)       
     endif else stop, 'CHI_MASTERBIAS: >> ERROR << The variable master_bias can only be median or mean. Please change its value in the ctio.par file'
     

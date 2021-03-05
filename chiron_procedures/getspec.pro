@@ -55,9 +55,9 @@ if n_params() lt 4 then begin
 endif
 
 ;  trace,25,'GETSPEC: Entering routine.'
-;;;;;;;;;;;;;;;;;;;;;;;
-;;;;;;;;;Constants. ;;;
-;;;;;;;;;;;;;;;;;;;;;;;
+ ;*******************************************************
+ ;   Constants
+ ;*******************************************************
 
 
 im=double(im)
@@ -121,9 +121,9 @@ if redpar.debug ge 2 then print,'GETSPEC: Extracting spectrum.'
 
 
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;;;;;;; CR Removal         ;;;;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+ ;*******************************************************
+ ;   Remove CR  ONE frame at the time
+ ;*******************************************************
 
 
 if n_elements(sky) eq 0 then sky=im*0.
@@ -143,9 +143,9 @@ ytarr = dblarr(imsz[1], orcsz[2])
 
 
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;;;;;;; Boxcar Extraction  ;;;;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+ ;*******************************************************
+ ;   Boxcar extraction
+ ;*******************************************************
 
 !p.multi=[1,1,2]
 for onum=1,nord do begin				;loop thru orders
@@ -167,9 +167,9 @@ for onum=1,nord do begin				;loop thru orders
       	
     ;endif else getarc, im, orcend, onum, xwd, arc, pix, ybi, yti
     
-    ;Added to account for flattening BEFORE extraction
+    ;xwid gets set up in reduce_ctio.pro
    
-    xwd = redpar.xwids[redpar.mode] -  redpar.pixel_not_extracted ; Set up this parameter in ctio.par    
+      
     ;print, 'GETSPEC: Extracting '+ strtrim(string(xwd),2) +' pixels in the cross dispersion direction.  '
     getarc, im, orcend, onum, xwd, arc, pix, debug = redpar.debug, ybi, yti
     

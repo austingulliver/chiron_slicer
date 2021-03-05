@@ -1,13 +1,12 @@
 ; median-co-adds flat-field files, result in SUM
 ; Find the master flat based on set of flat files numbers passed as input
-; 
-;do_mean: If 1 Calculates the Mean. 0 Calculates the mean
+
 
 ;Output:  sum(size of img)         :has either the MEAND or MEDIAN of all flats
 ;         im_arr(*,*, #of flats)   :all flats in a CUBE form   IF Normalized option actived  -->
 ;                                                              If not normalized then flats are just Copy-Paste
 
-pro addflat, flatfiles, sum, redpar, im_arr, do_mean=do_mean, masterFlatName=name
+pro addflat, flatfiles, sum, redpar, im_arr, masterFlatName=name
 
 compile_opt idl2
 
@@ -102,9 +101,9 @@ for ncol=0,nc-1 do begin
   for nrow=0,nr-1 do begin
        if redpar.master_flat eq 'mean' then begin
            sum[ncol,nrow]=mean(im_arr[ncol,nrow,*])
-       endif else begin
+       endif else  if redpar.master_flat eq 'median' then begin
            sum[ncol,nrow]=median(im_arr[ncol,nrow,*])
-       endelse	 
+       endif else stop, '>> ERROR << : >> ERROR << The variable master_flat can only be median or mean. Please change its value in the ctio.par file'
   endfor
 endfor
 

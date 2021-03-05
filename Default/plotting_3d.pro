@@ -1,21 +1,36 @@
 
 
 
-file= 'C:\Users\mrstu\idlworkspace_yalecalibration\chiron\raw\mir7\171218\chi171218.mstr_stellar.fits'
+flat= 'C:\Users\mrstu\idlworkspace_yalecalibration\chiron\tous\mir7\flats\chi210208.slicer.sum.fits'
 
-im= readfits(file)
+iflat= 'C:\Users\mrstu\idlworkspace_yalecalibration\chiron\raw\mir7\210208\chi210208.1040.fits'   ; 1040
+
+file= 'C:\Users\mrstu\idlworkspace_yalecalibration\chiron\raw\mir7\210208\chi210208.1121.fits'
+
+file17= 'C:\Users\mrstu\idlworkspace_yalecalibration\chiron\raw\mir7\171218\chi171218.1145.fits'
+
+
+
+
+imFlat= readfits(iflat)
+imSpec= readfits(file)
+
+im = imSpec /  imFlat
+
 ;im=rotate(im,1)
-print,size(im)
+print,size(im)  ; 1432 * 4112
 
 
-y1=500
-y2=520
+y1=900
+y2=950
 deltay=y2-y1
 
-X1=4112.0/4.0
-X2=4112.0/2.0
+X1=0.0;4112.0/4.0
+X2=4111.0;4112.0/2.0
 
-im=im[y1:y2,x1:x2]   ; Red Order
+
+imRaw=im[   y1:y2, x1:x2]
+;im=im[x1:x2, y1:y2]   ; Red Order    4112 x 1366
 ;im=im[450:490,*]   ; Middle Order
 ;im=im[1000:1431,0:689]  ; Plotting Blue Orders AFTER ARTIFACT
 ;im=im[1200:1250,727:*]  ; Plotting Blue Orders BEFORE ARTIFACT
@@ -23,30 +38,31 @@ im=im[y1:y2,x1:x2]   ; Red Order
 sz=size(im)
 print, 'this is what matters'
 print, sz
-d1=sz[1]   ; 1432
-d2=sz[2]   ; 4112
+
+d1=sz[1]   ;  4112 
+d2=sz[2]   ;  1432
 
 ;superd1=indgen(d1)
 ;superd2=indgen(d2)
 
 
-x=lonarr(d1*d2)
-y=lonarr(d1*d2)
-z=dblarr(d1*d2)
-
-counter=0L
-
-for i=0, deltay do begin
-
-  for j=0,d2-1 do begin
-    x[counter] = j
-    y[counter] =i
-    z[counter] = im[i,j]
-    counter=counter+1L
-
-  endfor
-endfor
-
+;x=lonarr(d1*d2)
+;y=lonarr(d1*d2)
+;z=dblarr(d1*d2)
+;
+;counter=0L
+;
+;for i=0, deltay do begin
+;
+;  for j=0,d2-1 do begin
+;    x[counter] = i
+;    y[counter] =j
+;    z[counter] = im[i,j]
+;    counter=counter+1L
+;
+;  endfor
+;endfor
+;
 
 
 print,size(z)
@@ -55,10 +71,10 @@ print,size(y)
 
 
 
-;s = SURFACE(im, TEXTURE_IMAGE=image, YSTYLE=1)
-s = SURFACE(z,x,y, COLOR='burlywood', BOTTOM_COLOR='r',DEPTH_CUE=[0,1], THICK=10 ) ; burlywood dark orange , dark slate gray
+s = SURFACE(imRaw, TEXTURE_IMAGE=image, YSTYLE=1)
+;s = SURFACE(z,x,y, COLOR='burlywood', BOTTOM_COLOR='r',DEPTH_CUE=[0,1], THICK=10 ) ; burlywood dark orange , dark slate gray
 
-s1= SURFACE(z,x,y,STYLE=0, COLOR='blue',THICK=6,/overplot)
+;s1= SURFACE(z,x,y,STYLE=0, COLOR='blue',THICK=6,/overplot)
 ;s2= SURFACE(z,x,y,STYLE=0, COLOR='BLACK',THICK=3, /overplot)  ;; perfect for all pixels
 ;
 ;

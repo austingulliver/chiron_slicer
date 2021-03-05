@@ -204,7 +204,7 @@ END
  
  
   
-FUNCTION trace_all_orders, img, inital_order_peaks,redpar=redpar
+FUNCTION trace_all_orders, img, inital_order_peaks,redpar=redpar, only_nearest_max=only_nearest_max
   ;+
   ; :Description:
   ;    Based on  initial positions which mark the middle of  an order (initial order peaks), it finds the gaussian by left order, find the peaks 
@@ -235,7 +235,7 @@ FUNCTION trace_all_orders, img, inital_order_peaks,redpar=redpar
   
                                                                                         ; Array that gets returned with all orders traced 
   mode_index=redpar.mode
-  order_width =redpar.xwids[mode_index] 
+  order_width =redpar.xwids[mode_index]                                                 ; This is not for extraction jus for tracing 
  
   
   FOR i=0, N_ELEMENTS(inital_order_peaks)-1 DO BEGIN  ; Each peak marks the begging of an order in the img. For a given order 
@@ -245,8 +245,7 @@ FUNCTION trace_all_orders, img, inital_order_peaks,redpar=redpar
   
       order_ys[i,round(n_columns/2)]=Y ; For the middle
       
-      only_nearest_max =0
-  
+     
       ; >> Left side of Order
       ;----------------------.
   
@@ -389,7 +388,7 @@ FUNCTION order_tracing, img, redpar
   ;------------------------------
   ; >> Constants
   ;------------------------------
-  debug=1;redpar.debug
+  debug=redpar.debug;redpar.debug
   flat= img
   img_size=size(flat)     ;size of image passed: e.g. Master Flat
   n_columns=img_size[1]   ;number of cols in image
@@ -422,7 +421,7 @@ FUNCTION order_tracing, img, redpar
   ; >> Traces all Orders 
   ;------------------------------ 
   ;Returns 2-D array [iord,n_columns] where values are the Y image index for the corresponding n_column
-  traced_orders = trace_all_orders(flat, y_peaks,redpar=redpar)
+  traced_orders = trace_all_orders(flat, y_peaks,redpar=redpar, only_nearest_max = 0) 
 
 
  
