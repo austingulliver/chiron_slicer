@@ -12,6 +12,7 @@ Pro RDsk,Var,InFile,Arg3,Arg4
 ;11-May-94 JAV  Added on_error trap. 
 ;10-Sep-94 JAV	Added path expansion.
 ;25-Aug-99 SF   added logic for eventual byte order swapping
+; E.g. RDsk,y_mean,'C:\Users\mrstu\idlworkspace_yalecalibration\chiron\debugging\weighting_schemas\wmchi210208.1121_100_mean', 1
 On_Error, 2 
 
 ;Verify that enough arguments were passed.

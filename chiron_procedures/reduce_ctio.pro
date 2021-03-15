@@ -311,7 +311,7 @@ if redpar.debug gt 1 then STOP
 
 if keyword_set(combine_stellar) then begin
       
-      print, 'REDUCE_CTIO: * Please wait... ( Master Stellar is getting created)'
+      print, 'REDUCE_CTIO: * Please wait... ( Creating Master Stellar )'
       ; >> find dimenesions of img
       im_ref = double(readfits( spfnames[0])) 
       sz = size(im_ref)
@@ -336,13 +336,14 @@ if keyword_set(combine_stellar) then begin
       
       
        
-      ;Calculating mean/median stellar :
+      ;Calculating MASTER (mean/median) stellar :
       ;---------------------------
-      if redpar.master_stellar eq 'mean' then begin
-        master_stellar = mean(data_cube, /double, dimen=3)
-      endif else if redpar.master_stellar eq 'median' then begin
-        master_stellar = median(data_cube, /double, dimen=3)
-      endif else stop, 'REDUCE_CTIO: >> ERROR << The variable master_stellar can only be median or mean. Please change its value in the ctio.par file'
+      master_stellar= weighted_master_frame(data_cube, 'mean')
+;      if redpar.master_stellar eq 'mean' then begin
+;        master_stellar = mean(data_cube, /double, dimen=3)
+;      endif else if redpar.master_stellar eq 'median' then begin
+;        master_stellar = median(data_cube, /double, dimen=3)
+;      endif else stop, 'REDUCE_CTIO: >> ERROR << The variable master_stellar can only be median or mean. Please change its value in the ctio.par file'
 
  
       
@@ -363,7 +364,9 @@ if keyword_set(combine_stellar) then begin
       writefits,  fname_master_stellar, master_stellar, hd   
       
              
-      CTIO_SPEC,prefix,fname_master_stellar,out_mast_stellar,redpar, orc, xwid=xwid, flat=ff     
+      CTIO_SPEC,prefix,fname_master_stellar,out_mast_stellar,redpar, orc, xwid=xwid, flat=ff   
+      
+;      stop, '  CHECK OF EXTRACTED MASTER STELLAR '
   
 endif else begin
       

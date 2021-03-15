@@ -63,7 +63,7 @@ function rd_chiron,file0,sp,head, $
   file=file0
   k=strpos(file,'.fits')
   if k gt 0 then file=strmid(file,0,k)    ;strip extension
-  if not ffile(file+'.fits') then begin                              ; missing  ffile.pro
+  if file_test(file+'.fits') eq 0 then begin                              ; missing  ffile.pro
     print,procname+': File ',file+'.fits not found - returning'
     if keyword_set(stp) then stop,procname+'>>>'
     return,-1
@@ -78,13 +78,18 @@ function rd_chiron,file0,sp,head, $
   nn=(size(sp))[1]
   w=reform(sp[0,*,*])
   s=reform(sp[1,*,*])
+  
+ 
   if nn ge 3 then snr=reform(sp[2,*,*]) else snr=sqrt(s>1.e-6)
   ;eb=s/snr
   if nn ge 4 then dq=reform(sp[3,*,*])
   if nn ge 5 then gd=reform(sp[4,*,*])   ;gaussian extraction
   fcr=sxpar(head,'fcalrec')
+  fcr = 1 ; added fot testing 
   gcr=sxpar(head,'grec')
-  if (fcr gt 0) then fs=reform(sp[fcr-1,*,*])
+  
+  if (fcr gt 0) then fs=reform(sp[fcr-1,*,*]) ; ;flux cal record
+  
   nx=(size(w))[1]
   nord=(size(w))[2]
   narr=n_elements(w)
@@ -106,13 +111,23 @@ function rd_chiron,file0,sp,head, $
     s[*,i]=f & w[*,i]=wn
   endfor
 
+; Assuming : 
+;  w : wavelength 
+;  s : spectra
+;  e : s/n
+;  dq :
+;  head : header of the fits file 
+;  f:
+
+fcr= 0 ;  testing making it work 
   case 1 of
     (fcr gt 0) and (gcr gt 0): z={w:w,s:s,e:snr,dq:dq,g:gd,f:fs,head:head}
     fcr gt 0: z={w:w,s:s,e:snr,dq:dq,f:fs,head:head}
     gcr gt 0: z={w:w,s:s,e:snr,dq:dq,g:gd,head:head}
     n_elements(dq) eq narr: z={w:w,s:s,e:snr,dq:dq,head:head}
     ;   nn ge 5: z={w:w,s:s,e:eb,dq:dq,g:gd,head:head}
-    else: z={w:w,s:s,e:snr,head:head}
+;    else: z={w:w,s:s,e:snr,head:head }
+    else: z={w:w,s:s,e:snr,head:head, f:fs } 
   endcase
   ;
   time=sxpar(head,'exptime')

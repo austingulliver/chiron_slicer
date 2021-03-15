@@ -43,13 +43,19 @@
       GO TO 86
    73 lo=lo+NPTS/IFRAC
       lh=lh-NPTS/IFRAC
+
+
       GO TO 86
-   74 TYPE *,'ENTER % INCREASE FOR PLOT (INTEGER)'
+ !  74 TYPE *,'ENTER % INCREASE FOR PLOT (INTEGER)' ! THis was uncommented at the beginning 
       READ(5,*,ERR=74)IFRAC
       GO TO 86
 c P command enters this section
+
+
+
+
    87 continue
-c     XM_temp=DLAM-FLOAT(LOS)
+c     XM_temp=DLAM-FLOAT(LOS)  
       xm_temp=dlam
 C     Round off to nearest integer
       jm=dlam + 0.5
@@ -70,7 +76,7 @@ C     Round off to the nearest integer
 D	write(50,*)
 D	write(50,*)' Shift profile to centre on xm in (xxdum,y)',
 D	1	' then (xxl,yyl)'
-D	write(50,*)' xm=',xm_temp,' jm=',jm
+D	write(50,*)' xm=',xm_temp,' jm=',jm '
 C     Shift profile to centre on XM by interpolating into array Y
       do i=1,npts
           x=xm_temp-float(jm)+xxl(i)
@@ -128,6 +134,12 @@ c     call pgmtxt('T',0.8,0.0,0.0,fileheader)
           y_val=yyl(i)
           call pgpt(1,x_val,y_val,0)
       end do 
+
+
+
+
+
+
   400 format('x/hwhm  low ',f8.3)
   409 format(1x,a20)
       write(com,400)xl

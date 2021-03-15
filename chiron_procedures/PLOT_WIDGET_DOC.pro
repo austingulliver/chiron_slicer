@@ -16,7 +16,7 @@
 
 
 
-FUNCTION RBBoxMouseDown, oWin, x, y, iButton, KeyMods, nClicks
+FUNCTION RBBoxMouseDown2, oWin, x, y, iButton, KeyMods, nClicks
   
   state = oWin.UVALUE
   
@@ -48,7 +48,7 @@ FUNCTION RBBoxMouseDown, oWin, x, y, iButton, KeyMods, nClicks
 
 END
 
-FUNCTION RBBoxMouseMotion, oWin, x, y, KeyMods
+FUNCTION RBBoxMouseMotion2, oWin, x, y, KeyMods
   
   state = oWin.UVALUE
 
@@ -74,7 +74,7 @@ END
 
 
 
-FUNCTION RBBoxMouseUp, oWin, x, y, iButton
+FUNCTION RBBoxMouseUp2, oWin, x, y, iButton
   state = oWin.uvalue
   
   IF state.snr_status EQ 1 THEN BEGIN
@@ -213,9 +213,9 @@ PRO PLOT_WIDGET_DOC_EVENT, event ; get called once a button is pressed
                
                
                
-               p.window.MOUSE_DOWN_HANDLER='RBBoxMouseDown'
-               p.window.MOUSE_UP_HANDLER='RBBoxMouseUp'
-               p.window.MOUSE_MOTION_HANDLER='RBBoxMouseMotion'
+               p.window.MOUSE_DOWN_HANDLER='RBBoxMouseDown2'
+               p.window.MOUSE_UP_HANDLER='RBBoxMouseUp2'
+               p.window.MOUSE_MOTION_HANDLER='RBBoxMouseMotion2'
                state.snr_status = 1
                graphicWin.uvalue=state
                graphicWin.SELECT
@@ -343,11 +343,11 @@ PRO PLOT_WIDGET_DOC
   
   
   ;achiFileName=  'C:\Users\mrstu\idlworkspace_yalecalibration\chiron\debugging\comparing master files\master_stellars_171218\achi171218.mstr_stellar_40.fits
-  achiFileName=  'C:\Users\mrstu\idlworkspace_yalecalibration\chiron\tous\mir7\fitspec\210128\achi210128.mstr_stellar.fits'
+  achiFileName=  'C:\Users\mrstu\idlworkspace_yalecalibration\chiron\debugging\weighting_schemas\wmchi210208.1121_100_mean.fits'
   cubeachi=readfits(achiFileName)
   
    ;value = find_ref_points (cubeachi )
-  p=plot(cubeachi[0,*,*],cubeachi[1,*,*] , NAME = 'PLOT_WIDGET_DOC', /CURRENT , TITLE = ' 210128' )
+  p=plot(cubeachi[0,*,*],cubeachi[1,*,*] , NAME = 'Mean', /CURRENT , TITLE = ' 210128' )
   
   
 ;  p=PLOT(DAY, PRECIP, NAME = 'PLOT_WIDGET_DOC', SYMBOL='o',  LINESTYLE='--', TITLE = 'Precipitation',   YTITLE = 'Inches', XTITLE= 'Day of Year', $

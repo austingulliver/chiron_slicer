@@ -217,101 +217,97 @@ createLogStructures,redpar,obnm,objnm ;,/doFromScratch   ; uncomment this for pr
 ;#####################################################
 ;################## Image Analysis ####################
 ;#####################################################
-
-mydebug =1
-;> Used to find the std of all stellar images to be gathered together.
-if mydebug eq 1 then begin
-  
-      restore, redpar.rootdir+redpar.logstdir+'20'+strmid(redpar.date, 0, 2)+'/'+redpar.date+'log.dat' ;restore the log structure (contains .log info)   
-      
-      stellarIdx = where(strt(log.imgtype) eq 'object' and  strt(log.ccdsum) eq '3 1' )
-      
-      print, 'Number of files found : '+ strt(n_elements(stellarIdx) )
-      
-      stellarFileNames = log.filename[stellarIdx]
-      
-      
-      
-      counter = 0
-      ;> Create Data Cube with all stellar frame
-      print, ' Combining'
-      foreach stellarFile, stellarFileNames do begin        
-          if counter eq 0 then begin          
-             im_ref=readfits(stellarFile)
-             sz        = size(im_ref)
-             n_col     = sz[1]          ;# columns in image
-             n_row     = sz[2]          ;# rows in image
-             data_cube =  fltarr(n_col,n_row, n_elements(stellarIdx))        
-             data_cube[*,*,counter] = im_ref
-          endif else begin
-             img=readfits(stellarFile)
-             data_cube[*,*,counter] = img
-          endelse
-          counter= counter +1
-      endforeach
-      
-      columuns = [356,745,1520] ;from 0 to 1431
-      rows = [3575,4012, 1250,2056]; from 0 to 4112
-      foreach column, columuns do begin
-        
-        foreach row, rows do begin
-          ;pdf = HISTOGRAM(data_cube[column, row, *], LOCATIONS=xbin,  nbins=100)
-          
-          
-          values = reform(data_cube[column, row, *]) ; value to evaluate on
-          
-          p =plot(values, SYMBOL=1)
-          
-          
-          
-          
-          print, size(values)
-          mean_pixel =mean( values )
-        
-          
-          
-          print, 'mean value : ' +string(mean_pixel)
-          std_pixel =stddev(values)
-          print, 'std : ' +string(std_pixel )
-          
-          values = data_cube[column, row, *] ; value to evaluate on
-          ;wa want to draw how that gaussian looks like 
-          params= [ 1, mean_pixel, std_pixel] ;
-          
-          y= gaussian(values, params)
-          
-          p= plot(y, title='Probabbility values ')
-          
-          print, 'done '
-          
-;          parms[0] = maximum value (factor) of Gaussian,
-;          parms[1] = mean value (center) of Gaussian,
-;          parms[2] = standard deviation (sigma) of Gaussian.
-;          (if parms has only 2 elements then sigma taken from previous
-;          call to gaussian(), which is stored in a common block).
-;          parms[3] = optional, constant offset added to Gaussian.
-
-        endforeach
-
-
-      endforeach
-
-    
-
-      
-      ; > Manipulation of data cube 
-       std_frame = stddev(data_cube,  dimension= 3)
-       writefits, 'C:\Users\mrstu\idlworkspace_yalecalibration\chiron\debugging\stellar_210208_pixels_std.fits', std_frame
-;       meanStd = mean(std_frame, /double)
-;       print,  'The mean of all pixels standard deviations are: ' + strt(meanStd)
- 
-      
-         
-  
-  
-  
-endif
-
+;
+;mydebug =1
+;;> Used to find the std of all stellar images to be gathered together.
+;if mydebug eq 1 then begin
+;  
+;      restore, redpar.rootdir+redpar.logstdir+'20'+strmid(redpar.date, 0, 2)+'/'+redpar.date+'log.dat' ;restore the log structure (contains .log info)   
+;      
+;      stellarIdx = where(strt(log.imgtype) eq 'object' and  strt(log.ccdsum) eq '3 1' )
+;      
+;      print, 'Number of files found : '+ strt(n_elements(stellarIdx) )
+;      
+;      stellarFileNames = log.filename[stellarIdx]
+;      
+;      
+;      
+;      counter = 0
+;      ;> Create Data Cube with all stellar frame
+;      print, ' Combining'
+;      foreach stellarFile, stellarFileNames do begin        
+;          if counter eq 0 then begin          
+;             im_ref=readfits(stellarFile)
+;             sz        = size(im_ref)
+;             n_col     = sz[1]          ;# columns in image
+;             n_row     = sz[2]          ;# rows in image
+;             data_cube =  fltarr(n_col,n_row, n_elements(stellarIdx))        
+;             data_cube[*,*,counter] = im_ref
+;          endif else begin
+;             img=readfits(stellarFile)
+;             data_cube[*,*,counter] = img
+;          endelse
+;          counter= counter +1
+;      endforeach
+;      
+;      columuns = [356,745,1520] ;from 0 to 1431
+;      rows = [3575,4012, 1250,2056]; from 0 to 4112
+;      foreach column, columuns do begin
+;        
+;        foreach row, rows do begin
+;          ;pdf = HISTOGRAM(data_cube[column, row, *], LOCATIONS=xbin,  nbins=100)
+;          
+;          
+;          values = reform(data_cube[column, row, *]) ; value to evaluate on
+;          
+;          p =plot(values, SYMBOL=1)
+;          
+;          
+;          
+;          
+;          print, size(values)
+;          mean_pixel =mean( values )
+;        
+;          
+;          
+;          print, 'mean value : ' +string(mean_pixel)
+;          std_pixel =stddev(values)
+;          print, 'std : ' +string(std_pixel )
+;          
+;          values = data_cube[column, row, *] ; value to evaluate on
+;          ;wa want to draw how that gaussian looks like 
+;          params= [ 1, mean_pixel, std_pixel] ;
+;          
+;          y= gaussian(values, params)
+;          
+;          p= plot(y, title='Prob values  ')
+;          
+;          print, 'done '
+;          
+;;          parms[0] = maximum value (factor) of Gaussian,
+;;          parms[1] = mean value (center) of Gaussian,
+;;          parms[2] = standard deviation (sigma) of Gaussian.
+;;          (if parms has only 2 elements then sigma taken from previous
+;;          call to gaussian(), which is stored in a common block).
+;;          parms[3] = optional, constant offset added to Gaussian.
+;
+;        endforeach
+;
+;
+;      endforeach
+;
+;    
+;
+;      
+;      ; > Manipulation of data cube 
+;       std_frame = stddev(data_cube,  dimension= 3)
+;       writefits, 'C:\Users\mrstu\idlworkspace_yalecalibration\chiron\debugging\stellar_210208_pixels_std.fits', std_frame
+;;       meanStd = mean(std_frame, /double)
+;;       print,  'The mean of all pixels standard deviations are: ' + strt(meanStd)
+; 
+;        
+;endif
+;
 
 
   

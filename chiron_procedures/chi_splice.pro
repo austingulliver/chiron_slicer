@@ -12,13 +12,13 @@
 ;         Original Taken from Proff. Walter
 ;         Improved, make it compatible with current software. Various changes - J.Andres Lozano
 ;         
-; E.g.  chi_splice, '171218', '1145'
+; E.g.  output_structure=chi_splice( '171218', '1145',cut=1,  savfile= 'C:\Users\mrstu\idlworkspace_yalecalibration\chiron\tous\mir7\fitspec\171218\trimmed.sav')
 ;
 
 
 function chi_splice,date,file,k11=k11,trim=trim,scale=scale, $
   weight=weight,sum=sum,cut=cut,nosave=nosave,savfile=savfile, $
-  ds=ds,z=z,plt=plt, examine=examine,helpme=helpme,
+  ds=ds,z=z,plt=plt, examine=examine,helpme=helpme
  ; common comxy,xcur,ycur,zerr,xx1,xx2,xx3
  ; common ch_calfiles,fcalfile,zfcal,zfcor,caldate
  
@@ -50,7 +50,7 @@ function chi_splice,date,file,k11=k11,trim=trim,scale=scale, $
   if keyword_set(examine) then plt=1
   if keyword_set(plt) then gc,13
 
-  trimfile=chdata+'/tous/mir7/utils/chi_deftrims.dat'
+  trimfile=chdata+'/tous/mir7/utils/ch_deftrims.dat'
   
 
   if not keyword_set(k11) then k11=190   ;  ???????????
@@ -109,7 +109,7 @@ function chi_splice,date,file,k11=k11,trim=trim,scale=scale, $
                           print,' Selected file: ',l
                       end
           ELSE     : BEGIN
-                      l=getfilelist('xchi*.fits',nl)
+                      l=getfilelist('achi*.fits',nl)
                       if nl gt 1 then begin
                         igo=0
                         for i=0,nl-1 do print,i,'  ',l[i]
@@ -127,8 +127,12 @@ function chi_splice,date,file,k11=k11,trim=trim,scale=scale, $
 
 
   print,procname,': reading ',l
-  d=rd_chiron(l,/xfile)                      ;         ?????? missing rd_chiron,.pro
+  d=rd_chiron(l)  ; /xfile)                      ;         ?????? missing rd_chiron,.pro
+  
+  print, strupcase(tag_names(d))
   k=where('F' eq strupcase(tag_names(d)),nk)
+  
+  
   if nk eq 0 then begin
     print,' No fluxed data found - run ch_xupdate,/flux'
     if keyword_set(stp) then stop,procname+'>>>'
