@@ -559,8 +559,10 @@ function optimal_order_tracing, img, redpar
   order_ys = MAKE_ARRAY(n_elements(templates.middle ), n_columns, /FLOAT, VALUE = 0.0) ; (#of Orders, # X Pixels (alond dispersion) )
   debug_ys = MAKE_ARRAY( n_columns, /FLOAT, VALUE = 0.0)
 
-  swath_width = 17
+  swath_width = 35
   for ord_idx = 0L, n_elements(templates.middle )-1 do begin
+       
+       
        
        debug =1 
        if debug  gt 0 then print, 'Now in order: ' +strt(ord_idx)
@@ -576,13 +578,14 @@ function optimal_order_tracing, img, redpar
         ; must be greate than xwid/2 ; Thus., we assuming that the whole order must be places in within a band of +- swath_width
        
        i_template =  flat [ middle_column , templates.down[ord_idx]  : templates.up[ord_idx] ]                        ; Define Section 
-       i_swath =     flat [ *,  templates.middle[ord_idx] - swath_width : templates.middle[ord_idx] + swath_width-1   ]  ; Define Swath 
+       i_swath =     flat [ *,  templates.middle[ord_idx]  -5 : templates.middle[ord_idx] + 40  ]  ; Define Swath 
         
         order_ys[ ord_idx,middle_column] = templates.middle[ord_idx] ; Insert value for  the middle
         debug_ys[middle_column] = templates.middle[ord_idx] 
         
-        swath_sz=size(i_swath)
-        prev_local_row =round(swath_sz[2]/2.0 )
+;        swath_sz=size(i_swath)
+;        prev_local_row =round(swath_sz[2]/2.0 )
+        prev_local_row =5 
         
         ; >> Left side of Order
         ;----------------------.
@@ -599,7 +602,7 @@ function optimal_order_tracing, img, redpar
           
 ;          print, 'Local_row :local_row '
 ;          sz_swath= size(i_swath)
-          order_ys[ord_idx,back_X] = templates.middle[ord_idx] -  swath_width   + local_row
+          order_ys[ord_idx,back_X] = templates.middle[ord_idx] -  5   + local_row
           
           
    ;       i_template =  flat [ back_x ,  order_ys[ord_idx,back_X] -6  : order_ys[ord_idx,back_X] + 5 ]  ;>> Key : update new template accordingly
@@ -610,25 +613,31 @@ function optimal_order_tracing, img, redpar
 
         ENDFOR
         
+        
+        
         ; >> Right side of Order
         ;-----------------------
         
         ; redefine i template and i_swath since start from the middle again
         i_template =  flat [ middle_column , templates.down[ord_idx]  : templates.up[ord_idx] ]                        ; Define Section
-        i_swath =     flat [ *,  templates.middle[ord_idx] - swath_width : templates.middle[ord_idx] + swath_width   ]  ; Define Swath
+        i_swath =     flat [ *,  templates.middle[ord_idx] - 5 : templates.middle[ord_idx] + 40   ]  ; Define Swath
         
-        prev_local_row =round(swath_sz[2]/2.0 )
+        prev_local_row =  5 
+       
         
         FOR x=middle_column, n_columns-2  DO BEGIN
           
+          
+          ;if x gt 3200 and (x mod 11 eq 0 )  then debug =1 else debug=0 
+          
           forward_x = x+1
-          local_row= cross_correlate( i_swath,i_template , forward_x, scipy_signal, prev_local_row=prev_local_row, debug =0 )
+          local_row= cross_correlate( i_swath,i_template , forward_x, scipy_signal, prev_local_row=prev_local_row, debug =debug )
           
           prev_local_row = local_row
           
-          order_ys[ord_idx,forward_x] = templates.middle[ord_idx] - swath_width + local_row  
+          order_ys[ord_idx,forward_x] = templates.middle[ord_idx] - 5 + local_row  
           
-        ;  i_template =  flat [ forward_x ,  order_ys[ord_idx,forward_x]-6  : order_ys[ord_idx,forward_x]+ 5 ]  ;>> Key : update new template accordingly
+         ;i_template =  flat [ forward_x ,  order_ys[ord_idx,forward_x]-6  : order_ys[ord_idx,forward_x]+ 5 ]  ;>> Key : update new template accordingly
 
           
           
@@ -638,8 +647,8 @@ function optimal_order_tracing, img, redpar
        
 ;       debug=1
 ;       if debug  gt 0 then begin 
-;            p=plot( order_ys[ord_idx,*]  )
-;            stop, 'check plot '
+            p=plot( order_ys[ord_idx,*]  )
+            stop, 'check plot '
 ;       endif   
 ;       if debug gt 0 then begin
 ;         ;Once finish with swath plot 
