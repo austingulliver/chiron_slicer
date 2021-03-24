@@ -31,7 +31,7 @@ function cross_correlate, i_swath,i_template , column_i,  scipy_signal, prev_loc
       
       corr= scipy_signal.correlate(section, i_template, mode='same' )
       
-      corr= smooth(corr, 3)
+;      corr= smooth(corr, 3)
       ;corr= corr_order(i_template, section  )
       ;The peak of corr is apperently already giving me the middle point
       ; It takes the middle point of my template and corr has a peak wrt to the template(wich is the middle of the template)
@@ -39,7 +39,7 @@ function cross_correlate, i_swath,i_template , column_i,  scipy_signal, prev_loc
       corr_peaks_idx =  find_peaks( corr )
       
      
-      corr_peaks_idx = round(n_elements(i_template)/2.0 ) + corr_peaks_idx 
+;      corr_peaks_idx = round(n_elements(i_template)/2.0 ) + corr_peaks_idx 
       
       
       
@@ -72,6 +72,7 @@ function cross_correlate, i_swath,i_template , column_i,  scipy_signal, prev_loc
      ; min_index = round(n_elements(i_template)/2.0) + min_index ; i_template/2.0 will give me the start point (wrt to the middle of the template)
                                                     ; min_index wills shift it according to where the minimum is found
       
+;      if column_i mod 31 eq 0 then debug=1 else  debug =0
       if debug gt 0 then begin
         t='column :' +strt(column_i)
         p =plot( section,  LAYOUT=[1,2,1] , title = t)
@@ -81,6 +82,8 @@ function cross_correlate, i_swath,i_template , column_i,  scipy_signal, prev_loc
         max_val =max(corr)
         p=plot([closest_to_prev, closest_to_prev] , [min_val, max_val],   color='red', /CURRENT,  LAYOUT=[1,2,2], /overplot )
         p=plot([prev_local_row, prev_local_row] , [min_val, max_val], LINESTYLE=2,  color='green', /CURRENT,  LAYOUT=[1,2,2], /overplot )
+        
+        stop, 'CHekc plots '
       endif
  
   
@@ -556,9 +559,10 @@ function optimal_order_tracing, img, redpar
   order_ys = MAKE_ARRAY(n_elements(templates.middle ), n_columns, /FLOAT, VALUE = 0.0) ; (#of Orders, # X Pixels (alond dispersion) )
   debug_ys = MAKE_ARRAY( n_columns, /FLOAT, VALUE = 0.0)
 
-swath_width = 11
+  swath_width = 17
   for ord_idx = 0L, n_elements(templates.middle )-1 do begin
        
+       debug =1 
        if debug  gt 0 then print, 'Now in order: ' +strt(ord_idx)
        
 ;       if ord_idx lt 2 then begin
@@ -578,10 +582,11 @@ swath_width = 11
         debug_ys[middle_column] = templates.middle[ord_idx] 
         
         swath_sz=size(i_swath)
-        prev_local_row =swath_sz[2]
+        prev_local_row =round(swath_sz[2]/2.0 )
+        
         ; >> Left side of Order
         ;----------------------.
-       debug=1
+       debug=0
         FOR x = middle_column, 1,-1  DO BEGIN
           back_x = x-1          
           
@@ -589,16 +594,15 @@ swath_width = 11
            ;IF back_x le 1942 and back_x gt 1920 then debug = 1 else debug = 0
           local_row= cross_correlate( i_swath,i_template , back_x, scipy_signal, prev_local_row = prev_local_row ,   debug =debug )   
           
-          
-          
+ 
           prev_local_row = local_row
           
 ;          print, 'Local_row :local_row '
-          sz_swath= size(i_swath)
-          order_ys[ord_idx,back_X] = templates.middle[ord_idx] - round( sz_swath[2] ) + local_row
+;          sz_swath= size(i_swath)
+          order_ys[ord_idx,back_X] = templates.middle[ord_idx] -  swath_width   + local_row
           
           
-          ;i_template =  flat [ back_x ,  order_ys[ord_idx,back_X] -6  : order_ys[ord_idx,back_X] + 5 ]  ;>> Key : update new template accordingly
+   ;       i_template =  flat [ back_x ,  order_ys[ord_idx,back_X] -6  : order_ys[ord_idx,back_X] + 5 ]  ;>> Key : update new template accordingly
 ;         i_swath = flat [ *,  order_ys[ord_idx,back_X] -10  : order_ys[ord_idx,back_X] +10  ]
           
           
@@ -613,7 +617,7 @@ swath_width = 11
         i_template =  flat [ middle_column , templates.down[ord_idx]  : templates.up[ord_idx] ]                        ; Define Section
         i_swath =     flat [ *,  templates.middle[ord_idx] - swath_width : templates.middle[ord_idx] + swath_width   ]  ; Define Swath
         
-        prev_local_row = middle_column
+        prev_local_row =round(swath_sz[2]/2.0 )
         
         FOR x=middle_column, n_columns-2  DO BEGIN
           
@@ -634,8 +638,8 @@ swath_width = 11
        
 ;       debug=1
 ;       if debug  gt 0 then begin 
-            p=plot( order_ys[ord_idx,*]  )
-            stop, 'check plot '
+;            p=plot( order_ys[ord_idx,*]  )
+;            stop, 'check plot '
 ;       endif   
 ;       if debug gt 0 then begin
 ;         ;Once finish with swath plot 
@@ -654,11 +658,11 @@ swath_width = 11
   
 ;  if debug gt 0 then begin   
 ;    
-;    p=plot(order_ys[0, *] )    
-;    for ord_idx = 1L, n_elements(templates.middle )-1 do begin
-;        p=plot( order_ys[ord_idx, *] , /overplot )
-;        
-;    endfor
+    p=plot(order_ys[0, *] )    
+    for ord_idx = 1L, n_elements(templates.middle )-1 do begin
+        p=plot( order_ys[ord_idx, *] , /overplot )
+        
+    endfor
 ;  endif
 ;
 ; 
