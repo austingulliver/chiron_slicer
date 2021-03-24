@@ -38,7 +38,8 @@ end
 dmode = strt(redpar.modes[redpar.mode])
 
 if dmode eq 'slicer' then begin
-      orc = order_tracing( image,redpar) ;ome is not output so has no used for later code.  
+;      orc = order_tracing( image,redpar) ;ome is not an output anymore so has no used for later code.  
+       orc = optimal_order_tracing(image, redpar )
 endif else begin
       swid = 32    ;arbitrarr swath width, the number of columns desired in each swath. 
       fords,image,swid,orc, ome, redpar ;find order location coeffs

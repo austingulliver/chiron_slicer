@@ -78,6 +78,8 @@ if n_elements(obs) eq 0 then obs = 'ctio' else begin ; default site is ctio 1.5-
       '**You are running QBARY, but your observatory is: '+obs+' !!'
 endelse
 obssite,obs,lat,lon,ht			; lat,lon in RADIANS,ht. in m
+
+
 height = ht/1000.d0				; Convert to km
 
 

@@ -15,7 +15,10 @@ section=float(section-min_val )
 
 my_order = float( image_data[1019:1031, 2000]  - min_val )
 
+smooth_order= ts_smooth(my_order,3)
 
+p=plot(my_order)
+p=plot(smooth_order, /overplot)
 
 corr= scipy_signal.correlate(section, my_order, mode='same' )
 

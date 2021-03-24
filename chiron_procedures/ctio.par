@@ -51,7 +51,9 @@ pkcoefs: [26.4117,34.9785,0.114412,0.00182212],        ; yt=2 poly coefs of peak
                                                        ; change this var for [26.4517d,35.0451d,0.112029d,0.00188384d] when date=  120302 - 120501 (torrent logic problem)
 pkcoefs_slicer: [3.7317974,11.735275,0.035510775,0.00064337943],   ;found by JL used for slicer not need to divide by binning (3)
 
-nords: 74,                                             ; Note there are 76 Orders however halve of 76th order is missing due to the nature curvature of the orders. 
+nords: 74,                                             ; There are really 76 Orders in the cdd However since the very first and 
+                                                       ; the very last go off the cdd then, we can really get a max of 74 orders
+                                                       ; If this number is lowered down, it will take the blue orders out of the ccd.
 modes: ['narrow','slicer','slit','fiber','narrow'],    ; observing modes             
 xwids: [8,12,8,5,18],                                  ; extraction width, binned pixels.  old xwids: [6,12,6,5]
 slcrxtrawid: [2,26],                                   ;set the 0th element >0 to give an extra width to slicer orders of slcrxtrawid[0] 
@@ -69,7 +71,7 @@ debug: 0,                                              ; 1 in debug mode, with p
                                                        ;Once finished, copy the new best fit order locations to the "pkcoefs" tag above.
 pixel_not_extracted: 0,                                ; Number of pixels no extracted from the default xwids for each mode. This must be an integer, even number 
                                                        ; E.g. Slice has 12 pixels. If pixel_no_extracted:4 then pixels extracted are 8 (4 up-4 down)
-use_prev_tracing: 1,                                   ; If 1 then it used the previous order tracing stored. Only use if such file exist. Default value is 0
+use_prev_tracing: 0,                                   ; If 1 then it used the previous order tracing stored. Only use if such file exist. Default value is 0
 master_bias:'median',                                  ; Can only take 2 string values 'median' or 'mean'. Used to calculate the mean/median of all bias frames and create master bias.
 master_flat:'median',                                  ; Can only take 2 string values 'median' or 'mean'. Used to calculate the mean/median of all flat frames and create master flat.
 master_stellar: 'mean',                                ; Can only take 2 string values 'median' or 'mean'. Used to calculate the mean/median of all stellar frames and create master master.

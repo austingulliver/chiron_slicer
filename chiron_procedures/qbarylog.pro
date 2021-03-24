@@ -461,6 +461,7 @@ pro qbarylog,logfile, test=test, baryDir=baryDir, prefix=prefix , justtest=justt
 
                                  
 ;                                >>Input for qbary.pro
+;                                 print,  ' ------------------------------------   ' 
 ;                                 print, 'coords : ' + string( coords) ; RA & DEC, in [hours,degrees] eg. [1.75,-15.9d]
 ;                                 print, 'pm     : ' + string(pm)       ; proper motion [ra,dec] in ARCsec/year [optional]
 ;                                 print, 'epoch  : ' + string(epoch)                                 
