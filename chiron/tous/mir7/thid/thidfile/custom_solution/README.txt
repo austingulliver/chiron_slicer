@@ -1,0 +1,1 @@
+These .sav files contain a variable name wvc. which is a structure(object) as detailed in mkwave.pro and thid.pro

@@ -1,0 +1,7 @@
+Luibreries downloaded from :
+cmtototal : http://cow.physics.wisc.edu/~craigm/idl/
+astron : https://idlastro.gsfc.nasa.gov/ftp/
+cconroy : https://github.com/cconroy20/fsps
+cayote : http://www.idlcoyote.com/documents/programs.php#COYOTE_LIBRARY_DOWNLOAD
+
+

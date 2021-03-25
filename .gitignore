@@ -11,7 +11,7 @@ chiron/sent_by_email/
 *chi1*
 *chi2*
 *med*
-*.txt
+.txt
 *.thid
 /.metadata/
 all_yale_files/*
@@ -22,3 +22,4 @@ previous_thid_ignore/
 /chiron/various_resources/
 chiron/debugging
 idl_packages/optspecextr-0.3.1/
+*password*
