@@ -19,9 +19,12 @@ function cross_correlate, i_swath,i_template , column_i,  scipy_signal, prev_loc
       
     
       i_swath = reform(i_swath)
-      min_val =  min(i_swath)  ; Just to bring everything down to 0 levl momentarely 
-      i_swath = double(i_swath - min_val)      
-      i_template=double( reform(i_template) - min_val ) 
+      min_val_swath =  min(i_swath)  ; Just to bring everything down to 0 levl momentarely       
+      i_swath = double(i_swath - min_val_swath)  
+      
+      i_template= reform(i_template)   
+      min_val_template=min(i_template)
+      i_template=double(i_template - min_val_template ) 
       
       
       
@@ -133,7 +136,7 @@ end
 function order_middle_peaks, flat, redpar, method_str= method_str
   compile_opt idl2
 
-  debug=0
+  debug=1
   ; Image is  4112X 1432 for the slicer mode
   img_size=size(flat)     ;size of image passed: e.g. Master Flat
   n_rows= img_size[1]     ;number of rows in image
@@ -230,7 +233,7 @@ end
 function define_templates, flat, redpar
   
   
-  debug = 0
+  debug = 1
 
   y_peaks=order_middle_peaks(flat, redpar, method_str='from_scratch')
   ; Image is 4112 x 1366 for the slicer mode
@@ -560,7 +563,7 @@ function optimal_order_tracing, img, redpar
   debug_ys = MAKE_ARRAY( n_columns, /FLOAT, VALUE = 0.0)
 
   swath_width = 35
-  for ord_idx = 0L, n_elements(templates.middle )-1 do begin
+  for ord_idx = 0L, n_elements(templates.middle )-2 do begin   ; Change to -1
        
        
        
@@ -578,14 +581,16 @@ function optimal_order_tracing, img, redpar
         ; must be greate than xwid/2 ; Thus., we assuming that the whole order must be places in within a band of +- swath_width
        
        i_template =  flat [ middle_column , templates.down[ord_idx]  : templates.up[ord_idx] ]                        ; Define Section 
-       i_swath =     flat [ *,  templates.middle[ord_idx]  -5 : templates.middle[ord_idx] + 40  ]  ; Define Swath 
+       
+       
+       i_swath =     flat [ *,  templates.middle[ord_idx]  -12 : templates.middle[ord_idx] + 11 ]  ; Define Swath 
         
         order_ys[ ord_idx,middle_column] = templates.middle[ord_idx] ; Insert value for  the middle
         debug_ys[middle_column] = templates.middle[ord_idx] 
         
 ;        swath_sz=size(i_swath)
 ;        prev_local_row =round(swath_sz[2]/2.0 )
-        prev_local_row =5 
+        prev_local_row =12
         
         ; >> Left side of Order
         ;----------------------.
@@ -595,18 +600,31 @@ function optimal_order_tracing, img, redpar
           
           ;  > Returns Y value to store in order_ys. This Y value is such that when add + 6 and -6 will give back the order perfectly          
            ;IF back_x le 1942 and back_x gt 1920 then debug = 1 else debug = 0
+         
+           ;if x lt 1160  then debug=1 else debug =0 
           local_row= cross_correlate( i_swath,i_template , back_x, scipy_signal, prev_local_row = prev_local_row ,   debug =debug )   
+          ; Returns local_row wrt to i_swath
           
+          sz_swath= size(i_swath)   ; Make sure swath is even at all times 
  
-          prev_local_row = local_row
           
-;          print, 'Local_row :local_row '
-;          sz_swath= size(i_swath)
-          order_ys[ord_idx,back_X] = templates.middle[ord_idx] -  5   + local_row
+        
+          order_ys[ord_idx,back_X] = ( order_ys[ord_idx,back_X+1] -  round(sz_swath[2]/2.0 ) )  + local_row
+                                     ; Initial point of the swath used for the present iteration
           
           
-   ;       i_template =  flat [ back_x ,  order_ys[ord_idx,back_X] -6  : order_ys[ord_idx,back_X] + 5 ]  ;>> Key : update new template accordingly
-;         i_swath = flat [ *,  order_ys[ord_idx,back_X] -10  : order_ys[ord_idx,back_X] +10  ]
+        ; i_template =  flat [ back_x ,  order_ys[ord_idx,back_X] -6  : order_ys[ord_idx,back_X] + 5 ]  ;>> Key : update new template accordingly
+          ; I cannot change the tempate cause if irregularity is present then this will change forever 
+          
+          
+          ; Deffining new i_swath for the next iteration
+          i_swath = flat [ *,  order_ys[ord_idx,back_X] -12  : order_ys[ord_idx,back_X] +11  ]
+          
+          
+          
+          ; Tricky . Better to define with we already got cause if ther is a new swath then the peak had to shift along with the new swath
+          prev_local_row = local_row  -(order_ys[ord_idx,back_X] - order_ys[ord_idx,back_X+1] ); Problem is that if I move swath ref then prev local will shouls be moved as well
+           ; If section went up we want to substract if section went down we want to add
           
           
           debug_ys[back_X] = local_row
@@ -620,9 +638,9 @@ function optimal_order_tracing, img, redpar
         
         ; redefine i template and i_swath since start from the middle again
         i_template =  flat [ middle_column , templates.down[ord_idx]  : templates.up[ord_idx] ]                        ; Define Section
-        i_swath =     flat [ *,  templates.middle[ord_idx] - 5 : templates.middle[ord_idx] + 40   ]  ; Define Swath
+        i_swath =     flat [ *,  templates.middle[ord_idx] - 12 : templates.middle[ord_idx] + 11   ]  ; Define Swath
         
-        prev_local_row =  5 
+        prev_local_row =  12 
        
         
         FOR x=middle_column, n_columns-2  DO BEGIN
@@ -632,13 +650,17 @@ function optimal_order_tracing, img, redpar
           
           forward_x = x+1
           local_row= cross_correlate( i_swath,i_template , forward_x, scipy_signal, prev_local_row=prev_local_row, debug =debug )
+          sz_swath= size(i_swath)
           
-          prev_local_row = local_row
           
-          order_ys[ord_idx,forward_x] = templates.middle[ord_idx] - 5 + local_row  
           
-         ;i_template =  flat [ forward_x ,  order_ys[ord_idx,forward_x]-6  : order_ys[ord_idx,forward_x]+ 5 ]  ;>> Key : update new template accordingly
-
+         
+          
+          order_ys[ord_idx,forward_x] = (order_ys[ord_idx,forward_x-1] - round(sz_swath[2]/2.0 ) ) + local_row  
+          
+          i_swath = flat [ *,  order_ys[ord_idx,forward_x] -12  : order_ys[ord_idx,forward_x] +11  ]
+          
+           prev_local_row = local_row  -(order_ys[ord_idx,forward_x] - order_ys[ord_idx,forward_x-1] )
           
           
           debug_ys[forward_x] = local_row
@@ -647,8 +669,8 @@ function optimal_order_tracing, img, redpar
        
 ;       debug=1
 ;       if debug  gt 0 then begin 
-            p=plot( order_ys[ord_idx,*]  )
-            stop, 'check plot '
+;            p=plot( order_ys[ord_idx,*]  )
+;            stop, 'check plot '
 ;       endif   
 ;       if debug gt 0 then begin
 ;         ;Once finish with swath plot 
