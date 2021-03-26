@@ -68,6 +68,7 @@ case pwddir of
    '/tous/CHIRON/QC': ctparfn = '/tous/CHIRON/REDUCTION/ctio.par'
    '/nfs/morgan/chiron/idl/CHIRON/REDUCTION': ctparfn = '/nfs/morgan/chiron/idl/CHIRON/REDUCTION/ctio.par'
    'C:\Users\mrstu': ctparfn = 'C:\Users\mrstu\idlworkspace_yalecalibration\chiron_procedures\ctio.par'
+   'C:\Users\gulliver': ctparfn = 'C:\F disk\chiron_reduc_pipeline\chiron_procedures\ctio.par'
     ELSE : ctparfn=!NULL 
     ; E.g. 'your_current_directory': ctparfn = 'absolute_path_to_ctio.par'
     ; Note: Let the program run. It will stop with the message bellow. Copy/Paste the printes direcotory in 'your_current_directory'

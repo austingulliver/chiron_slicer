@@ -5,7 +5,7 @@
 ;    Returns an array with the same dimension as signal  where every point is the difference of signal with section 
 ;    The rem
 ;
-;
+;    OUTDATED 
 ;-
 function corr_order, signal,  section 
   compile_opt idl2

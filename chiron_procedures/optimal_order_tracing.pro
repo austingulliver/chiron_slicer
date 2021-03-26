@@ -2,95 +2,114 @@
 
 ;+
 ; :Description:
-;  Returns Y value to store in order_ys. This Y value is such that when add + 6 and -6 will give back the order perfectly
+;               Hard-coded anomaly present in the Chiron CCD  (Blue orders - right hand side )
+;               The image at this point in the software is as follows :
+;               from left to right ( 4112 pixel - along the dispersion direction).
+;               bottom (red orders ) to top (blue orders) 
+;               It also account for the upper-right section of the ccd where the signal of the orders
+;               gets to the level of the noise 
+;
+; : Input :
+;          column : column number in the ccd.
+;          order  : indexed order number in the ccd. 
+;-
+function hasAnomaly, column, order   
+  anomalyColumns = [3387,3424] 
+  anomalyIndexedOrders = [60,75]; from redest to bluest 
+  
+  noiseColumns = [3840,4111] ; These columns are at the noise level 
+  noiseOrders = [62,75]
+    
+  if order ge  anomalyIndexedOrders[0] then begin   
+   if  (column ge  anomalyColumns[0] and column le anomalyColumns[1])   or (column gt noiseColumns[0] )  then return, 1 else return, 0
+  endif else return,0
+
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+;+
+; :Description:
+;        Returns a Y-value to store in order_ys. This is local Y-value, thus there is further processing to do with the pixel
 ;
 ;  Input :
-;       i_swath :
-;       i_template : 
-;       column_i :
+;       i_swath : (2D-ARRAY)  Section of the image array  with approximatly 4112 x 22
+;       i_template :  (1D-ARRAY)  12 pixel that define a template for the given order 
+;       column_i : Present column in the image that is running 
+;       scipy_signal:  Reference to the python method used for cross-correlate 
+;       prev_local_row : Previous local pixel output by this function  
+;       idx_order : Present indexed order number running  
 ;       
+;  Output: 
+;        local Y-value, thus there is further processing to do bring the Local Y-value in the context of the ccd 
 ;  
 ;-
 
-;  > Returns Y value to store in order_ys. This Y value is such that when add + 6 and -6 will give back the order perfectly
-
-function cross_correlate, i_swath,i_template , column_i,  scipy_signal, prev_local_row=prev_local_row,  debug=debug 
-  compile_opt idl2
+function cross_correlate, i_swath,i_template , column_i,  scipy_signal, prev_local_row=prev_local_row, idx_order=idx_order, debug=debug 
+      compile_opt idl2
       
     
       i_swath = reform(i_swath)
-      min_val_swath =  min(i_swath)  ; Just to bring everything down to 0 levl momentarely       
-      i_swath = double(i_swath - min_val_swath)  
-      
+      min_val_swath =  min(i_swath)  ; Bring everything down to 0 level momentarely       
+      i_swath = double(i_swath - min_val_swath)        
       i_template= reform(i_template)   
       min_val_template=min(i_template)
-      i_template=double(i_template - min_val_template ) 
+      i_template=double(i_template - min_val_template )  ; Bring everything down to 0 level momentarely   
       
       
       
       section = reform(i_swath[column_i,* ] )  
+      corr= scipy_signal.correlate(section, i_template, mode='same' ) ; Python Cross correlation. Return an array with the same size as 'section'
       
-       
+      ;The peak of corr already gives back the middle point of the template
+      ; We find all the peaks and pick that one closest to the prev local pixel selected by this function.
       
-      corr= scipy_signal.correlate(section, i_template, mode='same' )
-      
-;      corr= smooth(corr, 3)
-      ;corr= corr_order(i_template, section  )
-      ;The peak of corr is apperently already giving me the middle point
-      ; It takes the middle point of my template and corr has a peak wrt to the template(wich is the middle of the template)
-      
-      corr_peaks_idx =  find_peaks( corr )
-      
-     
-;      corr_peaks_idx = round(n_elements(i_template)/2.0 ) + corr_peaks_idx 
-      
-      
-      
-      if debug gt 0 then begin
-        print, 'Peaks found (indices) :'
-        print, corr_peaks_idx
-
-      endif
-      
-      ;Get the closest to prev_local_row
-      closest_to_prev = abs(corr_peaks_idx - prev_local_row )
-      closest_to_prev = min( closest_to_prev , min_idx) ; dummy we only care about the idx 
+      corr_peaks_idx =  find_peaks( corr )   
+      closest_to_prev = abs(corr_peaks_idx - prev_local_row )   ;Get the closest to prev_local_row
+      closest_to_prev = min( closest_to_prev , min_idx)          ; dummy we only care about the idx 
       closest_to_prev = corr_peaks_idx[min_idx]
       
       
-      if debug gt 0 then begin        
-        print, 'Previosuly Peak was : ' +strt(prev_local_row)
-        print, ' Current Peak is  : ' +strt(closest_to_prev)
-      endif
-      
-      
-     ;  dummy =  min(corr, min_index)
-     ;  dummy =  max(corr, max_index) ; instead find all the peaks and choose the one closes to prev_local_row
-      
-       
-;      print, 'Corr : '
-;      print, corr
-;      print, 'Min_index :'+strt(min_index)
-      
-     ; min_index = round(n_elements(i_template)/2.0) + min_index ; i_template/2.0 will give me the start point (wrt to the middle of the template)
-                                                    ; min_index wills shift it according to where the minimum is found
-      
-;      if column_i mod 31 eq 0 then debug=1 else  debug =0
-      if debug gt 0 then begin
-        t='column :' +strt(column_i)
-        p =plot( section,  LAYOUT=[1,2,1] , title = t)
-        p =plot( i_template,  color='blue', /overplot, LAYOUT=[1,2,1] )
-        p=plot(corr,/CURRENT,  LAYOUT=[1,2,2] )
-        min_val =min(corr)
-        max_val =max(corr)
-        p=plot([closest_to_prev, closest_to_prev] , [min_val, max_val],   color='red', /CURRENT,  LAYOUT=[1,2,2], /overplot )
-        p=plot([prev_local_row, prev_local_row] , [min_val, max_val], LINESTYLE=2,  color='green', /CURRENT,  LAYOUT=[1,2,2], /overplot )
+      if abs(closest_to_prev  - prev_local_row)  gt 1 and  hasAnomaly(column_i,idx_order) then begin
         
-        stop, 'CHekc plots '
-      endif
- 
+          ; If the proposed value 'fails' and is within the anomaly  (hard coded sectio) 
+          ; Or the blue section that is the noise level then we assign whatever the prev value was 
+          return, prev_local_row
+      endif else begin
+        
+            
+          ; Otherwise we can do some plotting + return the actual local peak found
+          if debug gt 0 then begin
+            print, 'Previosuly Peak was : ' +strt(prev_local_row)
+            print, ' Current Peak is  : ' +strt(closest_to_prev)
+            t='column :' +strt(column_i)
+            p =plot( section,  LAYOUT=[1,2,1] , title = t)
+            p =plot( i_template,  color='blue', /overplot, LAYOUT=[1,2,1] )
+            p=plot(corr,/CURRENT,  LAYOUT=[1,2,2] )
+            min_val =min(corr)
+            max_val =max(corr)
+            p=plot([closest_to_prev, closest_to_prev] , [min_val, max_val],   color='red', /CURRENT,  LAYOUT=[1,2,2], /overplot )
+            p=plot([prev_local_row, prev_local_row] , [min_val, max_val], LINESTYLE=2,  color='green', /CURRENT,  LAYOUT=[1,2,2], /overplot )
+            stop, 'Check Plots. Type  cont. '
+          endif
   
-  return, closest_to_prev ; Recall THE ACTUAL Y VALUE will be  wrt to the general image not the the local peak that we find in here 
+  
+          return, closest_to_prev ; Recall THE ACTUAL Y VALUE will be  wrt to the general image not the the local peak that we find in here
+        
+      endelse  
+
 end
 
 
@@ -121,13 +140,18 @@ end
 
 ;+
 ; :Description:
+;      Finds the middle peaks of each order. Note it will return the 76 orders but 
+;      usually the 1 first order and the last 2 are not taken into account cause they 
+;      are incomplete (off the ccd )          ; 
+;      OR uses saved polynomial to recalculate the middle order peaks.
+;     
 ; 
 ; Input : 
 ;       method_str :  'from_scratch' : Finds the middle peaks of each order from scratch 
 ;                  :  'use_poly' : Used the previously stored polynomial 
 ;       
 ; Output :
-;        y_peaks  
+;        y_peaks  :(1-d array [76])   the middle peaks  of each order.     
 ;
 ;-
 
@@ -136,18 +160,16 @@ end
 function order_middle_peaks, flat, redpar, method_str= method_str
   compile_opt idl2
 
-  debug=1
+  debug=0
   ; Image is  4112X 1432 for the slicer mode
   img_size=size(flat)     ;size of image passed: e.g. Master Flat
   n_rows= img_size[1]     ;number of rows in image
   n_columns=img_size[2]   ;number of cols in image
   
   
-  if method_str eq 'from_scratch' then begin
-      
-      
+  if method_str eq 'from_scratch' then begin      
       above_noise_level=10.0 ; Defines how many times bgger(wrt to the Background) the intensity values should get picked
-                            ; Found experimentally. Change if neccesary 
+                             ; Found experimentally. Change if neccesary 
                             
       middle = flat[  round(n_rows/2.0),*]
       middle= reform(middle)
@@ -163,42 +185,31 @@ function order_middle_peaks, flat, redpar, method_str= method_str
           upper_noise_level= noise_level+ ( redpar.ron * above_noise_level )
           p=plot(upper_noise_level, color='red', /overplot)
       endif
-     
-     
-      
+          
       idx_peaks = find_peaks(middle, noise_level ,read_out_noise=redpar.ron, above_noise=above_noise_level) ; The value of 20.0 was experimentally found
-
-      peak_intensities = middle[idx_peaks]
-      ; plot the 1-value noise level
-      if debug gt 0 then  p=plot( idx_peaks,peak_intensities,'+g'   , /overplot)
+      peak_intensities = middle[idx_peaks]      
+      if debug gt 0 then  p=plot( idx_peaks,peak_intensities,'+g'   , /overplot) ; plot the 1-value noise level
 
                 
        
-       all_indices = indgen(   n_elements(middle) )
-       
-       multiples_of_3 = where(all_indices mod 3  eq 0, n3)
-       
+       all_indices = indgen(   n_elements(middle) )       
+       multiples_of_3 = where(all_indices mod 3  eq 0, n3)       
        multiples_of_3= multiples_of_3 + 1L ; multiples_of_3 = 0,3,6,9...   +1 -> 1,4,5,... (The are the positions of the middle peaks )
        
       ; >> Group the peaks in groups of three. 
       n_orders= redpar.nords
       ; Check if number of peaks is a multiple of 12 othwerwise throw exception
       n_orders_found =n_elements(idx_peaks) /3.0
-      IF  ( n_elements(peak_intensities) mod 3 ) eq  0 then begin 
+      IF  ( n_elements(peak_intensities) mod 3 ) eq  0 then begin          
           
-          
-          if debug  gt 0 then print, 'Number of Orders found : '+strt(n_orders_found)
-        
-          indices_middle_peaks=idx_peaks[multiples_of_3[0:-2]]     ; Dont take last    multiples_of_3 into account  
-          
+          if debug  gt 0 then print, 'Number of Orders found : '+strt(n_orders_found)        
+          indices_middle_peaks=idx_peaks[multiples_of_3[0:-2]]     ; Dont take last    multiples_of_3 into account            
           if debug  gt 0 then p =plot(indices_middle_peaks, middle[indices_middle_peaks],  'Hr', /overplot  )
-          return, indices_middle_peaks; This is what we are after 
           
+          return, indices_middle_peaks; This is what we are after           
       endif else stop, '>> Error << The number of peaks returned is not a multiple of three. Please check the plot and try again. '
       
-      
-      
-                    
+                      
     
   endif else if method_str eq 'use_poly' then begin
     
@@ -226,43 +237,54 @@ end
 
 
 
+
+
+
 ;+
-; :Description: Defines the templates to be used to trace the orders
+; :Description: 
+;            Defines the templates to be used to trace the orders
+;            
+; Input: 
+;       flat (2d-array) : equivalent to the master flat frame used for tracing the orders
+;       redpar          : Structure with global variables. 
+; 
+; Output : 
+;        order_templates : (1d-array of structures )  E.g. 74 x Structure  ({middle, up, down })  Each defines a template
+;        up and down define the pixel taken  to define a template  (the diff between up and down = 12 pixels )
+;        and middle is the middle between down and up 
 ;
 ;-
 function define_templates, flat, redpar
   
   
-  debug = 1
+  debug = 0 ; Make it greater than 1 for detailed plotting
 
-  y_peaks=order_middle_peaks(flat, redpar, method_str='from_scratch')
-  ; Image is 4112 x 1366 for the slicer mode
-  img_size=size(flat)     ;size of image passed: e.g. Master Flat
-  n_columns=img_size[2]   ;number of cols in image
-  n_rows= img_size[1]     ;number of rows in image
+  y_peaks=order_middle_peaks(flat, redpar, method_str='from_scratch')  ; Finds the middle peaks of each order. Note it will return the 76 orders but 
+                                                                       ; we will get rid of some of them   
+  img_size=size(flat)     ;size of image passed: e.g. Master Flat ; Image is 4112 x 1366 for the slicer mode
+  n_columns=img_size[1]   ;number of cols in image E.g. 4112
+  n_rows= img_size[2]     ;number of rows in image E.g 1366
   
-  middle_column = round( n_rows/2.0 ) 
+  middle_column = round( n_columns/2.0 ) 
   
   if debug gt 0 then begin 
       print, 'Order width : ' +strt(redpar.xwids[redpar.mode] )
   endif 
  
-  
-  
   orders_to_extract = redpar.nords  ; There are really 76 Orders in the cdd However since the very first and 
                                     ; the very last go off the cdd then, we can really get a max of 74 orders 
-                                    
-                                    
+                                               
   ;>> Initiate info to be returned
   order_templates= {middle:fltarr(orders_to_extract ), up:fltarr(orders_to_extract ), down:fltarr(orders_to_extract)}
 
   
   ;>> Extract +-3 of xwid  just to validate the peak already selected.
+  ; Here is where the order are ommited if neccessary. The first red order is not included and the number 
+  ; of blue orders to include (up to) is defined by the ctio.par file. 
+  ; Take into account that even tho there are 76 order the max number order tested was 73 (implies 74 orders )
   for index = 1L, orders_to_extract do begin ; Iteration for each template
-    
-        ; I start from 1L since the frst order does not really count since it is incomplete 
+     
         
-        print, index
         ;Hack to compensate for the overlapping in the red ordesr. 
         if  index gt  28 then extra_width=3 else   extra_width =1
         
@@ -280,26 +302,13 @@ function define_templates, flat, redpar
         endif 
         
         ; This is going to mess up the initial and  final orders so take care of these down  TO FIX !!!
-        low =low > 1
-        up =up < 1430  ; chagen !!!OT FIX 
+        low =low > 1 ; References the first pixel 
+        up =up < n_rows-1  ; chagen !!!OT FIX 
         
         template  = flat[middle_column, low:up  ]
         template = reform(template)
-        
-        
-     
-       
-        ;Smooth the template with a moving avarage 
-        ;smooth_template= ts_smooth(template,3)
-        
-        
-        
-        
         background = background_level( template, noise_width=redpar.ron , noise_str = 'band_fragments' , section_width=float(n_elements(template)) , poly_order=1 )
-        
-
         peak_indices = find_peaks( template, background, above_noise=2.0, read_out_noise=redpar.ron ) ; This applies only for 1 template 
-        
         peak_values = template[peak_indices]
         
         
@@ -321,13 +330,10 @@ function define_templates, flat, redpar
         low_bound = peak_idx_of_template[0]
         up_bound = peak_idx_of_template[2]
         
-    ;    optimal_found=0
-    ;    while (optimal_found eq 0) do begin
-          
+
             ;*********************************
             ;* Creating Optimal Template
-            ;*********************************
-         
+            ;*********************************         
              
             pixel_diff  = abs(up_bound - low_bound ) +1 ; to account cause when substracting not taking low bound into accoun . E.g 9-2 = 7 (But pixel considered = 8 )
             
@@ -355,8 +361,7 @@ function define_templates, flat, redpar
               
             endelse
             
-            if debug gt 0 then begin
-              
+            if debug gt 0 then begin              
               print, 'After  first  *compensating for missing pixels ' 
               print, ' the bounds are : [' +strt(low_bound) + ' , '+strt(up_bound) + ' ]'
               print, 'The total number of pixels is now : ' +strt(up_bound-low_bound+1)
@@ -428,43 +433,7 @@ function define_templates, flat, redpar
               
               endif
               
-              
-;              if debug  gt 0 then begin
-;                
-;               ; test_low_bound= y_peaks[index] -12 > 0
-;                ;test_up_bound= y_peaks[index] +12  < 1365
-;;                pxls = indgen( test_up_bound - test_low_bound ) + test_low_bound
-;                
-;;                if index gt 65 then begin
-;                  min_ref_val = min( flat[middle_column, * ] )
-;                  max_ref_val =  max(flat[middle_column, * ])
-;
-;
-;                  p=plot(  flat[middle_column, * ] )
-;                  p=plot( [order_templates.down[index-1], order_templates.down[index-1] ] , [min_ref_val,max_ref_val ] , color='red', /overplot)
-;                  p=plot( [order_templates.up[index-1], order_templates.up[index-1] ] , [min_ref_val,max_ref_val ] , color='red', /overplot)
-;
-;
-;
-;                  ;                p=plot(background , color='red', /overplot)
-;                  ;                p=plot(peak_indices, peak_values, 'Hr',  /overplot)
-;;                    stop, 'prrr'
-;;                endif
-;                  
-;               
-;                
-;              endif
-;
-;
-;              stop, 'gotta stopped '
-              
-       
-          
-    
-     
-   
-    
-
+             
   endfor
   
   if debug gt 1 then begin
@@ -496,11 +465,28 @@ end
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
 ;Summary:
 ;      ** Main Function **
 ;       called from ctio_dord
 ;       Main method calls 
-;       Only optimized for slicer but can be applied to other modes with minor adjustments 
+;       Only optimized for slicer but can be applied to other modes with minor adjustments
+;       
+;       In Generatl Keepp in mind that Chiron's ccd records 76 orders  ([0,75]) 
+;       However the 1st [0] and last 2 orders [74,75] are incomplete and therefore are not considered 
+;        
+;       * This has only been tested for the slicer mode
 ;Input:
 ;      img:  2-D image of the master flat
 ;      initial_order_peaks:
@@ -529,26 +515,17 @@ function optimal_order_tracing, img, redpar
   orcdeg = 4.          ;polymial degree to fit order locations : Note increasing orcdeg initially decreases the fit residuals (ome)
   middle_column = round( n_columns/2.0 )
   scipy_signal= Python.Import('scipy.signal')
+  slicer_width= round(redpar.xwids[redpar.mode] )
 
-  
-
-  
-  
-  
-;  ;BUT  eventually loss of  precision begins increasing the errors again.MAKE SURE RESIDUALS DECREASE.
-;  mmfrac = 0.05       ;maximum fraction missing peaks allowed. Only Up to 5% of the spectrum can be missing.
-;  maxome = 10.        ;max allowable mean pixel error in orcs. Previous = 2 i ---------------------NEEDS IMPLEMENTATION
-
-  
   ;------------------------------
   ; >> define n  templates (for each order)
-  ;------------------------------
-   
+  ;------------------------------  
   
   templates = define_templates(flat , redpar) ; n orders structure  with middle, up and down for every order (central column)
   
   
   if debug gt 0 then print, " ** Templates recognizition  Sucessfull *** "
+  
   ;------------------------------
   ; >> Cross-correlate every order 
   ;------------------------------
@@ -560,74 +537,42 @@ function optimal_order_tracing, img, redpar
   ; > Fit polynomial to 4112 points
   
   order_ys = MAKE_ARRAY(n_elements(templates.middle ), n_columns, /FLOAT, VALUE = 0.0) ; (#of Orders, # X Pixels (alond dispersion) )
-  debug_ys = MAKE_ARRAY( n_columns, /FLOAT, VALUE = 0.0)
 
-  swath_width = 35
-  for ord_idx = 0L, n_elements(templates.middle )-2 do begin   ; Change to -1
-       
-       
-       
-       debug =1 
-       if debug  gt 0 then print, 'Now in order: ' +strt(ord_idx)
-       
-;       if ord_idx lt 2 then begin
-;        swath_width = 10
-;        
-;       endif else if ord_idx ge 2 and ord_idx lt 72 then begin
-;        swath_width = 10
-;        
-;       endif else swath_width =10
-       
-        ; must be greate than xwid/2 ; Thus., we assuming that the whole order must be places in within a band of +- swath_width
-       
-       i_template =  flat [ middle_column , templates.down[ord_idx]  : templates.up[ord_idx] ]                        ; Define Section 
-       
-       
-       i_swath =     flat [ *,  templates.middle[ord_idx]  -12 : templates.middle[ord_idx] + 11 ]  ; Define Swath 
-        
+
+  
+ print, 'OPTIMAL_ORDER_TRACING: Tracing the orders. Please wait ....'
+ for ord_idx = 0L, n_elements(templates.middle )-1 do begin   
+                     
+       print, 'OPTIMAL_ORDER_TRACING: Tracing  indexed order: ' +strt(ord_idx)     
+        i_template =  flat [ middle_column , templates.down[ord_idx]  : templates.up[ord_idx] ]                           ; Initial Template
+        i_swath =     flat [ *,  templates.middle[ord_idx]  -slicer_width : templates.middle[ord_idx] + slicer_width-1 ]  ; Initial Swath        
         order_ys[ ord_idx,middle_column] = templates.middle[ord_idx] ; Insert value for  the middle
-        debug_ys[middle_column] = templates.middle[ord_idx] 
-        
-;        swath_sz=size(i_swath)
-;        prev_local_row =round(swath_sz[2]/2.0 )
-        prev_local_row =12
+   
+
+        prev_local_row =slicer_width
         
         ; >> Left side of Order
         ;----------------------.
-       debug=0
+       
         FOR x = middle_column, 1,-1  DO BEGIN
           back_x = x-1          
           
-          ;  > Returns Y value to store in order_ys. This Y value is such that when add + 6 and -6 will give back the order perfectly          
-           ;IF back_x le 1942 and back_x gt 1920 then debug = 1 else debug = 0
-         
-           ;if x lt 1160  then debug=1 else debug =0 
-          local_row= cross_correlate( i_swath,i_template , back_x, scipy_signal, prev_local_row = prev_local_row ,   debug =debug )   
+          ;  > Returns Y value to store in order_ys. This Y value is such that when add + 6 and -6 will give back the order perfectly       
+          local_row= cross_correlate( i_swath,i_template , back_x, scipy_signal, prev_local_row = prev_local_row , idx_order=ord_idx,  debug =debug )   
           ; Returns local_row wrt to i_swath
           
-          sz_swath= size(i_swath)   ; Make sure swath is even at all times 
- 
-          
-        
+          sz_swath= size(i_swath)   ; Make sure swath is even at all times
           order_ys[ord_idx,back_X] = ( order_ys[ord_idx,back_X+1] -  round(sz_swath[2]/2.0 ) )  + local_row
                                      ; Initial point of the swath used for the present iteration
+  
+          ;  > Define new i_swath for the next iteration
+          i_swath = flat [ *,  order_ys[ord_idx,back_X] -slicer_width  : order_ys[ord_idx,back_X] +slicer_width-1  ]
           
-          
-        ; i_template =  flat [ back_x ,  order_ys[ord_idx,back_X] -6  : order_ys[ord_idx,back_X] + 5 ]  ;>> Key : update new template accordingly
-          ; I cannot change the tempate cause if irregularity is present then this will change forever 
-          
-          
-          ; Deffining new i_swath for the next iteration
-          i_swath = flat [ *,  order_ys[ord_idx,back_X] -12  : order_ys[ord_idx,back_X] +11  ]
-          
-          
-          
-          ; Tricky . Better to define with we already got cause if ther is a new swath then the peak had to shift along with the new swath
+
+          ;  > Tricky . Better to define with we already got cause if ther is a new swath then the peak had to shift along with the new swath
+          ;  If section went up we want to substract if section went down we want to add
           prev_local_row = local_row  -(order_ys[ord_idx,back_X] - order_ys[ord_idx,back_X+1] ); Problem is that if I move swath ref then prev local will shouls be moved as well
-           ; If section went up we want to substract if section went down we want to add
           
-          
-          debug_ys[back_X] = local_row
 
         ENDFOR
         
@@ -635,71 +580,37 @@ function optimal_order_tracing, img, redpar
         
         ; >> Right side of Order
         ;-----------------------
-        
-        ; redefine i template and i_swath since start from the middle again
+
         i_template =  flat [ middle_column , templates.down[ord_idx]  : templates.up[ord_idx] ]                        ; Define Section
-        i_swath =     flat [ *,  templates.middle[ord_idx] - 12 : templates.middle[ord_idx] + 11   ]  ; Define Swath
+        i_swath =     flat [ *,  templates.middle[ord_idx] -slicer_width : templates.middle[ord_idx] + slicer_width-1   ]  ; Define Swath
+        prev_local_row =  slicer_width       
         
-        prev_local_row =  12 
-       
-        
-        FOR x=middle_column, n_columns-2  DO BEGIN
-          
-          
-          ;if x gt 3200 and (x mod 11 eq 0 )  then debug =1 else debug=0 
-          
+        FOR x=middle_column, n_columns-2  DO BEGIN       
+          ; Same Idea as for Left side
           forward_x = x+1
-          local_row= cross_correlate( i_swath,i_template , forward_x, scipy_signal, prev_local_row=prev_local_row, debug =debug )
+          local_row= cross_correlate( i_swath,i_template , forward_x, scipy_signal, prev_local_row=prev_local_row, idx_order=ord_idx , debug =debug )
           sz_swath= size(i_swath)
           
-          
-          
-         
-          
-          order_ys[ord_idx,forward_x] = (order_ys[ord_idx,forward_x-1] - round(sz_swath[2]/2.0 ) ) + local_row  
-          
-          i_swath = flat [ *,  order_ys[ord_idx,forward_x] -12  : order_ys[ord_idx,forward_x] +11  ]
-          
+          order_ys[ord_idx,forward_x] = (order_ys[ord_idx,forward_x-1] - round(sz_swath[2]/2.0 ) ) + local_row            
+          i_swath = flat [ *,  order_ys[ord_idx,forward_x] -slicer_width : order_ys[ord_idx,forward_x] +slicer_width-1  ]          
            prev_local_row = local_row  -(order_ys[ord_idx,forward_x] - order_ys[ord_idx,forward_x-1] )
-          
-          
-          debug_ys[forward_x] = local_row
+
         ENDFOR
 
        
-;       debug=1
-;       if debug  gt 0 then begin 
-;            p=plot( order_ys[ord_idx,*]  )
-;            stop, 'check plot '
-;       endif   
-;       if debug gt 0 then begin
-;         ;Once finish with swath plot 
-;         
-;          plotimage,i_swath, range=[ 0,255]
-;         x_pixels= indgen(n_elements(debug_ys))
-;         
-;         p=plot( x_pixels,round(debug_ys) ,color='red', /overplot  )
-;         
-;         stop, 'Check Above '
-;       endif
 
-  endfor
+ endfor
  
  
   
-;  if debug gt 0 then begin   
-;    
+if debug gt 0 then begin       
     p=plot(order_ys[0, *] )    
     for ord_idx = 1L, n_elements(templates.middle )-1 do begin
-        p=plot( order_ys[ord_idx, *] , /overplot )
-        
+        p=plot( order_ys[ord_idx, *] , /overplot )        
     endfor
-;  endif
-;
-; 
-  
-  stop, 'Got to the very  end '
-  
+endif
+
+ 
 
 
   return, order_ys ; Order Coefficients

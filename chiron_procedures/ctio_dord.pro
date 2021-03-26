@@ -33,20 +33,33 @@ end
 
   
 
-;stop
 ;For SlICER mode we take a different approach. The other modes can be implemented in a similar Fashion but pkcoefs for each has to be found. 
 dmode = strt(redpar.modes[redpar.mode])
 
 if dmode eq 'slicer' then begin
-;      orc = order_tracing( image,redpar) ;ome is not an output anymore so has no used for later code.  
+       ;  >>If slicer then return 2-d arrray with order_ys[ # of orders , # of columns] E.g 74 x 4112
        orc = optimal_order_tracing(image, redpar )
+       ; >> We save the n- structure to later extract the orders usign them
+       
+       
+       ;2. Prefix added to FITS headers:
+       prefix=redpar.prefix   ; e.g. 'chi111003'
+       if strpos(prefix,'.') lt 0 then prefix=prefix+'.' ; add the point
+       
+       
 endif else begin
+  
+      ; >> For any other order we give back  an array with the the polynomia fitted to each order 
       swid = 32    ;arbitrarr swath width, the number of columns desired in each swath. 
       fords,image,swid,orc, ome, redpar ;find order location coeffs
       ;orc (output)
       ;ome (output)
       ;swid (input)
       ;image (input)  image from which order location is found
+      name = redpar.rootdir+redpar.orderdir+prefix+mode+'.orc'
+      wdsk, orc, name, /new
+      print, 'REDUCE_CTIO: Order Coefficients are stored as '+name
+      
 endelse
 
 
