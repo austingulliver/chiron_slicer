@@ -1,0 +1,11 @@
+# Ignore everything in this directory
+*
+# Except this file
+!.gitignore
+!*.txt
+!thid_data.xdr
+!thidfile/*.txt
+!thidfile/custom_solution/*
+!wavfile/*.txt
+
+
