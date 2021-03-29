@@ -184,6 +184,9 @@ if redpar.slicerflat eq 0 or mode ne 'slicer' then begin
           	  ;sum : crunched flat passed as param
           	  ;ordfname is passed empty and instead iamge param is passed
           	  ; orc :(output)(array (# coeffs , # orders))] coefficients from the polynomial fits to the order peaks
+          	  ;  EXCEPT ! for the slicer mode. If the slicer mode is currently running then  the vairable orc  will 
+          	  ; contain a 2-d array e.g. array with the  middles of all the orders for all the columns (4112 ) E.g.  74 x 4112
+          	  
           	  name = redpar.rootdir+redpar.orderdir+prefix+mode+'.orc'
           	  wdsk, orc, name, /new
           	  print, 'REDUCE_CTIO: Order Coefficients are stored as '+name
@@ -338,7 +341,7 @@ if keyword_set(combine_stellar) then begin
        
       ;Calculating MASTER (mean/median) stellar :
       ;---------------------------
-      master_stellar= weighted_master_frame(data_cube, 'mean')
+      master_stellar= weighted_master_frame(data_cube, redpar.master_stellar )
 ;      if redpar.master_stellar eq 'mean' then begin
 ;        master_stellar = mean(data_cube, /double, dimen=3)
 ;      endif else if redpar.master_stellar eq 'median' then begin

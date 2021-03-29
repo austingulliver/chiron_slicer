@@ -3,6 +3,8 @@
 ;    im (input array (# columns , # rows)) image from which orc and were
 ;    determined and from which spectrum is to be extracted.
 ;    orc (input array (# coeffs , # orders)) polynomial coefficients (from FORDS)
+;    EXCEPT for if is SLICER mode then the array will have the form (# order, # pixels(4112) ) E .g 74 x 4112
+;    
 ;    that describe the location of complete orders on the image.
 ;    xwd (input scalar) fractional extraction width (from GETXWD)
 ;
@@ -54,205 +56,277 @@ if n_params() lt 4 then begin
   retall
 endif
 
-;  trace,25,'GETSPEC: Entering routine.'
- ;*******************************************************
- ;   Constants
- ;*******************************************************
-
-
-im=double(im)
-ncol = n_elements(im(*,0))				;# columns in image
-nrow = n_elements(im(0,*))				;# rows in image
-ncoef = n_elements(orc(*,0))				;# polyn. coeffs
-nord =  n_elements(orc(0,*))				;# full orders in orc
-ix = findgen(ncol)					;column indicies
-spec = dblarr(ncol,nord)				;init spectrum
-orcend = dblarr(ncoef,nord+2)				;init extended orcs
 
 
 
 
 
-
-;GETARC needs order location coefficients (orc) on both sides of arc swath to 
-;  be extracted. In order to extract the lowest and highest orders specified
-;  in orc, we need to extend orc one extra order on each end. We shall do so
-;  by linearly extrapolating the last two orc on each end.
-;Extend orc on the low end. Check that requested swath lies on image.
-orclo = 2*orc(*,0) - orc(*,1)				;extrapolate orc
-coeff = orc(*,0)					;central coefficients
-y=poly(ix,coeff) - xwd				;edge of arc
-yoff = where(y lt 0,noff)				;pixels off low edge
-if noff gt 0 then begin				;check if on image
-  ;GETARC will reference im(j) where j<0. These array elements do not exist.
-  if redpar.debug ge 2 then print,'GETSPEC: Top order off image in columns [' $
-  + strtrim(string(yoff(0)),2) + ',' $
-  + strtrim(string(yoff(noff-1)),2) + '].'
-endif
-
-;Extend orc on the high end. Check that requested swath lies on image.
-orchi = 2*orc(*,nord-1) - orc(*,nord-2)		;extrapolate orc
+mode = strt(redpar.modes[redpar.mode])
 
 
-coeff = orc(*,nord-1)					;central coefficients
-y=poly(ix,coeff) + xwd				;edge of arc
+if (mode eq 'slicer') then begin
+  
+  ;*******************************************************
+  ; SLICER MODE
+  ;*******************************************************
+   
+  
+  ;  >> ONLY for the slicer mode 
+  ; We don't deal with polynomial since we pass the exact middles for all the orders.
+  nord = redpar.nords
+  ncol = n_elements(im(*,0))          ;# columns in image
+  nrow = n_elements(im(0,*))          ;# rows in image
+  spec = dblarr(ncol,nord)            ;init spectrum
+  ybarr = dblarr(ncol,nord)           ; No need for double but just to maintain consistency with prev code.
+  ytarr = dblarr(ncol,nord)
+  
+  ;*******************************************************
+  ;   LaCosmic applied  prior the the extraction and 1 frame at the time . 
+  ;*******************************************************
+  
+  
+  ;*******************************************************
+  ;  Boxcar Extraction 
+  ;*******************************************************
+  ; For the slicer mode only the extraction takes place in here rather than invoking getarc.pro 
+  for orderNum=0,redpar.nords -1  do begin
+        
+         ; Already giving back vector (double) which corresponds to the boxcar extraction 
+         ; of that order.
+       getarc_slicer,  im, orc, orderNum, redpar, arc, ybi, yti       
+       spec[*,orderNum] = arc
+       ybarr[*, orderNum] = ybi   ; used for testing puposes  array associated with bottom edge of the order
+       ytarr[*, orderNum] = yti   ; used for testing puposes  array associated with top edge of the order
+  endfor
+  
+  
+  
+  
+  
+  ; Objective -> find :   spec = dblarr(ncol,nord) E.g.  4112 x 74
+  
+  
 
-yoff = where(y gt nrow-1,noff)			;pixels off high edge
-if noff gt 0 then begin			
-  ;   GETARC will reference im(j) where j > ncol*nrow-1. These array elements do
-  ;     not exist.
-  print,'GETSPEC: Bottom order off image in columns [' $
-  + strtrim(string(yoff(0)),2) + ',' $
-  + strtrim(string(yoff(noff-1)),2) + '].'
-endif;noff gt 0
-
-;Define an order set (orcend) extended one extra order on either end.
-for n = 1,nord do orcend(*,n) = orc(*,n-1)
-orcend(*,0) = orclo
-orcend(*,nord+1) = orchi
+endif else begin
+  
+      ;*******************************************************
+      ; MODES OTHER THAN  Slicer 
+      ;*******************************************************
 
 
+       
+       
+       
+             
+      ;  trace,25,'GETSPEC: Entering routine.'
+      ;*******************************************************
+      ;   Constants
+      ;*******************************************************
 
 
-
-;Loop through orders extracting spectrum and maybe subtracting background.
-
-if redpar.debug ge 2 then print,'GETSPEC: Extracting spectrum.'
-
-
-
- ;*******************************************************
- ;   Remove CR  ONE frame at the time
- ;*******************************************************
-
-
-if n_elements(sky) eq 0 then sky=im*0.
-if keyword_set(cosmics) then remove_cosmics, im, orc, xwd, sky, spec = optspec, cosmics = replace, mask = mask, fwhm = seeing, gain=gain, ron=ron
-
-imsz = size(im)
-maskim = dblarr(imsz[1], imsz[2])
-orcsz = size(orcend)
-ybarr = dblarr(imsz[1], orcsz[2])
-ytarr = dblarr(imsz[1], orcsz[2])
+      
+      ;  >> This was previosuly implemented. It applies for any order other than the slicer
+      
+      im=double(im)
+      ncol = n_elements(im(*,0))          ;# columns in image
+      nrow = n_elements(im(0,*))          ;# rows in image
+      ncoef = n_elements(orc(*,0))        ;# polyn. coeffs
+      nord =  n_elements(orc(0,*))        ;# full orders in orc
+      ix = findgen(ncol)                  ;column indicies
+      spec = dblarr(ncol,nord)            ;init spectrum
+      orcend = dblarr(ncoef,nord+2)       ;init extended orcs
 
 
 
 
-
-
-
-
-
- ;*******************************************************
- ;   Boxcar extraction
- ;*******************************************************
-
-!p.multi=[1,1,2]
-for onum=1,nord do begin				;loop thru orders
-    ;extract counts/pixel
-    ;if keyword_set(redpar) then begin
+      
+    
+      ;GETARC needs order location coefficients (orc) on both sides of arc swath to
+      ;  be extracted. In order to extract the lowest and highest orders specified
+      ;  in orc, we need to extend orc one extra order on each end. We shall do so
+      ;  by linearly extrapolating the last two orc on each end.
+      ;Extend orc on the low end. Check that requested swath lies on image.
+      orclo = 2*orc(*,0) - orc(*,1)       ;extrapolate orc
+      coeff = orc(*,0)          ;central coefficients
+      y=poly(ix,coeff) - xwd        ;edge of arc
+      yoff = where(y lt 0,noff)       ;pixels off low edge
+      if noff gt 0 then begin       ;check if on image
+        ;GETARC will reference im(j) where j<0. These array elements do not exist.
+        if redpar.debug ge 2 then print,'GETSPEC: Top order off image in columns [' $
+          + strtrim(string(yoff(0)),2) + ',' $
+          + strtrim(string(yoff(noff-1)),2) + '].'
+      endif
+    
+      ;Extend orc on the high end. Check that requested swath lies on image.
+      orchi = 2*orc(*,nord-1) - orc(*,nord-2)   ;extrapolate orc
+    
+    
+      coeff = orc(*,nord-1)         ;central coefficients
+      y=poly(ix,coeff) + xwd        ;edge of arc
+    
+      yoff = where(y gt nrow-1,noff)      ;pixels off high edge
+      if noff gt 0 then begin
+        ;   GETARC will reference im(j) where j > ncol*nrow-1. These array elements do
+        ;     not exist.
+        print,'GETSPEC: Bottom order off image in columns [' $
+          + strtrim(string(yoff(0)),2) + ',' $
+          + strtrim(string(yoff(noff-1)),2) + '].'
+      endif;noff gt 0
+    
+      ;Define an order set (orcend) extended one extra order on either end.
+      for n = 1,nord do orcend(*,n) = orc(*,n-1)
+      orcend(*,0) = orclo
+      orcend(*,nord+1) = orchi
+    
+    
+    
+    
+    
+      ;Loop through orders extracting spectrum and maybe subtracting background.
+    
+      if redpar.debug ge 2 then print,'GETSPEC: Extracting spectrum.'
+    
+    
+    
+      ;*******************************************************
+      ;   Remove CR  ONE frame at the time
+      ;*******************************************************
+    
+    
+      if n_elements(sky) eq 0 then sky=im*0.
+      if keyword_set(cosmics) then remove_cosmics, im, orc, xwd, sky, spec = optspec, cosmics = replace, mask = mask, fwhm = seeing, gain=gain, ron=ron
+    
+      imsz = size(im)
+      maskim = dblarr(imsz[1], imsz[2])
+      orcsz = size(orcend)
+      ybarr = dblarr(imsz[1], orcsz[2])
+      ytarr = dblarr(imsz[1], orcsz[2])
+    
+    
+    
+    
+    
+    
+    
+    
+    
+      ;*******************************************************
+      ;   Boxcar extraction
+      ;*******************************************************
+    
+      !p.multi=[1,1,2]
+      for onum=1,nord do begin        ; < Ignore the first order for all other modes other than slicer (since for slicer this was already accounted for )
+        ;extract counts/pixel
+        ;if keyword_set(redpar) then begin
         ;add variable order width:
         ;if redpar.slcrxtrawid[0] gt 0 and onum gt redpar.slcrxtrawid[1] and redpar.mode eq 1 then $
         ;xwd = redpar.xwids[redpar.mode] + redpar.slcrxtrawid[0] else xwd = redpar.xwids[redpar.mode]
-        
-        
-        
-
-        
-      ;	getarc, im, orcend, onum, xwd, arc, pix, debug = redpar.debug, ybi, yti
-      	       ; Output --> arc : boxcar extracted pixels for corresponding order
-      	       ;            pix : fractional number of pixels mashed in each for each pixel
-      	
-      	;for i=0, imsz[1]-1 do maskim[i,ybi[i]:yti[i]] += (255d - 255d / nord * onum)
-      	
-    ;endif else getarc, im, orcend, onum, xwd, arc, pix, ybi, yti
-    
-    ;xwid gets set up in reduce_ctio.pro
-   
-      
-    ;print, 'GETSPEC: Extracting '+ strtrim(string(xwd),2) +' pixels in the cross dispersion direction.  '
-    getarc, im, orcend, onum, xwd, arc, pix, debug = redpar.debug, ybi, yti
     
     
-    ybarr[*, onum-1] = ybi
-    ytarr[*, onum-1] = yti
-    ;store total counts
-    spec[*,onum-1] = double(arc) * pix			
-endfor
+    
+    
+    
+        ; getarc, im, orcend, onum, xwd, arc, pix, debug = redpar.debug, ybi, yti
+        ; Output --> arc : boxcar extracted pixels for corresponding order
+        ;            pix : fractional number of pixels mashed in each for each pixel
+    
+        ;for i=0, imsz[1]-1 do maskim[i,ybi[i]:yti[i]] += (255d - 255d / nord * onum)
+    
+        ;endif else getarc, im, orcend, onum, xwd, arc, pix, ybi, yti
+    
+        ;xwid gets set up in reduce_ctio.pro
+    
+    
+        ;print, 'GETSPEC: Extracting '+ strtrim(string(xwd),2) +' pixels in the cross dispersion direction.  '
+        getarc, im, orcend, onum, xwd, arc, pix, debug = redpar.debug, ybi, yti
+    
+    
+        ybarr[*, onum-1] = ybi
+        ytarr[*, onum-1] = yti
+        ;store total counts
+        spec[*,onum-1] = double(arc) * pix
+      endfor
+    
+    
+    
+    
+    
+    
+    
+      ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+      ;;;;;;;;;;;;;;;; Debugging ;;;;
+      ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    
+      if redpar.debug ge 1 and redpar.debug le 2 then begin
+        fdir = redpar.plotsdir + 'arcs/'
+        spawn, 'mkdir '+fdir
+        fdir = redpar.plotsdir + 'arcs/' + redpar.date
+        spawn, 'mkdir '+fdir
+        fname = fdir+'/'+'arcs'+redpar.prefix+redpar.seqnum
+        if file_test(fname+'.eps') then spawn, 'mv '+fname+'.eps '+nextnameeps(fname+'_old')+'.eps'
+        ps_open, fname, /encaps, /color
+        !p.multi=[0,1,1]
+      endif;debug plots
+    
+      if redpar.debug ge 1 then begin
+        ;only plot if debug is greater than 0:
+        display, im
+        for i=0, nord-1 do oplot, ybarr[*,i], col=250
+        for i=0, nord-1 do oplot, ytarr[*,i], col=120
+      endif
+      ;for i=0, nord-1 do begin
+      ; display, im
+      ; oplot, ybarr[*,i], col=250
+      ; oplot, ytarr[*,i], col=120
+      ; plot, spec[*,i], /xsty, /ysty
+      ;stop
+      ;endfor
+      ;plot, spec
+      if redpar.debug ge 1 and redpar.debug le 2 then begin
+        ps_close
+        spawn, 'convert -density 200 '+fname+'.eps '+fname+'.png'
+      endif
+    
+      ;if keyword_set(redpar) then begin
+      ;  if redpar.debug ge 2 then print, 'JUST FINISHED GET ARC. DISPLAYED IS THE MASK'
+      ;  if redpar.debug ge 1 then begin
+      ;  if debug ge 1 and debug le 2 then begin
+      ;   fdir = redpar.plotsdir + 'getspec/'
+      ;   spawn, 'mkdir '+fdir
+      ;   fdir = redpar.plotsdir + 'getspec/' + redpar.date
+      ;   spawn, 'mkdir '+fdir
+      ;   ps_open, nextnameeps(fdir+'/'+'mask'), /encaps, /color
+      ;  endif;debug plots
+      ;  display, maskim
+      ;  if redpar.debug ge 1 and redpar.debug le 2 then ps_close
+      ;  endif;debug>1
+      ;
+      ;  if debug ge 1 and debug le 2 then begin
+      ;   ps_open, nextnameeps(fdir+'/'+'im'), /encaps, /color
+      ;  endif;debug plots
+      ;  display, maskim
+      ;  if redpar.debug ge 1 and redpar.debug le 2 then begin
+      ;   ps_close
+      ;   spawn, 'convert -density 200 '+qfn+'.eps '+qfn+'.png'
+      ;  endif;ps_close
+      ;  endif;debug>1
+      ;  if redpar.debug ge 2 then stop
+      ;endif;redpar passed in
+      ;  if keyword_set(cosmics) then begin
+      ;    if keyword_set(optspec) then spec=optspec ; use optimally extracted spectrum
+      ;    spec(0) = seeing
+      ;  endif
+    
+    
+      if redpar.debug ge 1 then print,'GETSPEC: Spectrum extracted - about to return to caller.'
+      if redpar.debug ge 2 then stop
+    
+      return
+  
+  
+endelse
 
 
 
 
-
-
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;;;;;;;;;;;;; Debugging ;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-if redpar.debug ge 1 and redpar.debug le 2 then begin
-  fdir = redpar.plotsdir + 'arcs/'
-  spawn, 'mkdir '+fdir
-  fdir = redpar.plotsdir + 'arcs/' + redpar.date
-  spawn, 'mkdir '+fdir
-  fname = fdir+'/'+'arcs'+redpar.prefix+redpar.seqnum
-  if file_test(fname+'.eps') then spawn, 'mv '+fname+'.eps '+nextnameeps(fname+'_old')+'.eps'
-  ps_open, fname, /encaps, /color
-  !p.multi=[0,1,1]
-endif;debug plots
-
-if redpar.debug ge 1 then begin
-  ;only plot if debug is greater than 0:
-  display, im
-  for i=0, nord-1 do oplot, ybarr[*,i], col=250
-  for i=0, nord-1 do oplot, ytarr[*,i], col=120
-endif
-;for i=0, nord-1 do begin
-; display, im
-; oplot, ybarr[*,i], col=250
-; oplot, ytarr[*,i], col=120
-; plot, spec[*,i], /xsty, /ysty
- ;stop
-;endfor
-;plot, spec
-if redpar.debug ge 1 and redpar.debug le 2 then begin
-  ps_close
-  spawn, 'convert -density 200 '+fname+'.eps '+fname+'.png'
-endif
-
-;if keyword_set(redpar) then begin
-;  if redpar.debug ge 2 then print, 'JUST FINISHED GET ARC. DISPLAYED IS THE MASK'
-;  if redpar.debug ge 1 then begin
-;	 if debug ge 1 and debug le 2 then begin
-;		fdir = redpar.plotsdir + 'getspec/'
-;		spawn, 'mkdir '+fdir
-;		fdir = redpar.plotsdir + 'getspec/' + redpar.date
-;		spawn, 'mkdir '+fdir
-;		ps_open, nextnameeps(fdir+'/'+'mask'), /encaps, /color
-;	 endif;debug plots
-;	 display, maskim
-;	 if redpar.debug ge 1 and redpar.debug le 2 then ps_close
-;	 endif;debug>1
-;	 
-;	 if debug ge 1 and debug le 2 then begin
-;		ps_open, nextnameeps(fdir+'/'+'im'), /encaps, /color
-;	 endif;debug plots
-;	 display, maskim
-;	 if redpar.debug ge 1 and redpar.debug le 2 then begin
-;		ps_close
-;		spawn, 'convert -density 200 '+qfn+'.eps '+qfn+'.png'
-;	 endif;ps_close
-;  endif;debug>1
-;  if redpar.debug ge 2 then stop
-;endif;redpar passed in
-;  if keyword_set(cosmics) then begin
-;    if keyword_set(optspec) then spec=optspec ; use optimally extracted spectrum
-;    spec(0) = seeing
-;  endif
-
-
-if redpar.debug ge 1 then print,'GETSPEC: Spectrum extracted - about to return to caller.'
-if redpar.debug ge 2 then stop
-
-return
-end
+END

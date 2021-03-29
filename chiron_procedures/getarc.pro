@@ -43,11 +43,12 @@ pro getarc,im,orc,onum,awid,arc,pix,hotpix=hotpix, debug = debug, ybi, yti
   
   ;Define useful quantities
     im=double(im)
-    ncol=n_elements(im(*,0))			  ;number of columns
+    
     nrow=n_elements(im(0,*))			  ;number of rows
+    ncol=n_elements(im(*,0))        ;number of rows
     maxo=n_elements(orc(0,*))-1		 	;maximum order covered by orc
-    ix=findgen(ncol)			        	;vector of column indicies
-    arc=ix*0.0					            ;dimension arc vector
+    ix=findgen(ncol)			        	;vector of column indicies. E.g 4112
+    arc=ix*0.0					            ;dimension arc vector   (Vector 4112 filled with 0s)
     pix=1.0					                ;define in case of trouble
   
   ; Interpolate polynomial coefficients for surrounding orders to get polynomial
@@ -136,11 +137,12 @@ pro getarc,im,orc,onum,awid,arc,pix,hotpix=hotpix, debug = debug, ybi, yti
   isrow = fltarr(n_elements(im[*, 0]), max(yti)-min(ybi)+1) ; same but meant to store double
   
   for row=min(ybi),max(yti) do begin		;loop through valid rows
-      srow=im(*,row)				;get CCD row
+      srow=im(*,row)				;get CCD row : vector  along the dispersion direction. Contains some pixels than actually are within the order ( the others are background)
       sup =im(*,row+1)
       sdn =im(*,row-1)
+      ;Is masking the pixels that are background
       mask=srow*0.				;make a mask for it
-      madd=where(row ge ybi and row le yti,nummad)	;choose pixels in this row
+      madd=where(row ge ybi and row le yti,nummad)	;choose pixels in this row, madd is the same size as the srow, as ybi, as yti
       if nummad gt 0 then mask(madd)=1.				;that belong in this order
     
       ;Cosmic-Ray Remover
@@ -165,6 +167,9 @@ pro getarc,im,orc,onum,awid,arc,pix,hotpix=hotpix, debug = debug, ybi, yti
     ;   end
         isrow(*, row-min(ybi)) = srow
         imask(*, row-min(ybi)) = mask
+        ; srow x mask gives me back the a vector (where the values that survided after multipling by mask will be  the ones elected )
+        ; Trick: arc : will keep begin a vectorwith the 4112  values but as it iteratates in the cross dispersion direction it will sum over the 12
+        ; corresponding pixels for each column
         arc=arc+srow*mask				;add them into extracted spectr
   endfor
   
@@ -175,7 +180,7 @@ pro getarc,im,orc,onum,awid,arc,pix,hotpix=hotpix, debug = debug, ybi, yti
   ;Now subtract out extra pixels at the top and bottom of the swath.
   arc = arc - 0.5 * (vb+vt)                                     $
             - (vb + 0.5*(im(ix+ncol*(ybi+1))-vb)*ybfrac)*ybfrac $
-            - (vt - 0.5*(vt-im(ix+ncol*(yti-1)))*ytfrac)*ytfrac
+            - (vt - 0.5*( vt- im(ix+ncol*(yti-1))   )*ytfrac)*ytfrac
   pix = yt - yb					;number of pixels mashed in arc
   arc = double(arc) / pix			;convert to counts/pixel
   

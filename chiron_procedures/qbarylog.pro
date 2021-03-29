@@ -179,8 +179,11 @@ pro qbarylog,logfile, test=test, baryDir=baryDir, prefix=prefix , justtest=justt
     ; spit out the file and grab the UT Date line
     ;tlogdir=STRMID(logdir, 1) 
     
-    spawn, "type " + logDir + logfile  , output  ;updated for Windows   : output is the content of the .log sheet  
+   
+    spawn, "type " + logDir + logfile   , output  ;updated for Windows   : output is the content of the .log sheet  
     output = cull(output)                        ; remove any blank lines  
+    
+
     logline = (output(where(getwrds(output,0) eq 'UT')))[0] ; 1 element
     
     
@@ -192,6 +195,8 @@ pro qbarylog,logfile, test=test, baryDir=baryDir, prefix=prefix , justtest=justt
     
     
     ; >> OLD VERSION  (To be confirmed)
+    
+
     if strmid(logfile,0,1) ne '1' then begin   ; DF revision Mar2012
         if ( strlen(logline) eq 0 ) then stop,'no proper format for logline'   ; it was ne before WHY ?
         

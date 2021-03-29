@@ -492,7 +492,7 @@ end
 ;      initial_order_peaks:
 ;
 ;Output:
-;      array 
+;      array with the  middles of all the orders for all the columns (4112 ) E.g.  74 x 4112
 ;      
 ;;Notes:
 ;      the polynomial "pkcoefs_slicer" was found from the 0th order to the nth order.

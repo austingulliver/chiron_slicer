@@ -371,9 +371,9 @@ if keyword_set(reduce) then begin
                   		   PRINT, ''
               		           		  
               		      CASE binning OF               		          
-              		          '3x1': chi_masterbias, redpar = redpar, log = log, /bin31, /normal, master_bias=redpar.master_bias ; If interested in the fast mode please change this to /fast or add a call the the CASE statement. 
-              		          '4x4': chi_masterbias, redpar = redpar, log = log, /bin44, /normal, master_bias=redpar.master_bias
-              		          '1x1': chi_masterbias, redpar = redpar, log = log, /bin11, /normal, master_bias=redpar.master_bias
+              		          '3x1': chi_masterbias, redpar = redpar, log = log, /bin31, /normal ; If interested in the fast mode please change this to /fast or add a call the the CASE statement. 
+              		          '4x4': chi_masterbias, redpar = redpar, log = log, /bin44, /normal
+              		          '1x1': chi_masterbias, redpar = redpar, log = log, /bin11, /normal 
               		      ENDCASE             		    
               	  endif
               endif
@@ -493,7 +493,7 @@ print, ' '
 
     	   
     	   ;Make  changes to WVC structure if needs    	   
-    	   initwvc[2]=74. ;73.   ;Number of Orders
+    	   initwvc[2]=74;redpar.nords;74. ;73.   ;Number of Orders
     	   initwvc[3]=64  ;67. ; before kept as 65 ;Physical Order Base ; OBASE. Note this has to much with what is input into THID. 
     	                      ;When adding  (Num of Ordes) + (Base Orders) =  Always 139 (Physically is 138 but addition does not account for obase )
     	   
@@ -509,7 +509,7 @@ print, ' '
     	          	   
     	   ;Find reference pixel from 2017 
     	   ;------------------------------ 
-    	   dir_2017= redpar.rootdir + redpar.iodspecdir+  '171218\achi171218.1003'
+    	   dir_2017= redpar.rootdir + redpar.customthidsol+  '171218\achi171218.1003'
     	   ref_pixel_2017 = find_ref_peak(dir_2017) ; returns an array with three elements
                                             	   ; peak 1 : found withint the range  r1=[ 600, 800 ]
                                             	   ; peak 2 : found withint the range  r2=[1975,2050]

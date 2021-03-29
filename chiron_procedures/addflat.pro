@@ -97,15 +97,20 @@ endif else im_arr = im_arr1      ;When no normalization is applied
 print, 'ADDFLAT: Combining flats using the ' +redpar.master_flat+' of all flats . Please wait ........'
 
 sum = dblarr(nc,nr)
-for ncol=0,nc-1 do begin
-  for nrow=0,nr-1 do begin
-       if redpar.master_flat eq 'mean' then begin
-           sum[ncol,nrow]=mean(im_arr[ncol,nrow,*])
-       endif else  if redpar.master_flat eq 'median' then begin
-           sum[ncol,nrow]=median(im_arr[ncol,nrow,*])
-       endif else stop, '>> ERROR << : >> ERROR << The variable master_flat can only be median or mean. Please change its value in the ctio.par file'
-  endfor
-endfor
+;for ncol=0,nc-1 do begin
+;  for nrow=0,nr-1 do begin
+;    
+;    
+;       if redpar.master_flat eq 'mean' then begin
+;           sum[ncol,nrow]=mean(im_arr[ncol,nrow,*])
+;       endif else  if redpar.master_flat eq 'median' then begin
+;           sum[ncol,nrow]=median(im_arr[ncol,nrow,*])
+;       endif else stop, '>> ERROR << : >> ERROR << The variable master_flat can only be median or mean. Please change its value in the ctio.par file'
+; 
+;  endfor
+;endfor
+
+sum = weighted_master_frame( im_arr, redpar.master_flat )
 
 
 

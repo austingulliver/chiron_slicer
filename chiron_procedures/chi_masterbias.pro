@@ -36,8 +36,8 @@ bin44 = bin44, $
 normal = normal, $
 fast = fast, $
 log = log, $
-bobsmed = bobsmed, $
-master_bias = master_bias ; Takes 2 options "  'median' or 'mean'
+bobsmed = bobsmed
+
 
 
 if keyword_set(bin31) then binsz='31'
@@ -132,14 +132,12 @@ if bobsct ge 2 then begin
     endfor
     
     
-    ;Calculating mean/median bias :
+    ;Calculating master bias :
     ;---------------------------
-    if master_bias eq 'mean' then begin   
-        bobMasterBias = mean(bcube, /double, dimen=3)          
-    endif else if master_bias eq 'median' then begin 
-        bobMasterBias = median(bcube, /double, dimen=3)       
-    endif else stop, 'CHI_MASTERBIAS: >> ERROR << The variable master_bias can only be median or mean. Please change its value in the ctio.par file'
     
+    bobMasterBias = weighted_master_frame (  bcube, redpar.master_bias )
+    
+
     ;Store master bias:
     ;---------------------------
     masterBiasPath = redpar.rootdir+redpar.biasdir+ redpar.date+'_'+binning+'_'+ redpar.master_bias +'_bias.fits'

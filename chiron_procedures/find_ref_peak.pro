@@ -104,7 +104,7 @@ FUNCTION validate_one_peak, pixel_list, spec
 END
 
 
-FUNCTION find_ref_peak ,abs_path
+FUNCTION find_ref_peak ,abs_path,order_num=order_num 
 ;+              
 ; :Input:
 ; 
@@ -118,13 +118,21 @@ FUNCTION find_ref_peak ,abs_path
 ;
 ;-
 
-
+if not keyword_set(order_num) then order_num =  2
 
   ;Read file & smooth
   ;--------------------------------------------  
-  rdsk,sp,abs_path,1
-  spec = REFORM(sp[*,-73] )                ; Get the first order only since we only need a reference  : Indexed Order 70
-  smooth_spec= TS_SMOOTH(spec,3)          ; Moving avg only to smooth seems to influece more 
+  rdsk,sp,abs_path,1                       ; File restored is the the one extracted where the orders still go 
+                                           ; from red to blue meaing has 2d array - >  sp[4112 x73]
+                                           ; We pick a blue order. The second blue order.
+                                           ; Thus, WARNING ! 
+                                           ; This procedure will work IFF OUT OF the 76 order that were in the ccd the first 
+                                           ; red order was ignored and the last 2 blue as well.
+  spec = REFORM(sp[*,-73] )                  ; Get the first order only since we only need a reference  
+                                           ; If software crashes at this point. It is most likely because the order changed due to 
+                                           ; .
+                                           ;I used sp[*,-73] when extracting 74 order
+  ;smooth_spec= TS_SMOOTH(spec,3)          ; Moving avg only to smooth seems to influece more 
   
  ;p0 = plot(spec, LINESTYLE='-:', title ='ThAr -Indexed Order  (Blue order)' ); ,/overplot)
 
@@ -132,7 +140,8 @@ FUNCTION find_ref_peak ,abs_path
 
   ;Find peaks
   ;--------------------------------------------
-  yvals = smooth_spec 
+  ;yvals = smooth_spec 
+  yvals =spec 
   xvals = indgen( n_elements(yvals) )
   local_maxmin_index = find_spec_peak(xvals, yvals) ; expect back an array with the pixel number where peaks in the spectrum where found 
                                                     ; The peaks were found under certain criteria 
