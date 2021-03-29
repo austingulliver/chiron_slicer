@@ -66,7 +66,7 @@ endif else begin
         logpath = '/mir7/logsheets/'+yyyy+'/'
     endif else if  host eq 'Drius22' then begin
         rawpath = 'C:\Users\mrstu\idlworkspace_yalecalibration\chiron\raw\mir7\'
-        logpath = 'C:\Users\mrstu\idlworkspace_yalecalibration\chiron\tous\mir7\logsheets\'+yyyy+'\'
+        logpath = 'C:\Users\mrstu\idlworkspace_yalecalibration\chiron\tous\mir7\logsheets\'+yyyy+'\'        
     endif else begin
         rawpath = '/nfs/morgan/chiron/raw/mir7/'
         logpath = '/nfs/morgan/chiron/tous/mir7/logsheets/'+yyyy+'/'

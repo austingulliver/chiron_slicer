@@ -180,7 +180,8 @@ pro qbarylog,logfile, test=test, baryDir=baryDir, prefix=prefix , justtest=justt
     ;tlogdir=STRMID(logdir, 1) 
     
    
-    spawn, "type " + logDir + logfile   , output  ;updated for Windows   : output is the content of the .log sheet  
+    spawn, "type "+ string(34B) + logDir + logfile + string(34B) , output  ;updated for Windows   : output is the content of the .log sheet  
+
     output = cull(output)                        ; remove any blank lines  
     
 

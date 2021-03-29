@@ -68,7 +68,7 @@ case pwddir of
    '/tous/CHIRON/QC': ctparfn = '/tous/CHIRON/REDUCTION/ctio.par'
    '/nfs/morgan/chiron/idl/CHIRON/REDUCTION': ctparfn = '/nfs/morgan/chiron/idl/CHIRON/REDUCTION/ctio.par'
    'C:\Users\mrstu': ctparfn = 'C:\Users\mrstu\idlworkspace_yalecalibration\chiron_procedures\ctio.par'
-   'C:\Users\gulliver': ctparfn = 'C:\F disk\chiron_reduc_pipeline\chiron_procedures\ctio.par'
+   'C:\Users\gulliver': ctparfn = 'C:\F disk\ctio.par'
     ELSE : ctparfn=!NULL 
     ; E.g. 'your_current_directory': ctparfn = 'absolute_path_to_ctio.par'
     ; Note: Let the program run. It will stop with the message bellow. Copy/Paste the printes direcotory in 'your_current_directory'
@@ -132,8 +132,8 @@ redpar.logdir=logpath
 logsheet = redpar.rootdir+logpath+night+'.log'
 iodspec_path = redpar.rootdir+redpar.iodspecdir+redpar.imdir
 fits_path = redpar.rootdir+redpar.fitsdir+redpar.imdir
-if ~file_test(fits_path) then spawn, 'mkdir '+fits_path
-if ~file_test(iodspec_path) then spawn, 'mkdir '+iodspec_path
+if ~file_test(fits_path) then spawn, 'mkdir '+ string(34B) + fits_path + string(34B)
+if ~file_test(iodspec_path) then spawn, 'mkdir '+ string(34B) + iodspec_path + string(34B) 
 
 thid_path = redpar.rootdir+redpar.thidfiledir
 thid_path_dat =   redpar.rootdir+redpar.thiddir
