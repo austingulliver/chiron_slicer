@@ -22,5 +22,7 @@ previous_thid_ignore/
 chiron/debugging
 idl_packages/optspecextr-0.3.1/
 *password*
-*Default/*
+Default/*
 /chiron/tous/mir7/fits_version/*
+*chiron_procedures/ctio.par
+research/*
