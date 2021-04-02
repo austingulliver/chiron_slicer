@@ -157,37 +157,52 @@ end
 
 
 
-function order_middle_peaks, flat, redpar, method_str= method_str
+function all_order_peaks, flat, redpar, method_str= method_str
   compile_opt idl2
 
-  debug=0
-  ; Image is  4112X 1432 for the slicer mode
-  img_size=size(flat)     ;size of image passed: e.g. Master Flat
-  n_rows= img_size[1]     ;number of rows in image
-  n_columns=img_size[2]   ;number of cols in image
+debug=1
+
+;; USE THIS SECTION TO MANUALLY ADD OR REMOVE PEAKS. Refer to the plot by setting debug =1 
+; DON'T FORGET TO COME BACK HERE AND LEAVE THEM EMPTY ONCE IS
+
+
+; Image is  4112X 1432 for the slicer mode
+img_size=size(flat)     ;size of image passed: e.g. Master Flat
+n_rows= img_size[1]     ;number of rows in image
+n_columns=img_size[2]   ;number of cols in image
   
   
-  if method_str eq 'from_scratch' then begin      
+if method_str eq 'from_scratch' then begin      
       above_noise_level=10.0 ; Defines how many times bgger(wrt to the Background) the intensity values should get picked
                              ; Found experimentally. Change if neccesary 
                             
       middle = flat[  round(n_rows/2.0),*]
       middle= reform(middle)
-      if debug gt 0 then p=plot(middle)
+      
       
       noise_level = background_level(middle, noise_width=redpar.ron, section_width=redpar.xwids[redpar.mode] ,  noise_str='band_fragments', debug=debug) ; Has the same with as readout noise
                     ; ron(input) : Read out noise of the frame                                    
                     ; section_width(input) : Used to define the width of the  24.0
                     ; now noise level(output) is a vector with the same length as the middle vector
       
-      if debug gt 0 then begin        
-          p=plot(noise_level, color='red', /overplot)   
-          upper_noise_level= noise_level+ ( redpar.ron * above_noise_level )
-          p=plot(upper_noise_level, color='red', /overplot)
-      endif
+     
           
-      idx_peaks = find_peaks(middle, noise_level ,read_out_noise=redpar.ron, above_noise=above_noise_level) ; The value of 20.0 was experimentally found
-      peak_intensities = middle[idx_peaks]      
+      idx_peaks = find_peaks(middle, noise_level ,read_out_noise=redpar.ron, above_noise=above_noise_level) ; The value of 10.0 was experimentally found
+      
+      
+      try_new_peaks:
+      print, 'Number of peaks detected : '+string(n_elements(idx_peaks))
+      peak_intensities = middle[idx_peaks]  
+       
+      if debug gt 0 then p=plot(middle, title= 'Debug-Plot', xtitle='Cross-dispersion direction', ytitle='electrons count')
+      if debug gt 0 then begin
+        p=plot(noise_level, color='red', /overplot)
+        upper_noise_level= noise_level+ ( redpar.ron * above_noise_level )
+        p=plot(upper_noise_level, color='red', /overplot)
+      endif
+      
+     
+         
       if debug gt 0 then  p=plot( idx_peaks,peak_intensities,'+g'   , /overplot) ; plot the 1-value noise level
 
                 
@@ -200,32 +215,133 @@ function order_middle_peaks, flat, redpar, method_str= method_str
       n_orders= redpar.nords
       ; Check if number of peaks is a multiple of 12 othwerwise throw exception
       n_orders_found =n_elements(idx_peaks) /3.0
-      IF  ( n_elements(peak_intensities) mod 3 ) eq  0 then begin          
+      
+      
+      print, 'Number of Orders detected : '+strt(n_orders_found)
+      indices_middle_peaks=idx_peaks[multiples_of_3[0:-2]]     ; Dont take last    multiples_of_3 into account
+      if debug  gt 0 then p =plot(indices_middle_peaks, middle[indices_middle_peaks],  'Hr', /overplot  )
+      
+      
+      
+      ; We assuming there could be giving you 75 or 76 orders
+      IF  ( n_elements(peak_intensities) mod 3 ) eq  0  and( n_elements(peak_intensities) eq 225 or n_elements(peak_intensities) eq 228)then begin    
           
-          if debug  gt 0 then print, 'Number of Orders found : '+strt(n_orders_found)        
-          indices_middle_peaks=idx_peaks[multiples_of_3[0:-2]]     ; Dont take last    multiples_of_3 into account            
-          if debug  gt 0 then p =plot(indices_middle_peaks, middle[indices_middle_peaks],  'Hr', /overplot  )
+          ; All good as expected 
           
-          return, indices_middle_peaks; This is what we are after           
-      endif else stop, '>> Error << The number of peaks returned is not a multiple of three. Please check the plot and try again. '
+          ; save this to restore if needed  for a future night as a reference
+          
+          idx_peaks= idx_peaks[sort(idx_peaks)]
+          return, idx_peaks  ; I am returning all 3 peaks of an order now  to later iterate every three. THIS SHOULD BE CLOSES TO CONSISTEN AS FAR 
+                             ; THE MIDDLE COLUMN IS 1432 Pixels long
+                 
+      endif  else begin 
+        
+        print, '>> Error << The program failed to recognized all peaks in the middle column (cross-dispersion direction). '
+        print, '' 
+        print, ' We have two options : '
+        print, ' 1) Set the variable use_prev_tracing=1 in the ctio.par file.     ' 
+        print, ' This will use an order tracing susccesfully found of a different night (The closest to this this one) '
+        print, ' Please answer with the letter n if you opt for option 1. The program will end and you are expected to change the variable and run again.'
+        print,''
+        print,  '2) Enter to debug mode. This will produce a plot in the cross-dispersion direction of the approx. 76 orders.
+        print, ' you are expected to define the index number (the x value in the plot) of the missing peaks by inspection and enter them in the idl console.'
+        print, ''
+        
+        
+        B=''
+        READ, B, PROMPT=' ctio.par Do you want to enter debug mode ? (y/n) :'
+        
+        
+        if B eq 'y' then begin
+              
+              ; Start DEBUG MODE 
+              print, ' All peaks found by the software are marked with a cross in the plot.
+              print, ' E.g. If the peaks at x=160 and x=1139 are missing then insert:
+              print, ' idl> 160'
+              print, ' idl> 1139'
+              print, ' idl> -1'
+              print , 'The -1 will let the program know you are done. Next, the program will ask if there are any extra peaks '
+              print,  'that should not be considred.If there is not any, simply insert -1.
+              print,  'Please insert the value as the e.g. above and -1 to terminate '
+             
+             print, 'Please take your time to see the plot !! and write down the peaks. The plot will freeze once you continue.'
+             
+             p=plot(middle, title= 'Debug-Plot', xtitle='Cross-dispersion direction', ytitle='electrons count')
+             p=plot(noise_level, color='red', /overplot)
+             upper_noise_level= noise_level+ ( redpar.ron * above_noise_level )
+             p=plot(upper_noise_level, color='red', /overplot)
+             p=plot( idx_peaks,peak_intensities,'+g'   , /overplot) 
+             
+             stop, 'Please type   .cont  :'
+             
+             inputC = 0
+             missing_peaks= list()
+             
+             while (inputC ne -1 ) do begin     
+
+                 READ, inputC, PROMPT='MISSING Peak : '
+                 if inputC ne -1 then missing_peaks.add, inputC               
+             endwhile
+             
+             missing_peaks =missing_peaks.toarray()
+             
+             inputC = 0
+             extra_peaks= list()
+             
+             while (inputC ne -1 ) do begin
+               READ, inputC, PROMPT='EXTRA  Peak  : '
+               if inputC ne -1 then extra_peaks.add, inputC
+             endwhile
+             
+             
+             
+             print, "Summary of debug mode "
+             print, 'Exta Peaks :'
+             print, extra_peaks
+             print, 'Missing Peaks : '
+             print, missing_peaks
+             
+             print, 'Number of peaks previously detected :'+strt(n_elements(idx_peaks))  
+              
+             if extra_peaks.count()  gt 0 then begin 
+              
+                 foreach missing_peak, missing_peaks do begin
+                      indices =where(idx_peaks ne missing_peak, n ) ; these are goood peaks ; THESE SHOULD BE ALL IF NONE IS CHOOSE
+                      idx_peaks =idx_peaks[indices]
+                 endforeach
+
+             endif 
+             
+         
+                         
+             idx_peaks=[idx_peaks, missing_peaks]
+             print, 'Number of peaks detected NOW :'+strt(n_elements(idx_peaks))   
+              
+             GOTO, try_new_peaks
+          
+        endif else stop, ' >>  Program stopped  at OPTIMAL_TRACING.PRO << Run again with prev_order_tracing=1 in the ctio.par'
+        
+       
+        
+      endelse
+        
       
                       
     
-  endif else if method_str eq 'use_poly' then begin
-    
-    ;>> The polynomial "pkcoefs_slicer" has the middle points of each order in the cross-dispersion direction
-    pkcoefs =redpar.pkcoefs_slicer  ; POlynomial is restored from ctio.par 
-    y_peaks = poly(iord,pkcoefs)
+endif else if method_str eq 'use_poly' then begin
+  
+  ;>> The polynomial "pkcoefs_slicer" has the middle points of each order in the cross-dispersion direction
+  pkcoefs =redpar.pkcoefs_slicer  ; POlynomial is restored from ctio.par 
+  y_peaks = poly(iord,pkcoefs)
+
 
   
-    
-    return, y_peaks 
-  endif else stop,  '>> ERROR <<  Argument method_str does not match any avaialble option '
+  return, y_peaks 
+endif else stop,  '>> ERROR <<  Argument method_str does not match any avaialble option '
  
   
   
-  
-end
+END
 
 
 
@@ -256,11 +372,14 @@ end
 ;-
 function define_templates, flat, redpar
   
-  
-  debug = 0 ; Make it greater than 1 for detailed plotting
+  print, 'OPTIMAL_ORDER_TRACING: Defining templates to be used for cross-correlation. Please Wait ....'
+  debug = 1 ; Make it greater than 1 for detailed plotting
 
-  y_peaks=order_middle_peaks(flat, redpar, method_str='from_scratch')  ; Finds the middle peaks of each order. Note it will return the 76 orders but 
-                                                                       ; we will get rid of some of them   
+  y_peaks=all_order_peaks(flat, redpar, method_str='from_scratch')  ; Finds the all peaks of each order. Note it will return the 76 orders but 
+                                                                       ; we will get rid of some of them 
+                                                                       ; Need to iterate for every thee
+  
+  if debug  then p=plot(y_peaks, title='These are all the peaks found', xtitle='Indices of peaks', ytitle='indices of peaks wrt column')                                                                       
   img_size=size(flat)     ;size of image passed: e.g. Master Flat ; Image is 4112 x 1366 for the slicer mode
   n_columns=img_size[1]   ;number of cols in image E.g. 4112
   n_rows= img_size[2]     ;number of rows in image E.g 1366
@@ -278,6 +397,11 @@ function define_templates, flat, redpar
   order_templates= {middle:fltarr(orders_to_extract ), up:fltarr(orders_to_extract ), down:fltarr(orders_to_extract)}
 
   
+  
+  middle_peak_idx=4 ; Starts from 4 cause this is the first middle peak since we don t account for the first red order, Then increse every three . E.g 1,4,7
+                    ; this acts as reference to keep iterating every thee 
+  
+  
   ;>> Extract +-3 of xwid  just to validate the peak already selected.
   ; Here is where the order are ommited if neccessary. The first red order is not included and the number 
   ; of blue orders to include (up to) is defined by the ctio.par file. 
@@ -288,48 +412,92 @@ function define_templates, flat, redpar
         ;Hack to compensate for the overlapping in the red ordesr. 
         if  index gt  28 then extra_width=3 else   extra_width =1
         
+        
+        ;Definning the middle peaks  + the other side peaks of a given order
+
        
-        low= round(y_peaks[index] - (  (redpar.xwids[redpar.mode]/2.0 )  +  extra_width )  )
-        up= round(y_peaks[index]  + (  (redpar.xwids[redpar.mode]/2.0 )  +  extra_width ) )
+;        low= round(y_peaks[middle_peak_idx] - (  (redpar.xwids[redpar.mode]/2.0 )  +  extra_width )  )
+;        up= round( y_peaks[middle_peak_idx]  + (  (redpar.xwids[redpar.mode]/2.0 )  +  extra_width ) )
         
         if debug  gt 0 then begin 
             print, " *************** "
             print, " *************** "
             print, 'Order : '+strt(index)
-            print, 'Template to work with : [' +strt(low) +' , '+strt(up) +' ]'
-            print, 'y-peak found : '+strt(round(y_peaks[index]) )
+;            print, 'Template to work with : [' +strt(low) +' , '+strt(up) +' ]'
+;            print, 'y-peak found : '+strt(round(y_peaks[index]) )
 
         endif 
         
         ; This is going to mess up the initial and  final orders so take care of these down  TO FIX !!!
-        low =low > 1 ; References the first pixel 
-        up =up < n_rows-1  ; chagen !!!OT FIX 
+;        low =low > 1 ; References the first pixel 
+;        up =up < n_rows-1  ; chagen !!!OT FIX 
+;        
+;        template  = flat[middle_column, low:up  ]
+;        template = reform(template)
         
-        template  = flat[middle_column, low:up  ]
-        template = reform(template)
-        background = background_level( template, noise_width=redpar.ron , noise_str = 'band_fragments' , section_width=float(n_elements(template)) , poly_order=1 )
-        peak_indices = find_peaks( template, background, above_noise=2.0, read_out_noise=redpar.ron ) ; This applies only for 1 template 
-        peak_values = template[peak_indices]
         
+        
+        
+        
+        ; dont need to find the peaks anny more 
+;        background = background_level( template, noise_width=redpar.ron , noise_str = 'band_fragments' , section_width=float(n_elements(template)) , poly_order=1 )
+;        peak_indices = find_peaks( template, background, above_noise=2.0, read_out_noise=redpar.ron ) ; This applies only for 1 template 
+;        
+;        if index eq 67 then  debug =2 else debug =1
+;        
+;        if debug gt 1 then begin
+;          
+;            p=plot(template)
+;            p=plot(background, color='red', /overplot)
+;            p=plot( peak_indices , template[peak_indices] , 'Hr',/overplot)
+;        endif
         
         
         ;*********************************
         ;* Define Initial upper-lower bounds 
         ;*********************************
         
-        if n_elements(peak_values) lt 3 then stop, '>> Error << Numper of peak found is less than 3 for  spectra '
-        idx_sorted_peaks =  sort(peak_values) ;  Ascending order : these indices are relatative to the list created within find_peaks 
-        idx_sorted_peaks = reverse(idx_sorted_peaks) ; Now in descending order. From highest to lowest
-        idx_sorted_peaks = idx_sorted_peaks[0:2] ; Just the 3 highest peaks . Which presumable have to me the ones that belong to the order. 
-        peak_idx_of_template = peak_indices[ idx_sorted_peaks  ]  ; but out of these indices we only care about the indes of the side peaks (meaning not the middle peak)
+;        if n_elements(peak_indices) lt 3 then begin ; assiging defautl values in case the profile of an order is so irrefular that there are not even 3 peaks
+;          
+;          ; >> IF FOR SOME REASON THERE WERE ONLY 3 PEAKS FOUND
+;          
+;          peak_idx_of_template =[round(n_elements(template)/2.0 ), round(n_elements(template)/2.0 -(redpar.xwids[redpar.mode]/2.0) -1 ), $
+;                                 round( (n_elements(template)/2.0) + ( (redpar.xwids[redpar.mode]/2.0) -2)  )   ] ; need to make up peak_indices wrt to template
+;           print, '* Less than 3 peaks found for order: ' +strt(index) 
+;           print, round(n_elements(template)/2.0 )
+;           print, round(n_elements(template)/2.0 -(redpar.xwids[redpar.mode]/2.0)  )
+;           print, round( (n_elements(template)/2.0) + ( (redpar.xwids[redpar.mode]/2.0) -1)  )
+;           
+;           pk1=flat[middle_column,round(y_peaks[index])  ]
+;;          pk2= flat[middle_column, round(y_peaks[index]  -(redpar.xwids[redpar.mode]/2.0) )  ]
+;;          pk3=flat[middle_column, round(y_peaks[index] +(redpar.xwids[redpar.mode]/2.0 )+1 )  ]
+;;          
+;;          peak_values =[ y_peaks[index] , round ( y_peaks[index] +  (redpar.xwids[redpar.mode]/2.0 ) )  -  round( y_peaks[index] -  (redpar.xwids[redpar.mode]/2.0 ) )] ;Assigning a default value
+;;        
+;        endif  else begin 
+;           
+;           ; >> IF ALL GOES AS PLANNED 
+;          if debug  gt 1 then print, ' number of elements in peak_indices :' +strt(   n_elements(peak_indices) )
+;          peak_values = template[peak_indices]
+;          idx_sorted_peaks =  sort(peak_values) ;  Ascending order : these indices are relatative to the list created within find_peaks
+;          idx_sorted_peaks = reverse(idx_sorted_peaks) ; Now in descending order. From highest to lowest
+;          idx_sorted_peaks = idx_sorted_peaks[0:2] ; Just the 3 highest peaks . Which presumable have to me the ones that belong to the order.
+;          peak_idx_of_template = peak_indices[ idx_sorted_peaks  ]  ; but out of these indices we only care about the indices of the side peaks (meaning not the middle peak)
+;          peak_idx_of_template =  peak_idx_of_template [ sort(peak_idx_of_template)] ;Ascending;
+;         
+;         
+;        endelse
         
-        
-        peak_idx_of_template =  peak_idx_of_template [ sort(peak_idx_of_template)] ;Ascending; 
-        
+              
         ; So far bounds in the cross dispersion direction for this order 
-        low_bound = peak_idx_of_template[0]
-        up_bound = peak_idx_of_template[2]
+;        low_bound = peak_idx_of_template[0]
+;        up_bound = peak_idx_of_template[2]
+
+         low_bound = y_peaks[middle_peak_idx-1] 
+         up_bound =  y_peaks[middle_peak_idx+1] 
         
+         print, ' low_bound :'+strt(low_bound)
+         print, ' up_bound :'+strt(up_bound) 
 
             ;*********************************
             ;* Creating Optimal Template
@@ -355,7 +523,7 @@ function define_templates, flat, redpar
                 up_bound = up_bound + round(missing_px_num/2) 
                 
                 ; >> We add the +1 pixel to complete the 12 pixels based on which pixel either lower or upper is higher (this translates to if the pixel belongs to the order or  not )
-                if flat[middle_column,low + low_bound-1  ] gt flat[middle_column, low + up_bound+1  ] then begin
+                if flat[middle_column, low_bound-1  ] gt flat[middle_column,  up_bound+1  ] then begin
                   low_bound =low_bound -1 
                 endif else up_bound = up_bound+1
               
@@ -387,9 +555,9 @@ function define_templates, flat, redpar
                 potential_plus_up_bound  = up_bound  +1
                 
                 ; Recall to add low  to pass from local to the general spectrum 
-                sum_no_shift = total( reform( flat[middle_column,  low+low_bound: low+up_bound]   ) )
-                sum_minus    = total( reform( flat[middle_column,  low+potential_minus_low_bound : low+potential_minus_up_bound] ) )
-                sum_plus     = total( reform( flat[middle_column,  low+potential_plus_low_bound : low+potential_plus_up_bound]   ) )
+                sum_no_shift = total( reform( flat[middle_column,  low_bound: up_bound]   ) )
+                sum_minus    = total( reform( flat[middle_column,  potential_minus_low_bound : potential_minus_up_bound] ) )
+                sum_plus     = total( reform( flat[middle_column,  potential_plus_low_bound : potential_plus_up_bound]   ) )
     
                 sorted_idx = REVERSE( sort([sum_no_shift, sum_minus, sum_plus])) ; descending
     
@@ -423,16 +591,17 @@ function define_templates, flat, redpar
               ;* Store order-template information
               ;*********************************
                ; Index -1 is to compensate the loop starting from 1
-              order_templates.middle[index-1] = low+ low_bound + round(redpar.xwids[redpar.mode] /2.0 ) ; NEED TO DUBLE CHECK BOXCAR TO FIND HOW IT DEFINES THE MIDDLE
-              order_templates.down[index-1]   = low + low_bound   ; + low is to compensate for the fact that the pixel template are taken as local when they are part of somthing bigger
-              order_templates.up[index-1]     = low+ up_bound
+              order_templates.middle[index-1] =  low_bound + round(redpar.xwids[redpar.mode] /2.0 ) ; NEED TO DUBLE CHECK BOXCAR TO FIND HOW IT DEFINES THE MIDDLE
+              order_templates.down[index-1]   =  low_bound   ; + low is to compensate for the fact that the pixel template are taken as local when they are part of somthing bigger
+              order_templates.up[index-1]     =  up_bound
               
               if debug gt 0 then  begin
                    print, 'Order-template information : middle : ' +strt(order_templates.middle[index-1] ) + ' | down :'+strt(order_templates.down[index-1] ) + ' | up:'+strt(order_templates.up[index-1] )
                            
               
               endif
-              
+      
+      middle_peak_idx = middle_peak_idx+3 ; reference for the middle peak of an orde r       
              
   endfor
   
@@ -602,7 +771,7 @@ function optimal_order_tracing, img, redpar
  endfor
  
  
-  
+  debug = 1
 if debug gt 0 then begin       
     p=plot(order_ys[0, *] )    
     for ord_idx = 1L, n_elements(templates.middle )-1 do begin

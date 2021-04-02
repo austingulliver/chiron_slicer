@@ -38,8 +38,8 @@ dmode = strt(redpar.modes[redpar.mode])
 
 if dmode eq 'slicer' then begin
        ;  >>If slicer then return 2-d arrray with order_ys[ # of orders , # of columns] E.g 74 x 4112
-       ;orc = optimal_order_tracing(image, redpar )
-        orc = order_tracing(image, redpar )
+        orc = optimal_order_tracing(image, redpar )
+       ; orc = order_tracing(image, redpar )
        ; >> We save the n- structure to later extract the orders usign them
        ; Be aware than the orc (2-d array output) for the slicer mode is
        ; differente than the orc output for the other modes. 

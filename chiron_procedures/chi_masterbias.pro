@@ -135,7 +135,7 @@ if bobsct ge 2 then begin
     ;Calculating master bias :
     ;---------------------------
     
-    bobMasterBias = weighted_master_frame (  bcube, redpar.master_bias )
+    bobMasterBias = weighted_master_frame(  bcube, redpar.master_bias )
     
 
     ;Store master bias:

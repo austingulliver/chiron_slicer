@@ -51,7 +51,7 @@ pkcoefs: [26.4117,34.9785,0.114412,0.00182212],        ; yt=2 poly coefs of peak
                                                        ; change this var for [26.4517d,35.0451d,0.112029d,0.00188384d] when date=  120302 - 120501 (torrent logic problem)
 pkcoefs_slicer: [3.7317974,11.735275,0.035510775,0.00064337943],   ;found by JL used for slicer not need to divide by binning (3)
 
-nords: 74,                                             ; Chiron's ccd records 76 orders  ([0,75]) 
+nords: 73,                                             ; Chiron's ccd records 76 orders  ([0,75]) 
                                                        ; But the first red order and the very last 2 go off the cdd so, we can really get a max of 73 orders
                                                        ;  However the 1st [0] and last 2 orders [74,75] are incomplete and therefore are not contemplated when creating the algorithims.
 modes: ['narrow','slicer','slit','fiber','narrow'],    ; observing modes             
@@ -78,6 +78,6 @@ use_prev_tracing: 1,                                   ; If 1 then it used the p
 master_bias:'median',                                  ; Can only take 2 string values 'median' or 'mean'. Used to calculate the mean/median of all bias frames and create master bias.
 master_flat:'median',                                  ; Can only take 2 string values 'median' or 'mean'. Used to calculate the mean/median of all flat frames and create master flat.
 master_stellar: 'mean',                                ; Can only take 2 string values 'median' or 'mean'. Used to calculate the mean/median of all stellar frames and create master master.
-flat_from_scratch: 1,                                  ; If 1 create the master flat from scratch every time program runs, if 0 then program restores existing file in memory for given night
-bias_from_scratch: 1}                                  ; If 1 Creates master bias from scratch regardless if such file exists already
+flat_from_scratch: 0,                                  ; If 1 create the master flat from scratch every time program runs, if 0 then program restores existing file in memory for given night
+bias_from_scratch: 0}                                  ; If 1 Creates master bias from scratch regardless if such file exists already
 

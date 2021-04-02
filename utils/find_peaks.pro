@@ -21,7 +21,7 @@ function find_peaks , y_values, background_lvl, above_noise=above_noise, read_ou
 
   if not keyword_set(above_noise) then above_noise =2.0 ;Default The number of times the line has to be above noise level
 
-  for i=1, n_elements(data_y)-3 do begin     
+  for i=1, n_elements(data_y)-2 do begin     
       ;previous point less than i-th point and next point less than i-th point
       if (  (data_y[i-1] lt data_y[i]) AND (data_y[i] ge data_y[i+1])  ) then  begin  
           if keyword_Set( background_lvl) then begin

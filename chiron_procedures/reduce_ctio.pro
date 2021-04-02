@@ -144,8 +144,8 @@ PRINT, ''
      rdsk, sum, name, 1  ; get existing flat from disk
      bin = redpar.binnings[modeidx] ; set correct binning for order definition
      redpar.binning = [fix(strmid(bin,0,1)), fix(strmid(bin,2,1))]
-     print, 'REDUCE_CTIO: Master Flar read from disk: '+name 
-     print, 'REDUCE_CTIO: Master flat restored has a binning of ', redpar.binning
+     print, 'REDUCE_CTIO: Master Flat read from disk: '+name 
+     print, 'REDUCE_CTIO: Restored Master flat has a binning of ', redpar.binning
  endelse
 
 

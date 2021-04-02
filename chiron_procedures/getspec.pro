@@ -64,60 +64,59 @@ endif
 mode = strt(redpar.modes[redpar.mode])
 
 
-; uncomment from here 
-;
-;if (mode eq 'slicer') then begin
-;  
-;  ;*******************************************************
-;  ; SLICER MODE
-;  ;*******************************************************
-;   
-;  
-;  ;  >> ONLY for the slicer mode 
-;  ; We don't deal with polynomial since we pass the exact middles for all the orders.
-;  nord = redpar.nords
-;  ncol = n_elements(im(*,0))          ;# columns in image
-;  nrow = n_elements(im(0,*))          ;# rows in image
-;  spec = dblarr(ncol,nord)            ;init spectrum
-;  ybarr = dblarr(ncol,nord)           ; No need for double but just to maintain consistency with prev code.
-;  ytarr = dblarr(ncol,nord)
-;  
-;  ;*******************************************************
-;  ;   LaCosmic applied  prior the the extraction and 1 frame at the time . 
-;  ;*******************************************************
-;  
-;  
-;  ;*******************************************************
-;  ;  Boxcar Extraction 
-;  ;*******************************************************
-;  ; For the slicer mode only the extraction takes place in here rather than invoking getarc.pro 
-;  for orderNum=0,redpar.nords -1  do begin
-;        
-;         ; Already giving back vector (double) which corresponds to the boxcar extraction 
-;         ; of that order.
-;       getarc_slicer,  im, orc, orderNum, redpar, arc, ybi, yti       
-;       spec[*,orderNum] = arc
-;       ybarr[*, orderNum] = ybi   ; used for testing puposes  array associated with bottom edge of the order
-;       ytarr[*, orderNum] = yti   ; used for testing puposes  array associated with top edge of the order
-;  endfor
-;  
-;  
-;  
-;  
-;  
-;  ; Objective -> find :   spec = dblarr(ncol,nord) E.g.  4112 x 74
-;  
-;  
-;
-;endif else begin
+
+
+if (mode eq 'slicer') then begin
+  
+  ;*******************************************************
+  ; SLICER MODE
+  ;*******************************************************
+   
+  
+  ;  >> ONLY for the slicer mode 
+  ; We don't deal with polynomial since we pass the exact middles for all the orders.
+  nord = redpar.nords
+  ncol = n_elements(im(*,0))          ;# columns in image
+  nrow = n_elements(im(0,*))          ;# rows in image
+  spec = dblarr(ncol,nord)            ;init spectrum
+  ybarr = dblarr(ncol,nord)           ; No need for double but just to maintain consistency with prev code.
+  ytarr = dblarr(ncol,nord)
+  
+  ;*******************************************************
+  ;   LaCosmic applied  prior the the extraction and 1 frame at the time . 
+  ;*******************************************************
+  
+  
+  ;*******************************************************
+  ;  Boxcar Extraction 
+  ;*******************************************************
+  ; For the slicer mode only the extraction takes place in here rather than invoking getarc.pro 
+  for orderNum=0,redpar.nords -1  do begin
+        
+         ; Already giving back vector (double) which corresponds to the boxcar extraction 
+         ; of that order.
+       getarc_slicer,  im, orc, orderNum, redpar, arc, ybi, yti       
+       spec[*,orderNum] = arc
+       ybarr[*, orderNum] = ybi   ; used for testing puposes  array associated with bottom edge of the order
+       ytarr[*, orderNum] = yti   ; used for testing puposes  array associated with top edge of the order
+  endfor
+  
+  
+  
+  
+  
+  ; Objective -> find :   spec = dblarr(ncol,nord) E.g.  4112 x 74
+  
+  
+
+endif else begin
   
       ;*******************************************************
       ; MODES OTHER THAN  Slicer 
       ;*******************************************************
 
 
-      ; TO HERE 
-      ;
+    
        
        
        
@@ -328,7 +327,7 @@ mode = strt(redpar.modes[redpar.mode])
       return
   
   
-;endelse
+endelse
 
 
 

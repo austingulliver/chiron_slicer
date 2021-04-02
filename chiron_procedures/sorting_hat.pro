@@ -492,10 +492,17 @@ print, ' '
 ;    	   print, ' ------------------------------------------------------- '
 
     	   
-    	   ;Make  changes to WVC structure if needs    	   
-    	   initwvc[2]=74;redpar.nords;74. ;73.   ;Number of Orders
-    	   initwvc[3]=64  ;67. ; before kept as 65 ;Physical Order Base ; OBASE. Note this has to much with what is input into THID. 
-    	                      ;When adding  (Num of Ordes) + (Base Orders) =  Always 139 (Physically is 138 but addition does not account for obase )
+    	   ;Make  changes to WVC structure if needs    	 
+    	   
+    	   initwvc[2]=round(redpar.nords);redpar.nords;74. ;73.   ;Number of Orders
+    	   initwvc[3]=138 - round(redpar.nords)  ;For nords= 73 this =65 ; before kept as 65 ;Physical Order Base ; OBASE. Note this has to much with what is input into THID.
+    	   ;When adding  (Num of Ordes) + (Base Orders) =  Always 139 (Physically is 138 but addition does not account for obase )
+
+    	   
+    	   ; BEFORE 
+;    	   initwvc[2]=74;redpar.nords;74. ;73.   ;Number of Orders
+;    	   initwvc[3]=64  ;67. ; before kept as 65 ;Physical Order Base ; OBASE. Note this has to much with what is input into THID. 
+;    	                      ;When adding  (Num of Ordes) + (Base Orders) =  Always 139 (Physically is 138 but addition does not account for obase )
     	   
     	   print, ' Data used for wavelength calibration ( Thid ): '
     	   print, ' ------------------------------------------------------- '
@@ -509,8 +516,11 @@ print, ' '
     	          	   
     	   ;Find reference pixel from 2017 
     	   ;------------------------------ 
-    	   dir_2017= redpar.rootdir + redpar.customthidsol+  '171218\achi171218.1003'
-    	   ref_pixel_2017 = find_ref_peak(dir_2017) ; returns an array with three elements
+    	   dir_2017= redpar.rootdir + redpar.customthidsol+  'achi171218.1003'  ; RECALL THIS FILE HAS 74 ORDERS !
+    	   
+    	   
+    	   order_num= 1 ; This will always remain constant since is wrt to 'achi171218.1003' an this is meant to remina constant as well 
+    	   ref_pixel_2017 = find_ref_peak(dir_2017, redpar=redpar, order_num=order_num) ; returns an array with three elements
                                             	   ; peak 1 : found withint the range  r1=[ 600, 800 ]
                                             	   ; peak 2 : found withint the range  r2=[1975,2050]
                                             	   ; peak 3 : found withint the range  r3=[3820,3920]
@@ -540,7 +550,10 @@ print, ' '
       			      ; this is the first wavelength solution that we found
       			      ;---------------------------------------------------------------------------
       			      current_dir = redpar.rootdir + redpar.iodspecdir+ redpar.imdir + redpar.prefix_tag+ redpar.prefix +thar[i]
-      			      current_ref_pixel = find_ref_peak(current_dir) 
+      			      order_num= 1  ; Need to be the red order at index [1]; 
+      			                    ; This will always be the first as well since this is a red order and even if less order are traced
+      			                    ; we getting rid of blue order rather than the red. So this order is guarentee to be in here. 
+      			      current_ref_pixel = find_ref_peak(current_dir,  order_num=order_num) 
 
       			      pixel_offset =  mean( [ref_pixel_2017[0]-current_ref_pixel [0] , ref_pixel_2017[1]-current_ref_pixel [1], $
       			                             ref_pixel_2017[2]-current_ref_pixel [2]  , ref_pixel_2017[3]-current_ref_pixel [3], $

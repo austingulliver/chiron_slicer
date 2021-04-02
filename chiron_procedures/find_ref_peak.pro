@@ -104,7 +104,7 @@ FUNCTION validate_one_peak, pixel_list, spec
 END
 
 
-FUNCTION find_ref_peak ,abs_path,order_num=order_num 
+FUNCTION find_ref_peak ,abs_path, redpar=redpar,  order_num=order_num
 ;+              
 ; :Input:
 ; 
@@ -118,23 +118,18 @@ FUNCTION find_ref_peak ,abs_path,order_num=order_num
 ;
 ;-
 
-if not keyword_set(order_num) then order_num =  2
+if not keyword_set(order_num) then order_num =  1
 
   ;Read file & smooth
   ;--------------------------------------------  
   rdsk,sp,abs_path,1                       ; File restored is the the one extracted where the orders still go 
-                                           ; from red to blue meaing has 2d array - >  sp[4112 x73]
-                                           ; We pick a blue order. The second blue order.
-                                           ; Thus, WARNING ! 
-                                           ; This procedure will work IFF OUT OF the 76 order that were in the ccd the first 
-                                           ; red order was ignored and the last 2 blue as well.
-  spec = REFORM(sp[*,-73] )                  ; Get the first order only since we only need a reference  
-                                           ; If software crashes at this point. It is most likely because the order changed due to 
-                                           ; .
-                                           ;I used sp[*,-73] when extracting 74 order
+
   ;smooth_spec= TS_SMOOTH(spec,3)          ; Moving avg only to smooth seems to influece more 
   
- ;p0 = plot(spec, LINESTYLE='-:', title ='ThAr -Indexed Order  (Blue order)' ); ,/overplot)
+  
+  spec = REFORM(sp[*, order_num] )  ; If software crashes at this point. It is most likely because the order changed due to 
+   
+  ;p0 = plot(spec, LINESTYLE='-:', title ='ThAr -Indexed Order  (Blue order) ' ); ,/overplot)  
 
 
 
@@ -161,6 +156,7 @@ if not keyword_set(order_num) then order_num =  2
   r3=[2560,2590]
   r4=[3160,3195]
   r5=[3340,3380]
+  
   ref_pixel_1=list()
   ref_pixel_2=list()
   ref_pixel_3=list()
