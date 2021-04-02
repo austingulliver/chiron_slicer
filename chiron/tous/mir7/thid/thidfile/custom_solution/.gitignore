@@ -1,0 +1,6 @@
+# Ignore everything in this directory
+*
+# Except thess files
+!.gitignore
+!achi171218.1003
+!wvc_slicer_171218.sav
