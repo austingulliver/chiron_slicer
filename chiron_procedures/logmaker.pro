@@ -52,6 +52,7 @@ chi_path=getenv('CHIRON_PATH')  ;This must the absolute path where the directory
 
 
 spawn, 'hostname', host 
+spawn, 'cd', pwddir   ;Updated to a Windows command
 
 ;print, "This is the actual directory : " +string(host)
 ;if strmid(host, 13,14, /reverse) eq 'astro.yale.edu' then pdir = '/tous'+pdir
@@ -67,6 +68,9 @@ endif else begin
     endif else if  host eq 'Drius22' then begin
         rawpath = 'C:\Users\mrstu\idlworkspace_yalecalibration\chiron\raw\mir7\'
         logpath = 'C:\Users\mrstu\idlworkspace_yalecalibration\chiron\tous\mir7\logsheets\'+yyyy+'\'        
+    endif else if pwddir eq 'C:\Users\gulliver' then begin
+        rawpath = 'C:\F disk\chiron_reduc_pipeline\chiron\raw\mir7\'
+        logpath = 'C:\F disk\chiron_reduc_pipeline\chiron\tous\mir7\logsheets\'+yyyy+'\'      
     endif else begin
         rawpath = '/nfs/morgan/chiron/raw/mir7/'
         logpath = '/nfs/morgan/chiron/tous/mir7/logsheets/'+yyyy+'/'

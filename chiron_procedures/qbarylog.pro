@@ -78,17 +78,23 @@ pro qbarylog,logfile, test=test, baryDir=baryDir, prefix=prefix , justtest=justt
     ; ---------------------------------------------------
     if  n_elements(logfile) eq 0 then stop,  "qBaryLog-ERROR:  No logfiles found to process." 
     
+    
+    
     if  ~ keyword_set(baryDir)  then begin ; If path for barycentric direcotry is not pass and find path.
           chi_path=getenv('CHIRON_PATH')   ; This must the absolute path where the directory chiron was placed
                                            ; E.g.  SETENV, 'CHIRON_PATH=.......\chiron'
           if strlen(chi_path)  ge 1 then begin
-            baryDir = chi_path.trim() + '\tous\mir7\bary\'
-            if ~file_test(baryDir) then spawn, 'mkdir ' + baryDir
+              baryDir = chi_path.trim() + '\tous\mir7\bary\'
+              if ~file_test(baryDir) then spawn, 'mkdir ' + baryDir
           endif else begin
-            spawn, 'hostname', host
-            if  host eq 'Drius22' then begin
-              baryDir = 'C:\Users\mrstu\idlworkspace_yalecalibration\chiron\tous\mir7\bary\'
-            endif else stop, ' Set up the environment variable CHIRON_PATH or add your path to the script list to continue.'
+              spawn, 'hostname', host
+              spawn, 'cd', pwddir   ;Updated to a Windows command
+                
+              if  host eq 'Drius22' then begin
+                baryDir = 'C:\Users\mrstu\idlworkspace_yalecalibration\chiron\tous\mir7\bary\'
+              endif else if pwddir eq 'C:\Users\gulliver' then begin
+                baryDir = 'C:\F disk\chiron_reduc_pipeline\chiron\tous\mir7\bary\'
+              endif else   stop, ' Set up the environment variable CHIRON_PATH or add your path to the script list to continue.'
           endelse      
     endif ; Else baryDir was defined by user 
     
