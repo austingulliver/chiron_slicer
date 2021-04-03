@@ -563,7 +563,7 @@ pro qbarylog,logfile, test=test, baryDir=baryDir, prefix=prefix , justtest=justt
     if strupcase(ans) eq 'Y' then begin
         get_lun,une                 ;get Logical Unit Number
         ;openu,une,bcfile,/append    ;open bcvel file for writing
-        openu,une,bcfile ;/append    ;open bcvel file for writing
+        openw,une,bcfile ;/append    ;open bcvel file for writing
     ;    form = '(A9,3X,A10,1X,D11.3,1X,D12.6,1X,F7.3,1X,A1)'; modified for
     ;            fn, object, cts, mjd, ha, type
         form = '(2X, A-16,A12, D12.3,D13.6,F8.3,A2)' ; long names

@@ -173,9 +173,53 @@ if redpar.slicerflat eq 0 or mode ne 'slicer' then begin
   	print, 'REDUCE_CTIO : Creating a -->NEW<-- Order tracing from scratch'
   	
   	if (redpar.use_prev_tracing eq 1 ) then begin
-          	   dirn =redpar.rootdir+redpar.orderdir+prefix+mode +'.orc'
-          	   print, 'REDUCE_CTIO: Order Coefficients are getting  RE-STORED from '+dirn
-          	   rdsk, orc, dirn, 1
+  	           
+  	           ;We look for the closest VALID order tracing wrt to this night 
+  	           ; 1) Get all the existing order traces  prefix contains the date already 
+  	           ; 2) filter for the valid ones only 
+  	           ; 3) restore the closest to this night  
+  	           traces_dir= redpar.rootdir+redpar.orderdir   	           
+  	           mask = traces_dir + '*'+mode +'.orc'
+  	           all_files = file_search(mask, count = count) 
+  	           
+  	           
+  	           
+  	           if count lt 1 then stop, 'REDUCE_CTIO : >> ERROR <<  You set the variable use_prev_tracing=1 but there are no previous files.'
+  	           
+  	           nights_nums_str    = all_files.substring( strlen(traces_dir)+3, strlen(traces_dir)+8  )
+  	           nights_nums        = double(nights_nums_str)
+  	           night_differences  = abs( double(redpar.date) - nights_nums ) 
+  	           night_diff_indices = sort(night_differences) ; sorted in ascending from lowest to highest (we want the lowest nights since these are the closest )
+  	           nights_nums        = round(nights_nums[ night_diff_indices])
+  	           
+  	           ; Open each one and find out if they are valid. If so they use that one.
+  	           found     = 0
+  	           night_idx = 0
+  	           
+  	           while (found eq 0) do begin
+  	                 
+  	                 if night_idx eq  n_elements(nights_nums)-1 then stop, 'REDUCE_CTIO : >> ERROR <<  You set the variable use_prev_tracing=1 but there are not VALID previous order tracing files.'
+  	                 
+  	                 order_trace_file=redpar.rootdir+redpar.orderdir+  prefix.substring( 0,2) + strt(nights_nums[night_idx]) +'.'+mode +'.orc'
+  	                 rdsk, orc, order_trace_file, 1
+  	                 
+  	                 orc_sz = size(orc)
+  	                 
+  	                 night_idx = night_idx +1
+  	                 
+  	                 ; fix this 
+  	                 if orc_sz[1] ge redpar.nords and  orc_sz[2] ge 4112 then  found=1 ; this will stop iterating and the continue with the 
+  	                 
+
+  	           endwhile
+
+  	           
+  	           print, 'REDUCE_CTIO : Order Tracing successfully restored from night : '+strt()
+  	           
+  	           
+;          	   dirn =redpar.rootdir+redpar.orderdir+prefix+mode +'.orc'  ; Directoy of  actual 
+;          	   print, 'REDUCE_CTIO: Order Coefficients are getting  RE-STORED from '+dirn
+;          	   rdsk, orc, dirn, 1
 
   	endif else begin
       	       if order_ind ge 0 then begin ; If a default order file was passed as param
@@ -189,23 +233,40 @@ if redpar.slicerflat eq 0 or mode ne 'slicer' then begin
           	  
           	  name = redpar.rootdir+redpar.orderdir+prefix+mode+'.orc'
           	  wdsk, orc, name, /new
-          	  print, 'REDUCE_CTIO: Order Coefficients are stored as '+name
+          	  print, 'REDUCE_CTIO: Order Coefficients are stored from : '
+          	  print, order_trace_file
           	  ;         if redpar.debug then stop, 'Debug stop after order location, .c to continue'
   	endelse
 
   	
   	
-endif else begin
-  	
-  	print, 'REDUCE_CTIO: Order tracing got restored from :'
-  	name = redpar.rootdir+redpar.orderdir+prefix+'narrow.orc'
-  	print, name
-  	rdsk, orc, name, 1
-  	orc[0,*] += redpar.dpks[modeidx]
-  	;now subtract 2 outer orders since the slicer is larger than the slits:
-  	redpar.nords -= 2
-  	orc = orc[*,1:(redpar.nords - 1)]
-  	;stop
+endif else begin 
+  
+    if (redpar.use_prev_tracing eq 1 ) then begin          
+        if order_ind ge 0 then begin ; If a default order file was passed as param
+          ctio_dord, ordfname, redpar, orc, ome
+        endif else ctio_dord, ordfname, redpar, orc, ome, image=sum  ; this is our case(no order definition passed as param)
+        ;sum : crunched flat passed as param
+        ;ordfname is passed empty and instead iamge param is passed
+        ; orc :(output)(array (# coeffs , # orders))] coefficients from the polynomial fits to the order peaks
+        ;  EXCEPT ! for the slicer mode. If the slicer mode is currently running then  the vairable orc  will
+        ; contain a 2-d array e.g. array with the  middles of all the orders for all the columns (4112 ) E.g.  74 x 4112
+        name = redpar.rootdir+redpar.orderdir+prefix+mode+'.orc'
+        wdsk, orc, name, /new
+        print, 'REDUCE_CTIO: Order Coefficients are stored as '+name
+    endif else begin    
+            
+        ;         if redpar.debug then stop, 'Debug stop after order location, .c to continue'       	
+      	print, 'REDUCE_CTIO: Order tracing got restored from :'
+      	name = redpar.rootdir+redpar.orderdir+prefix+'narrow.orc'
+      	print, name
+      	rdsk, orc, name, 1
+      	orc[0,*] += redpar.dpks[modeidx]
+      	;now subtract 2 outer orders since the slicer is larger than the slits:
+      	redpar.nords -= 2
+      	orc = orc[*,1:(redpar.nords - 1)]
+     endelse
+     
 endelse
 
 

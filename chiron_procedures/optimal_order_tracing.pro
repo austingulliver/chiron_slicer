@@ -193,7 +193,8 @@ if method_str eq 'from_scratch' then begin
       try_new_peaks:
       print, 'Number of peaks detected : '+string(n_elements(idx_peaks))
       peak_intensities = middle[idx_peaks]  
-       
+      
+      
       if debug gt 0 then p=plot(middle, title= 'Debug-Plot', xtitle='Cross-dispersion direction', ytitle='electrons count')
       if debug gt 0 then begin
         p=plot(noise_level, color='red', /overplot)
