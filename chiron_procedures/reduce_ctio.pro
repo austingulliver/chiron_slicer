@@ -231,8 +231,8 @@ if redpar.slicerflat eq 0 or mode ne 'slicer' then begin
           	  ;  EXCEPT ! for the slicer mode. If the slicer mode is currently running then  the vairable orc  will 
           	  ; contain a 2-d array e.g. array with the  middles of all the orders for all the columns (4112 ) E.g.  74 x 4112
           	  
-          	  name = redpar.rootdir+redpar.orderdir+prefix+mode+'.orc'
-          	  wdsk, orc, name, /new
+          	  order_trace_file = redpar.rootdir+redpar.orderdir+prefix+mode+'.orc'
+          	  wdsk, orc, order_trace_file, /new
           	  print, 'REDUCE_CTIO: Order Coefficients are stored from : '
           	  print, order_trace_file
           	  ;         if redpar.debug then stop, 'Debug stop after order location, .c to continue'
