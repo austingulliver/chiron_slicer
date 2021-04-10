@@ -21,9 +21,8 @@ no_log=no_log $                       ; If set it wont create a new .log file
 no_reduction =no_reduction $          ; If set it wont reduce the spectra of the given night 
 combine_stellar = combine_stellar $   ; If reduction step is run this determines if reduction should consider  individual frames or
                                       ; collect them to produce a master stellar 
-no_bary =no_bary$                     ; If set it wont do the barycentric correction
-no_splice= no_splice$                 ; If set it wont splice the spectr
-
+post_process = post_process           ; Post processing includes shift found from  barycentric correction +  splice the spectra          
+star_name=star_name                   ; Name of the Star
 
 
 
@@ -39,18 +38,23 @@ no_splice= no_splice$                 ; If set it wont splice the spectr
 ;# 1) Create .log file
 ;#####################################################
 
-if ~keyword_set(no_log) then begin
+if ~keyword_set(no_log) then begin ; If this is keyword is set then is expected the log sheet to exist already !! 
   
       print, '**************************************************'
-      print, 'Creating the log file for '+strt(night)+'......'
+      print, 'Creating the .log file for '+strt(night)+'......'
       print, '**************************************************'
     
-      logmaker, strt(night), date=strt(night), /nofoc, /override,  prefix='chi', object_name = object_name 
+      if keyword_set(no_bary) then begin
+          logmaker_v2, strt(night), /nofoc, prefix='chi'
+      endif else begin
+          ; Run bary Correction as well 
+          ; It is very important to get the name of the start Correct to run the barycorrection successfully  
+          logmaker_v2, strt(night), /nofoc, prefix='chi', star_name=star_name, stellar_bary_correc=stellar_bary_correc, /barycorr
+          ;   stellar_bary_correc(Output): is a list wich elements are strucutres with the form {file_name:obs_file[i] , correction:czi }
+      endelse
       
-      if  object_name eq '' then stop, 'REDUCE_SLICER: >> Error << There are stellar frames found for '+strt(night)
       
-      
-      ; NEED TO DO VALIDATION FOR OBJECT NAME  !!! TO FIX 
+
       
 endif
 
@@ -90,95 +94,103 @@ endif
 ;#####################################################
 
 
+cut_spectra=1
+do_shift=1
 
+;To do post processing we expecting to run it along with sorting_hat for now. FIX SO THEY ARE INDEPENDENT IN THE FUTURE 
 
-
-
-
-
-
-
-
-if ~keyword_set(no_bary) then begin
-
-  ;#####################################################
-  ;# 3) Barycentric correction
-  ;#####################################################
-      print, '**************************************************'
-      print, 'Runing Barycentric Correction for'+strt(night)+'......'
-      print, '**************************************************'
+if keyword_set (post_process) then begin
+    print, '**************************************************'
+    print, 'Runing Post processing for '+strt(night)+'......'
+    print, '**************************************************'
     
-      ;If the procedure sorting_hat is not run then the user need to specify the directory for the barycentric correction
     
-      if keyword_set(no_reduction) then begin  ; redpar does not exist so the paths have be hardwired. For our case they already are within qbarylog
-        qbarylog,  prefix= 'chi' ,simbadStartName=object_name, log_content=log_content    
-      endif else begin
-        bary_dir= redpar.rootdir + redpar.logdir + '20' + strt(strmid(strt(night),0,2)  )+'\'+strt(night)+'.log'
-        qbarylog, bary_dir,  prefix= 'chi' ,simbadStartName=object_name, log_content=log_content
-      endelse
-      ; log_content(output): structure with sam size as the number of observations regitered in the .log file 
-      ; where temp = {bcvel, filename:'', object:'', cz:0.d0, mjd:0.d0, ha:0.d0, type:''}
-      ; We are after for all cz (corrections) and filenmaes that beleng to stellar objects 
+    ;##################
+    ;# Collect files for post-process 
+    ;##################
+    
+    ; Get all bary correction in 1 array
+    ;   stellar_bary_correc(Output): is a list wich elements are strucutres with the form {file_name:obs_file[i] , correction:czi }
+    if keyword_set(combine_stellar) then begin 
+       
+       ; Search for master file just created
+       str_file_type=  redpar.rootdir+ redpar.fitsdir+ redpar.imdir +redpar.prefix_tag+'m'+redpar.prefix+'*.fits'
+       post_process_files = file_search(str_file_type, count = count_master) ; look for the data files. Name of the file itself       
+       if count_master ne 1 then stop, 'REDUCE_SLICER: None or more than one master stellar files found within the directory.' 
+       
+       ; Produce mean barycentric correction
+       
+       ; overwrite 
+       
+       
+       
       
-      stellar_obj_names = reform(log_content.object)      
-      stellar_indices=where(stellar_obj_names ne 'iodine' and stellar_obj_names ne 'thar' $
-                      and stellar_obj_names ne 'focus' and stellar_obj_names ne 'junk' and stellar_obj_names ne 'dark' $
-                      and stellar_obj_names ne 'bias' and stellar_obj_names ne 'quartz' and stellar_obj_names ne 'master_stellar', num_star)
+    
+    endif else begin
+      str_file_type=  redpar.rootdir+ redpar.fitsdir+ redpar.imdir +redpar.prefix_tag+redpar.prefix+'*.fits' ; without the 'm' of master 
+      post_process_files = file_search(str_file_type, count = count_all_files) ; look for the data files. Name of the file itself
+      if count_all_files eq 0 then stop, 'REDUCE_SLICER: No individual files found for further processing.'
 
       
-      ; recall cz is in [m/s]
-      if keyword_set(combine_stellar) then begin
-           ; >> Consider only 1 file : master stellar  
-           ; mean of all
-          
-      endif else begin            
-            ; >> Consider Files Individually 
-            
-            if num_star gt 0 then begin
-                  foreach stellar_idx, stellar_indices do begin
-  
-                  endforeach
-              
-              
-            endif else print, "*************** Barycentric Correction was not applied *************** : There is no nough information in bary log file."
-          
+    endelse
+      
+    
+    foreach file_name, post_process_files do begin ; Iterate of each file to post process 
+      
+      
+      
 
+    endforeach
+
+    
+
+    
+    
+    
+    ;##################
+    ;# Wavelength Shift
+    ;##################
+    
+    if (do_shift eq 1) and ~keyword_set(no_log) and ~keyword_set(no_bary) then begin
+        print, '**************************************************'
+        print, 'Shifting wavelengths for night '+strt(night)+'......'
+        print, '**************************************************'
+        ;   stellar_bary_correc(Output): is a list wich elements are strucutres with the form {file_name:obs_file[i] , correction:czi }
         
-      endelse
+        ;>> 1) Restore each file, 2) Shift only wavelength accorfing to Eq. 3)Update HISTORY header and 4) continue to check if cut is needed.
+        
+        
+    endif else  if (do_shift eq 0) then begin
+        print "REDUCE_SLICER :  The Spectra has NOT been shifted to compensate for the barycentric correction "
+    endif else begin         
+        print, '*REDUCE_SLICER : The keyword post_process was set but the no_bary and no_log were also set. '
+        stop, ' Please remove the keyword no_log and no_bary to continue. '
+    endelse
+
+    ;##################
+    ;# Cut spectra
+    ;##################
+    
+    if (cut_spectra eq 1) then begin 
+      print, '**************************************************'
+      print, ' Cutting the spectra for night '+strt(night)+'......'
+      print, '**************************************************'
       
-  
-      
-      ; 1) Make it return the all the shifts along with the observation numbers in .TO FIX !!!
-      ; 2) how to account for master stellar
-      
-      ; no new file is created rather a the same file is used and a comment about the shift in  header is added 
-
-
-
-      ; NEED TO SPECIFY THE FILE THAT ARE GONNA GET CONSIDERED
-      ;
-      ;#####################################################
-      ;# 3) Shift of Spectra
-      ;#####################################################
-
+      ; pass array along with type of cut 
+    
+    endif else print, "REDUCE_SLICER :  The Spectra has NOT been reduced in size "
+    
+    
+    
+    
+    
+    
+    
+    
 endif
 
 
 
-
-
-
-
-
-;#####################################################
-;# 3) Splice of Spectra
-;#####################################################
-
-if ~keyword_set(no_splice) then begin
-    ; Restore all files 
-  
-  
-endif
 
 ;#####################################################
 ;# 3) Store in directory  post_procesed

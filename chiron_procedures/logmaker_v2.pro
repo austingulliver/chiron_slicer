@@ -114,7 +114,7 @@ end
 ; 09-04-2021 J.Lozano Added complete UT to each observation + Barycentric Correction .
 
 
-; JL:  E.g. IDL> logmaker_v2, '210118', /nofoc, prefix='chi', star_name='HR5049',/barycorr
+; JL:  E.g. -- IDL> logmaker_v2, '210118', /nofoc, prefix='chi', star_name='HR5049',/barycorr
 
 pro logmaker_v2, rawdir, $
   override = override, $
@@ -359,7 +359,7 @@ pro logmaker_v2, rawdir, $
   form2='(a10, a1, a13, a4, a14,    a8,  a6,  a-8,  a1,    a15,    a-40)'
    
   ;                (#,   space,   objname,   i2,   mdtm,   jd,    barycorrec    exptm,  bin,   slit,  space,   propid,  comment)
-  extended_form = '(a10, a1,      a13,       a4,   a14,    a14,   a15,           a8,     a6,    a-8,   a1,      a15,     a-40)'
+  extended_form = '(a10, a1,      a13,       a4,   a14,    a20,   a15,           a8,     a6,    a-8,   a1,      a15,     a-40)'
 
 
 
@@ -419,9 +419,9 @@ pro logmaker_v2, rawdir, $
       printf,1, str_ech, '     ', str_xdisp, '                  Foc FWHM: '+focfwhm
       printf,1,'-------------------------------------------------------------------------------------'
       if keyword_Set(barycorr) then begin
-        printf,1,' Obs            Object    I2     Mid-Time        JDate          BaryCorrec  Exp  Bin   Slit             PropID   Hdr-Comments'
-        print,   ' Obs            Object    I2     Mid-Time        JDate          BaryCorrec  Exp  Bin   Slit             PropID   Hdr-Comments'
-        printf,1,'number           Name    (y/n)     (UT)                            [m/s]   '
+        printf,1,' Obs            Object    I2     Mid-Time              JDate       BaryCorrec     Exp  Bin   Slit             PropID   Hdr-Comments'
+        print,   ' Obs            Object    I2     Mid-Time              JDate       BaryCorrec     Exp  Bin   Slit             PropID   Hdr-Comments'
+        printf,1,'number           Name    (y/n)     (UT)                               [m/s]   '
       endif else begin
         printf,1,' Obs            Object    I2     Mid-Time     Exp  Bin   Slit             PropID   Hdr-Comments'
         print,   ' Obs            Object    I2     Mid-Time     Exp  Bin   Slit             PropID   Hdr-Comments'
@@ -703,12 +703,12 @@ pro logmaker_v2, rawdir, $
               endelse
   
               jdUTC = jdate([year,month,dd,hour,minutes])
-              JD    = strt(jdUTC)
+              JD    = cgNumber_Formatter(jdUTC, DECIMALS=6)
   
               if keyword_Set(star_name) then objName = star_name
   
               call_qbary, star_name=objName, jd=jdUTC, barydir=barypath, czi=czi
-              bary_correc = strt(czi) ; Barycentric Correction
+              bary_correc = cgNumber_Formatter(czi,DECIMALS=3) ; Barycentric Correction
   
   
               ; For future reference only stellar files
