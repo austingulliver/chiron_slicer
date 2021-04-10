@@ -34,8 +34,8 @@ function weighted_master_frame, data_cube, typeStr
     ;**************************************************
     ; *   Mean
     ;**************************************************
-    'mean': begin
-      master_frame = mean(data_cube, /double, dimen=3)
+    'mean': begin      
+      master_frame = mean(data_cube, /double, dimension=3)
       break
     end
     ;**************************************************

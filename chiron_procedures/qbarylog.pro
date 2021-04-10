@@ -1,4 +1,4 @@
-pro qbarylog,logfile, test=test, baryDir=baryDir, prefix=prefix , justtest=justtest, simbadStartName = simbadStartName
+pro qbarylog,logfile, test=test, baryDir=baryDir, prefix=prefix , justtest=justtest, simbadStartName = simbadStartName, log_content = log_content
 ; PURPOSE: Calculate Barycentric Correction for Stellar spectra.
 ; 	    
 ; INPUT : 
@@ -554,6 +554,7 @@ pro qbarylog,logfile, test=test, baryDir=baryDir, prefix=prefix , justtest=justt
     ;--------------------------------------
    
     temp = temp[0:num-1]            ;trim temp structure array
+    log_content =  temp             ;for further processing in reduce_slicer.pro
     if ( keyword_set(test) ) then begin
     	print,' '
     	ans = ' '

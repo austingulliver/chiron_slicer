@@ -860,7 +860,7 @@ debug_flag = 0
  endfor
  
  
-  debug = 1
+  ;debug = 1
 if debug gt 0 then begin       
     p=plot(order_ys[0, *] )    
     for ord_idx = 1L, n_elements(templates.middle )-1 do begin

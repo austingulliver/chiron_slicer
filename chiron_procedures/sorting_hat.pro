@@ -52,7 +52,7 @@ pro sorting_hat, night, run=run, iod2fits=iod2fits, reduce=reduce, $
 doppler=doppler, doptag=doptag, end_check=end_check, skip=skip, $
 thar_soln=thar_soln, getthid=getthid, mode = mode, obsnm=obsnm, $
 bin11 = bin11, flatsonly=flatsonly, tharonly=tharonly, combine_stellar=combine_stellar, $
-remove_cr=remove_cr		
+remove_cr=remove_cr, redpar =redpar 	
 
 angstrom = '!6!sA!r!u!9 %!6!n'
 
