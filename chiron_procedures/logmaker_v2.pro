@@ -712,7 +712,8 @@ pro logmaker_v2, rawdir, $
   
   
               ; For future reference only stellar files
-              stellar_bary_correc.add, {file_name:obs_file[i] , correction:czi } ; Meant to be output
+              file_nm_to_save=  stregex(obs_file[i], 'chi([0-9]+).([0-9]+).fits', /extract)
+              stellar_bary_correc.add, {file_name:file_nm_to_save , correction:czi } ; Meant to be output
   
             endif else begin
   

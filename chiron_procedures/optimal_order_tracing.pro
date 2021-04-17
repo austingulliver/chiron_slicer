@@ -160,7 +160,7 @@ end
 function all_order_peaks, flat, redpar, method_str= method_str
   compile_opt idl2
 
-    debug=0
+    debug=1
     
     ;; USE THIS SECTION TO MANUALLY ADD OR REMOVE PEAKS. Refer to the plot by setting debug =1 
     ; DON'T FORGET TO COME BACK HERE AND LEAVE THEM EMPTY ONCE IS
@@ -173,7 +173,7 @@ function all_order_peaks, flat, redpar, method_str= method_str
       
       
 ;    if method_str eq 'from_scratch' then begin      
-          above_noise_level=10.0 ; Defines how many times bgger(wrt to the Background) the intensity values should get picked
+          above_noise_level=15.0 ; Defines how many times bgger(wrt to the Background) the intensity values should get picked
                                  ; Found experimentally. Change if neccesary 
                                 
           middle = flat[  round(n_rows/2.0),*]
@@ -227,8 +227,8 @@ function all_order_peaks, flat, redpar, method_str= method_str
     
                 ;if  ref eq 164 then stop, 'stopped continue '
     
-                if order_counter lt 18 then pixel_window= 6 else  pixel_window= 8  ; hack to get red orders  just right
-                
+                ;if order_counter lt 18 then pixel_window= 6 else  pixel_window= 8  ; hack to get red orders  just right
+                pixel_window= 6 
     
                 low_ref  = ref-pixel_window > 0
                 upper_ref = ref+pixel_window <  (n_columns-1)
@@ -746,7 +746,7 @@ function optimal_order_tracing, img, redpar
   ;------------------------------
   ; >> Constants
   ;------------------------------
-  debug    = 0 ;redpar.debug
+  debug    =  redpar.debug
   flat     = img
   img_size = size(flat)      ;size of image passed: e.g. Master Flat  4112 x 1366 for the slicer mode
   n_columns   = img_size[1]     ;number of rows in image

@@ -37,7 +37,7 @@ endif
 c       = 2.997924580000d5      ; in km/s 
 DtoR    = !dpi/180.d0			; !dtor is not double
 constants                       ; Load in constants as a common block
-common CONSTANTS,autom,automJPL,autokm,cms,ckm,radtosec,pctoAU,$
+common CONSTANTS, autom,automJPL,autokm,cms,ckm,radtosec,pctoAU,$
   yeartosec,yrtos,ltyr,lightyear,pctom,secperday,daytosec,$
   century,precise,ddtor,msun,msung,mearth,mmoon,$
   mmoong,rearth,rearthkm,rsun,rsunkm,Gcgs,G,angstrom

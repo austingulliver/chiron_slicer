@@ -14,7 +14,17 @@ target = strupcase(targ) & center = strupcase(cent)
 if target  eq 'SSB' then target = 'SOLARBARY'
 if center  eq 'SSB' then center = 'SOLARBARY'
 
-ephemeris = 'C:\Users\mrstu\idlworkspace_yalecalibration\chiron_procedures\JPLEPH.405'
+
+spawn, 'hostname', host
+spawn, 'cd', pwddir   ;Updated to a Windows command
+
+if  host eq 'Drius22' then begin
+  ephemeris = 'C:\Users\mrstu\idlworkspace_yalecalibration\chiron_procedures\JPLEPH.405'
+endif else if pwddir eq 'C:\Users\gulliver' then begin
+  ephemeris = 'C:\F disk\chiron_reduc_pipeline\chiron_procedures\JPLEPH.405'
+endif else   stop, ' Set up the environment variable  path ephemeris in JNUTATION into the code to continue.'
+
+
 if (file_test(ephemeris))(0) eq '' then stop,ephemeris+' not found. Wrong directory?'   ; Outdated; findfile(ephemeris)
 jdrange = [jdt-0.5d0,jdt+0.5d0]   ; Must feed ephem range over which to interp.
 

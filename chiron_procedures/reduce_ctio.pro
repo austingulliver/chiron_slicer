@@ -214,7 +214,7 @@ if redpar.slicerflat eq 0 or mode ne 'slicer' then begin
   	           endwhile
 
   	           
-  	           print, 'REDUCE_CTIO : Order Tracing successfully restored from night : '+strt()
+  	           print, 'REDUCE_CTIO : Order Tracing successfully restored from night : '+strt(redpar.date)
   	           
   	           
 ;          	   dirn =redpar.rootdir+redpar.orderdir+prefix+mode +'.orc'  ; Directoy of  actual 

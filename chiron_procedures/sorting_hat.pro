@@ -45,7 +45,7 @@
 ;  20110808 - structured  (AT)
 ;  20120419 - Modified to work with Torrent 4 amp readout. Added 1x1 binning as an option. ~MJG
 ;  20121023 - Added the ThAr filename to redpar to be written to the FITS header ~MJG
-;  20201201 - Various changes including Windoss compatability. Read summary paper   ~J. Andres Lozano
+;  20201201 - Various changes including Windows compatability. Read summary paper   ~J. Andres Lozano
 ;-
 ;
 pro sorting_hat, night, run=run, iod2fits=iod2fits, reduce=reduce, $
@@ -148,7 +148,8 @@ pretag = redpar.prefix_tag
 ;### Read .log sheet + parse 
 ;#####################################################
 
-readcol,logsheet, skip=9, obnm, objnm, i2, mdpt, exptm, bin, slit, f='(a5, a13, a4, a14, a8, a3, a6)'
+;readcol,logsheet, skip=9, obnm, objnm, i2, mdpt, juDate,baryCorrec,  exptm, bin, slit, f='(a5, a13, a4, D14,    D20,   a15, a8, a3, a6)'
+readcol,logsheet, skip=9, obnm, objnm, i2, mdpt, juDate,baryCorrec,  exptm, bin, slit, f='(a10 , a14, a4, a14, a20, a15, a8, a6,  a8, a16, a18 )'
 
 ;now to expand the quartz items in the logsheet:
 ;print, 'obnm before is: ', obnm       ; These are all file numbers E.g. 1001  1002  .....
@@ -210,7 +211,7 @@ ut = gettime(mdpt) ; floating-point hours, >24h in the morning
 ;### Creates log structure which has information about ALL raw files. 
 ;#####################################################
 
-createLogStructures,redpar,obnm,objnm ;,/doFromScratch   ; uncomment this for production 
+createLogStructures,redpar,obnm,objnm, /doFromScratch   ; uncomment this for production 
 
 
 
@@ -894,6 +895,5 @@ if keyword_set(end_check) then  begin
 		  endfor       
 endif ; end_check
 
-
-
+return 
 end ;sorting_hat.pro
