@@ -84,7 +84,7 @@ if ~keyword_set(no_reduction) then begin
       print, '**************************************************'
     
       sorting_hat, strt(night), mode='slicer', /reduce, /getthid, /iod2fits, combine_stellar=combine_stellar ,$
-                   thar_soln='wvc_slicer_171218.sav',redpar =redpar   ; ,/remove_cr thar_soln was added
+                   thar_soln='wvc_slicer_171218.sav',redpar =redpar, /remove_cr   ; ,/remove_cr thar_soln was added
       ;sorting_hat, night, mode=modes[i], /reduce, /getthid, /iod2fits ,thar_soln='wvc_slicer_171218.sav'
     
 

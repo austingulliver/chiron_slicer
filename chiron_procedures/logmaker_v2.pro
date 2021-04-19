@@ -25,7 +25,7 @@ pro call_qbary,star_name=simbadStarName, jd=jdUTC, barydir=barydir,czi=czi
   ;---------
   ;>>2_ coords
   ;--------
-  print, 'call_qbary:  Requesting RA and DEC information to SIMBAD ..... '
+  print, 'call_qbary:  Requesting RA and DEC information from SIMBAD ..... '
   
   ; Validate simbadStarName
   

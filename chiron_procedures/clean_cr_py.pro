@@ -127,7 +127,7 @@ FUNCTION clean_cr_py, redpar, log
 
 
   
-  STOP, 'VERIFY  COUNT FOR STELLAR IS  100 FOR THE  210208 ' 
+  
   ;####################################
   ;#1) Find cosmics Rays + Overwrite Files
   ;####################################
