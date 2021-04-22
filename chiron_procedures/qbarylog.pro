@@ -473,13 +473,15 @@ pro qbarylog,logfile, test=test, baryDir=baryDir, prefix=prefix , justtest=justt
 
                                  
 ;                                >>Input for qbary.pro
-;                                 print,  ' ------------------------------------   ' 
-;                                 print, 'coords : ' + string( coords) ; RA & DEC, in [hours,degrees] eg. [1.75,-15.9d]
-;                                 print, 'pm     : ' + string(pm)       ; proper motion [ra,dec] in ARCsec/year [optional]
-;                                 print, 'epoch  : ' + string(epoch)                                 
-;                                 print, 'barydir: ' + string(barydir)   ; Barycentric directory
-;                                 print, 'jdUTC  : ' + string(jdUTC)    ; julian date (double precision) eg 2448489.3462d0 
-;                                 
+                                 print,  ' ------------------------------------   ' 
+                                 print, 'coords : ' 
+                                 print, 'ra: '  + string( coords[0]); RA & DEC, in [hours,degrees] eg. [1.75,-15.9d]
+                                 print, 'dec: ' + string(coords[1]) 
+                                 print, 'pm     : ' + string(pm)       ; proper motion [ra,dec] in ARCsec/year [optional]
+                                 print, 'epoch  : ' + string(epoch)                                 
+                                 print, 'barydir: ' + string(barydir)   ; Barycentric directory
+                                 print, 'jdUTC  : ' + string(jdUTC)    ; julian date (double precision) eg 2448489.3462d0 
+                                 
                                   ; ***********************************************
                                   ;  Run Correction 
                                   ; ***********************************************

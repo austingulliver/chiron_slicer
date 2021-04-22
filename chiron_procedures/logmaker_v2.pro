@@ -8,9 +8,17 @@
 ; Output : czi (barycentric correction)
 ;          jdUTC (julian data)
 ;-
-pro call_qbary,star_name=simbadStarName, jd=jdUTC, barydir=barydir,czi=czi 
+pro call_qbary, jd=jdUTC, barydir=barydir,czi=czi,coords=coords
   
   debug=0
+  
+  
+  ;----------
+  ;>> ra nad dec
+  ;----------
+  ; need to format them correctly 
+  ; correction takes place in  coords
+  ; RA & DEC, in [hours,degrees] eg. [1.75,-15.9d]
   
   
   ;----------
@@ -25,16 +33,12 @@ pro call_qbary,star_name=simbadStarName, jd=jdUTC, barydir=barydir,czi=czi
   ;---------
   ;>>2_ coords
   ;--------
-  print, 'call_qbary:  Requesting RA and DEC information from SIMBAD ..... '
+
   
   ; Validate simbadStarName
   
   
-  QuerySimbad, simbadStarName , ra, dec, found=coord_found
-  if  coord_found ne 0 then begin
-      ra= ra* (24.0/360.0)      ; Transformation from degrees to hours
-      coords = [ra,dec]
-  endif else print, 'call_qbary: Request failed '
+
     
   ;---------
   ;>>3_ epoch
@@ -62,9 +66,9 @@ pro call_qbary,star_name=simbadStarName, jd=jdUTC, barydir=barydir,czi=czi
         print, 'jdUTC  : ' + string(jdUTC)    ; julian date (double precision) eg 2448489.3462d0
     endif
     
-    if coord_found eq 0 then begin
+    if coords[0] eq 0.0 or coords[1] eq 0.0 then begin
          print, ' ** The coordinates (RA and DEC) for the star '+ strtrim(simbadStarName,2) + ' were not found. Check for the name **'
-         stop, ' >> Error <<  Please pass the argument star_name when calling logmaker_v2 OR get rid of /barycorr . RUN AGAIN'
+         
          czi= 0.0
     endif else begin
          qbary,jdUTC,coords,epoch,czi,obs='ctio', pm = pm,barydir=barydir, ha=ha
@@ -77,6 +81,115 @@ pro call_qbary,star_name=simbadStarName, jd=jdUTC, barydir=barydir,czi=czi
   
 
 end
+
+
+
+
+
+
+
+
+
+;+
+; :Description:
+;
+; Finds the RA and DEC from either the header or making a SIMBAD request
+;
+; Output : ra and dec in  FOMRAT  RA(h:m:s) |  Dec(d:m:s)
+; 
+; ra and dec are in string format ready for presetation in sheet
+; coords server to pass to 
+;-
+pro get_stellar_coord, hd, starname=starname, ra=ra, dec=dec, coords=coords
+  compile_opt idl2
+
+  ra=sxpar(hd,'RA', count=ra_match  )
+  dec=sxpar(hd,'DEC', count=dec_match)
+  coords= [0.0, 0.0] ; default value 
+  if  ra_match gt 0  and dec_match gt 0 then begin
+
+    ; no need to do anything else
+    ; ;  THEY COME IN FORMAT RA(hours:minute:second) |  Dec(degree :minute :ssecond)
+    ; format to format acceptable for qbary 
+    
+    
+    coords_ra  = float(strsplit(ra,':',/EXTRACT))   
+    if coords_ra[0] gt 0.0 then begin
+       coords_ra = coords_ra[0] + (coords_ra[1]/60.0) +  (coords_ra[2]/3600.0)
+    endif else begin
+      coords_ra = abs(coords_ra[0]) + (coords_ra[1]/60.0) +  (coords_ra[2]/3600.0)
+      coords_ra =-1.0*coords_ra
+    endelse   
+
+
+
+    coords_dec  =float(strsplit(dec,':',/EXTRACT))    
+    if coords_dec[0] gt 0.0 then begin
+       coords_dec = coords_dec[0] + (coords_dec[1]/60.0) +  (coords_dec[2]/3600.0)       
+    endif else begin 
+        coords_dec = abs(coords_dec[0]) + (coords_dec[1]/60.0) +  (coords_dec[2]/3600.0)
+        coords_dec =-1.0*coords_dec 
+    endelse
+    
+    
+    ; qbary is expecting :  RA & DEC, in [hours,degrees] eg. [1.75,-15.9d]
+    coords=[ coords_ra,   coords_dec]
+
+
+  endif else begin
+    ; else need to make request to SIMBAD  to obtain RA and DEC
+
+    if ~keyword_Set (starname) then begin
+      print, "get_stellar_coord: The programs is expected to make a request to SIMBAD but var 'starname' is not passed. "
+      ra  = '00:0:00'
+      dec = '00:00:00'
+    endif else begin
+     
+       print, 'call_qbary:  Requesting RA and DEC information from SIMBAD ..... '
+      QuerySimbad, starname , ra, dec, found=coord_found
+      ;dec comes back as degrees
+      ;ra comes back as degrees 
+      
+      if  coord_found ne 0 then begin
+        ; format in correct format 
+        ; RA(hours:minute:second) |  Dec(degree :minute :ssecond)
+        
+        ra= ra* (24.0/360.0)      ; Transformation from degrees to hours        
+        hours   =  floor(ra)
+        minutes = floor( (ra - floor(ra) ) *60.0  ); 60 minutes /1 hour
+        seconds  =  floor(    (  ((ra - floor(ra) ) *60.0 ) -   floor((ra - floor(ra) ) *60.0)  ) *60.0   )
+        
+        ra= strt(hours) +':' +strt(minutes) +':'+strt(seconds)
+        
+        degrees = floor(dec)
+        minutes = floor(  (dec - floor(dec))*60  ) ; 1 degree/ 60 minutes 
+        seconds = floor(  (      ((dec - floor(dec))*60)      -floor(((dec - floor(dec))*60)    )          )*60.0) 
+        dec = strt(degrees) +':' +strt(minutes) +':'+strt(seconds)
+        
+        
+        coords = [ra,dec]
+        
+      endif else begin
+        print, 'call_qbary: Request failed '
+        ra  = '00:0:00'
+        dec = '00:00:00'
+      endelse
+
+    endelse
+
+
+
+  endelse
+
+ 
+ 
+  
+ 
+end
+
+
+
+
 
 
 
@@ -114,15 +227,13 @@ end
 ; 09-04-2021 J.Lozano Added complete UT to each observation + Barycentric Correction .
 
 
-; JL:  E.g. -- IDL> logmaker_v2, '210118', /nofoc, prefix='chi', star_name='HR5049',/barycorr
-
+; JL:  E.g. -- IDL> logmaker_v2, '210118', /nofoc, prefix='chi', star_name='HR5049'
 pro logmaker_v2, rawdir, $
   override = override, $
   prefix = prefix, $
   noarchive=noarchive, $
   nofoc =nofoc, $
-  date=date, $
-  barycorr=barycorr, $ ; When set includes barycentric correction and Jdate in the .log file
+  date=date, $ 
   star_name =star_name,$  ; Name of the stellar object. This name HAS TO BE compatible with SIMBAD 
   stellar_bary_correc=stellar_bary_correc
 
@@ -358,10 +469,9 @@ pro logmaker_v2, rawdir, $
   ;form2 is for quartz exposures
   form2='(a10, a1, a13, a4, a14,    a8,  a6,  a-8,  a1,    a15,    a-40)'
    
-  ;                (#,   space,   objname,   i2,   mdtm,   jd,    barycorrec    exptm,  bin,   slit,  space,   propid,  comment)
-  extended_form = '(a10, a1,      a13,       a4,   a14,    a20,   a15,           a8,     a6,    a-8,   a1,      a15,     a-40)'
-
-
+  ;                (#obs,   objname,   bin,   slit ,    ra ,  dec     time1     time2     ccdTe,   airmas    jd    bary    maxInt)
+  extended_form = '(a10,     a15,       a8,    a10 ,   a14,   a14,     a10,      a12,     a12,      a10,     a17,    a14,    a10    )'
+  
 
 
   ;*****************************************
@@ -418,14 +528,19 @@ pro logmaker_v2, rawdir, $
   endif else begin
       printf,1, str_ech, '     ', str_xdisp, '                  Foc FWHM: '+focfwhm
       printf,1,'-------------------------------------------------------------------------------------'
-      if keyword_Set(barycorr) then begin
-        printf,1,' Obs            Object    I2     Mid-Time              JDate       BaryCorrec     Exp  Bin   Slit             PropID   Hdr-Comments'
-        print,   ' Obs            Object    I2     Mid-Time              JDate       BaryCorrec     Exp  Bin   Slit             PropID   Hdr-Comments'
-        printf,1,'number           Name    (y/n)     (UT)                               [m/s]   '
-      endif else begin
-        printf,1,' Obs            Object    I2     Mid-Time     Exp  Bin   Slit             PropID   Hdr-Comments'
-        print,   ' Obs            Object    I2     Mid-Time     Exp  Bin   Slit             PropID   Hdr-Comments'
-      endelse
+    
+      printf,1,'     Obs           Object     Bin     Slit          RA            DEC     Date-midUT    Exp      CCDTemp     AirMass           JD(bary)        BCV     MaxInt'
+      
+      
+      print,   '     Obs           Object     Bin     Slit          RA            DEC     Date-midUT    Exp      CCDTemp     AirMass           JD(bary)        BCV     MaxInt'
+      printf,1,'   number            Name                         (h:m:s)      (d:ms:s)     (hms)       (s)                                      (m/s)     '
+   
+
+
+
+
+
+
 
   endelse
                   
@@ -439,19 +554,44 @@ pro logmaker_v2, rawdir, $
 
 
 
-  ; setup arrays for grouping quartz images
-  counter_num = intarr(nobs)
-  counter     = intarr(nobs+1)
-  decknm      = strarr(nobs)
-  exptm     = fltarr(nobs)
-  i2        = strarr(nobs)
-  st_exptime = strarr(nobs)
-  propID     = strarr(nobs)
-  binarr      = strarr(nobs)
-  slitarr     = strarr(nobs)
-  comment1    = strarr(nobs)
-  bary_correc = strarr(nobs) ; Barycentric Correction 
-  mjdate      = strarr(nobs) ;Modified Julian Date
+  ; >>All arrays containning information 
+  ; New sheet has 
+  ; [Observation #  |  Object Name  | bin | slit  |  # RA(h:m:s) |  Dec(d:m:s)  | Date midUT(hms) |  Exp(s) |  CCDTemp | AirMass |  JD(bary) | BCV |  MaxInt  ]
+  ;     1                  2           3    4            5           6                 7             8            9       10         11         12     13
+  
+  
+  ; These are all the depricated variables
+  ;  i2          = strarr(nobs)
+  ;  propID      = strarr(nobs)
+  ;  comment1    = strarr(nobs)
+  ; bin      = strarr(nobs)  
+   
+   
+  counter_num = intarr(nobs)   ; HELPER : Usedto collapse flats into 1 line. 
+  counter     = intarr(nobs+1) ;HELPER : Used to collapse flats into 1 line.   
+  decknm      = strarr(nobs)  ; HELPER : Used as helper to keep track of type of observations  E.g quarts, ...
+
+  
+  
+  
+  
+ ; -----------------------
+ ;   All variables in sheet 
+ ; ----------------------- 
+
+  ; found independently         [1 ] Observation Number  : st_num  
+  ; found independently         [2 ] Object Name    : objNam
+  binarr      = strarr(nobs) ;  [3 ] Binning used E.g. 3x1 
+  slitarr     = strarr(nobs) ;  [4 ] Slit type E.g. slicer.. 
+  ; found independently         [5 ] coords_ra   : Right Ascension             
+  ; found independently         [6 ]  coords_dec  : Declination                 
+  st_exptime  = strarr(nobs) ;  [7 ] DateMid-Time 
+  exptm       = fltarr(nobs) ;  [8 ] Exposure Time
+  ccd_temp    =strarr(nobs)  ;  [9 ]  temperature of CCD                    CREATE 
+  air_mass    =strarr(nobs)  ;  [10]  Air mass                              CREATE 
+  ;found independently       ;  [11]  JD: Modified Julian Date
+  ;found independently       ;  [12] bary_correc  : Barycentric Correction 
+  max_intensity = strarr(nobs); [13] Maximum Intensity                      CREATE 
   
   
   ;Used in a different script
@@ -564,17 +704,17 @@ pro logmaker_v2, rawdir, $
         
         
         
-        ; >> [3] in LOG : Is (y/n) :i2
+        ; >> [3] in LOG : Is (y/n) :i2 (Depricated)
         ; --------------------------
-        iod = sxpar(hd,'IODCELL', count=iod_tag)
-        if iod_tag gt 0 and strcompress(iod,/rem) eq 'IN' then i2[i] = 'y'
-        if iod_tag gt 0 and strcompress(iod,/rem) eq 'OUT' then i2[i] = 'n'       
-        if iod_tag eq 0 then begin ;old school, old controller, no IODCELL keyword - do the best you can.
-            i2[i]='y'
-            if ( objName eq _QUARTZ or objName eq _THAR or strupcase(strmid(objName,0,2)) eq 'HD' ) then i2[i] = 'n'
-        endif
-        if i2[i] eq 'y' and objName eq _QUARTZ then objName = _IODINE
-    
+;        iod = sxpar(hd,'IODCELL', count=iod_tag)
+;        if iod_tag gt 0 and strcompress(iod,/rem) eq 'IN' then i2[i] = 'y'
+;        if iod_tag gt 0 and strcompress(iod,/rem) eq 'OUT' then i2[i] = 'n'       
+;        if iod_tag eq 0 then begin ;old school, old controller, no IODCELL keyword - do the best you can.
+;            i2[i]='y'
+;            if ( objName eq _QUARTZ or objName eq _THAR or strupcase(strmid(objName,0,2)) eq 'HD' ) then i2[i] = 'n'
+;        endif
+;        if i2[i] eq 'y' and objName eq _QUARTZ then objName = _IODINE
+
     
     
     
@@ -584,80 +724,87 @@ pro logmaker_v2, rawdir, $
         ; -----------------------------
     
         ccd_ck = chip_geometry(obs_file[i],hdr=hd)   
-        if (ccd_ck.status eq 'OK' and strpos(ccd_ck.ccd,'e2v') lt 0) then begin
-            ;>> Pre-2011: DETECT ANY CHANGES IN THE SETTINGS
-            ;--------------------------------------------
-            if ( ccd_ck.controller ne runInfo.controller ) then comment1 = comment1 + ' ctl: ' + ccd_ck.controller
-            for j=0, n_elements(runInfo.image_trim.upleft)-1 do begin
-              if ( ccd_ck.image_trim.upleft[j] ne runInfo.image_trim.upleft[j] ) then begin
-                comment1[i] = comment1[i] + ' geoL: ' + strTrim(string(ccd_ck.image_trim.upleft[0]),2) + $
-                  ':' + strTrim(string(ccd_ck.image_trim.upleft[1]),2) + ',' + $
-                  strTrim(string(ccd_ck.image_trim.upleft[2]),2) + ':' + $
-                  strTrim(string(ccd_ck.image_trim.upleft[3]),2)
-                break
-              endif
-            endfor
-            for j=0, n_elements(runInfo.image_trim.upright)-1 do begin
-              if ( ccd_ck.image_trim.upright[j] ne runInfo.image_trim.upright[j] ) then begin
-                comment1[i] = comment1[i] + ' geoR: ' + strTrim(string(ccd_ck.image_trim.upright[0]),2) + $
-                  ':' + strTrim(string(ccd_ck.image_trim.upright[1]),2) + ',' + $
-                  strTrim(string(ccd_ck.image_trim.upright[2]),2) + ':' + $
-                  strTrim(string(ccd_ck.image_trim.upright[3]),2)
-                break
-              endif
-            endfor
-            if ( ccd_ck.bin.row ne runInfo.bin.row || ccd_ck.bin.col ne runInfo.bin.col) then begin
-              comment1[i] = comment1[i] + strtrim(string(ccd_ck.bin.row),2) + 'r' $
-                + strtrim(string(ccd_ck.bin.col),2) + 'c'
-            endif
-            
-        endif else begin
+;        if (ccd_ck.status eq 'OK' and strpos(ccd_ck.ccd,'e2v') lt 0) then begin  (DEPRICATED)
+;            ;>> Pre-2011: DETECT ANY CHANGES IN THE SETTINGS
+;            ;--------------------------------------------
+;            if ( ccd_ck.controller ne runInfo.controller ) then comment1 = comment1 + ' ctl: ' + ccd_ck.controller
+;            for j=0, n_elements(runInfo.image_trim.upleft)-1 do begin
+;              if ( ccd_ck.image_trim.upleft[j] ne runInfo.image_trim.upleft[j] ) then begin
+;                comment1[i] = comment1[i] + ' geoL: ' + strTrim(string(ccd_ck.image_trim.upleft[0]),2) + $
+;                  ':' + strTrim(string(ccd_ck.image_trim.upleft[1]),2) + ',' + $
+;                  strTrim(string(ccd_ck.image_trim.upleft[2]),2) + ':' + $
+;                  strTrim(string(ccd_ck.image_trim.upleft[3]),2)
+;                break
+;              endif
+;            endfor
+;            for j=0, n_elements(runInfo.image_trim.upright)-1 do begin
+;              if ( ccd_ck.image_trim.upright[j] ne runInfo.image_trim.upright[j] ) then begin
+;                comment1[i] = comment1[i] + ' geoR: ' + strTrim(string(ccd_ck.image_trim.upright[0]),2) + $
+;                  ':' + strTrim(string(ccd_ck.image_trim.upright[1]),2) + ',' + $
+;                  strTrim(string(ccd_ck.image_trim.upright[2]),2) + ':' + $
+;                  strTrim(string(ccd_ck.image_trim.upright[3]),2)
+;                break
+;              endif
+;            endfor
+;            if ( ccd_ck.bin.row ne runInfo.bin.row || ccd_ck.bin.col ne runInfo.bin.col) then begin
+;              comment1[i] = comment1[i] + strtrim(string(ccd_ck.bin.row),2) + 'r' $
+;                + strtrim(string(ccd_ck.bin.col),2) + 'c'
+;            endif
+;            
+;        endif else begin
           
-            ;>> Post-2011: GET HEADER INFO
-            ; --------------------------------
-            if (ccd_ck.status eq 'OK' and strpos(ccd_ck.ccd,'e2v') ge 0) then begin
-                im=readfits(obs_file[i],header,/silent)
-                bintag=sxpar(header,'CCDSUM')
-                bintag=strcompress(bintag,/rem)
-                bin=strarr(2)
-                bin[0]=strmid(bintag,0,1)
-                bin[1]=strmid(bintag,1,1)
-                decknm[i]=strt(sxpar(header,'DECKER'))
-                exptm[i]=sxpar(header,'EXPTIME')
-                if decknm[i] eq 'narrow_slit' then decknm[i] = 'narrow'
-                binarr[i] = bin[0]+'x'+bin[1] ;<< [5] Bin
-                slitarr[i] = '  '+strt(decknm[i]) ; [6] Slit
-                comment1[i]=' '
-            endif
-        endelse
+          ;>> Post-2011: GET HEADER INFO
+          ; --------------------------------
+          if (ccd_ck.status eq 'OK' and strpos(ccd_ck.ccd,'e2v') ge 0) then begin
+              im=readfits(obs_file[i],header,/silent)
+              bintag=sxpar(header,'CCDSUM')
+              bintag=strcompress(bintag,/rem)
+              bin=strarr(2)
+              bin[0]=strmid(bintag,0,1)
+              bin[1]=strmid(bintag,1,1)
+              decknm[i]=strt(sxpar(header,'DECKER'))
+              exptm[i]=sxpar(header,'EXPTIME')
+              if decknm[i] eq 'narrow_slit' then decknm[i] = 'narrow'
+              binarr[i] = bin[0]+'x'+bin[1] ;<< [5] Bin
+              slitarr[i] = '  '+strt(decknm[i]) ; [6] Slit
+              
+              ccd_temp[i] =strt(sxpar(header,'CCDTEMP'))
+              air_mass[i]= strt(sxpar(header,'AIRMASS'))
+              max_intensity[i] =strt(sxpar(header,'MAXEXP'))  ; how to find max intensity ? for now maximum exposure time in ms (expmeter)
+              
+              ;comment1[i]=' '
+          endif
+          
+          
+;        endelse
         
         
         
         
         
         
-        ; >> [8] Hdr Comments : comment1
-        ; -----------------------------     
-        ;grab comments from the FITS header
-        comments = sxpar(hd, 'COMMENT')
-        if n_elements(comments) ge 3 then begin
-          if comments[2] ne 'none' then addcomment=comments[2] else addcomment = ''
-        endif else addcomment = ''    
-        ; don't let manual entries override FITS headers
-        if addcomment eq 'slicer' or addcomment eq 'normal slit' or $
-          addcomment eq 'fiber' or addcomment eq 'narrow slit' then addcomment=''    
-        comment1[i] = '      '+comment1[i]+' '+addcomment
-        if diff_from_geom gt 0.0 then comment1[i] = comment1[i]+' '+strcompress(string(fix(diff_from_geom)),/rem)+' sec'
+        ; >> [8] Hdr Comments : comment1  (DEPRICATED )
+;        ; -----------------------------     
+;        ;grab comments from the FITS header
+;        comments = sxpar(hd, 'COMMENT')
+;        if n_elements(comments) ge 3 then begin
+;          if comments[2] ne 'none' then addcomment=comments[2] else addcomment = ''
+;        endif else addcomment = ''    
+;        ; don't let manual entries override FITS headers
+;        if addcomment eq 'slicer' or addcomment eq 'normal slit' or $
+;          addcomment eq 'fiber' or addcomment eq 'narrow slit' then addcomment=''    
+;        comment1[i] = '      '+comment1[i]+' '+addcomment
+;        if diff_from_geom gt 0.0 then comment1[i] = comment1[i]+' '+strcompress(string(fix(diff_from_geom)),/rem)+' sec'
         
         
         
-        ; >> [7] PropID :propID[i]
-        ; -----------------------------
-        propspec = sxpar(hd, 'PROPID')
-        if strt(propspec) eq '' then propspec = 'chi'
-        propID[i] = strt(propspec)
-        
-        
+        ; >> [7] PropID :propID[i] (DEPRICATED)
+;        ; -----------------------------
+;        propspec = sxpar(hd, 'PROPID')
+;        if strt(propspec) eq '' then propspec = 'chi'
+;        propID[i] = strt(propspec)
+;        
+;        
         
     
         ;FOR FLATS, ABBREVIATE THE NUMBER SYSTEM
@@ -669,60 +816,82 @@ pro logmaker_v2, rawdir, $
         endif
         
         
+
+
+
+
+
+  
         
         
-        
-        ; >> [] JD, czi : Julian Date and relativistic redshift
+        ; >> [] JD, czi : Julian Date and relativistic redshift ,RA (coords_ra)AND  DECLINATION (coords_dec)
         ; -----------------------------
         
-        if keyword_Set(barycorr) then begin 
-              if objName ne 'iodine' and objName ne 'thar' $ ; Only for stellar file
+        
+          if objName ne 'iodine' and objName ne 'thar' $ ; Only for stellar file
               and objName ne 'focus' and objName ne 'junk' and objName ne 'dark' $
               and objName ne 'bias' and objName ne 'quartz' and objName ne 'master_stellar' then begin
-  
-              em_date_time=sxpar(hd,'EMMNWOB', count=mid_time_match)
-              ; >> Find Julian Date and calculate barycentric correction only for stellar objects.
-              if mid_time_match gt 0 then begin
-  
-                ;date
-                em_date=strmid(em_date_time, 0, 10)
-                em_date = strsplit(em_date, '-',/extract)
-                year    =em_date[0]
-                month   =em_date[1]
-                dd      =em_date[2]
-  
-                ;time
-                em_time=strmid(em_date_time, 11, strlen(em_time))
-                em_time =strsplit(em_time, ':', /extract)
-                hour    =em_time[0]
-                minutes =em_time[1] + (em_time[1]/60.0) ; *Including decimales
-  
-  
-              endif else begin
-                ; Create option for when  keyword EMMNWOB does not exist
-              endelse
-  
-              jdUTC = jdate([year,month,dd,hour,minutes])
-              JD    = cgNumber_Formatter(jdUTC, DECIMALS=6)
-  
-              if keyword_Set(star_name) then objName = star_name
-  
-              call_qbary, star_name=objName, jd=jdUTC, barydir=barypath, czi=czi
-              bary_correc = cgNumber_Formatter(czi,DECIMALS=3) ; Barycentric Correction
-  
-  
-              ; For future reference only stellar files
-              file_nm_to_save=  stregex(obs_file[i], 'chi([0-9]+).([0-9]+).fits', /extract)
-              stellar_bary_correc.add, {file_name:file_nm_to_save , correction:czi } ; Meant to be output
-  
-            endif else begin
-  
-              ;>>Default for non-stellar files
-              bary_correc = '0.0' ; Barycentric Correction
-              JD          = '0.0'
-  
-            endelse
-        endif ; end bary correction
+              
+              ;IF start then we actual  JD, bary_correc, coords_ra and coords_dec
+              
+                 
+                 
+                ; ------------
+                ; Define JD  
+                ; ------------
+                em_date_time=sxpar(hd,'EMMNWOB', count=mid_time_match)
+                
+                if mid_time_match gt 0 then begin
+      
+                  ;date
+                  em_date=strmid(em_date_time, 0, 10)
+                  em_date = strsplit(em_date, '-',/extract)
+                  year    =em_date[0]
+                  month   =em_date[1]
+                  dd      =em_date[2]
+      
+                  ;time
+                  em_time=strmid(em_date_time, 11, strlen(em_time))
+                  em_time =strsplit(em_time, ':', /extract)
+                  hour    =em_time[0]
+                  minutes =em_time[1] + (em_time[1]/60.0) ; *Including decimales
+      
+      
+                endif else begin
+                  ; Create option for when  keyword EMMNWOB does not exist
+                endelse
+      
+                jdUTC = jdate([year,month,dd,hour,minutes])
+                JD    = cgNumber_Formatter(jdUTC, DECIMALS=6) ;String format 
+                
+                
+                if keyword_Set(star_name) then objName = star_name
+
+                ; ------------
+                ; Define coords ra and dec 
+                ; ------------
+                get_stellar_coord, hd, starname=objName, ra=coords_ra, dec=coords_dec, coords=coords ; output ra, dec 
+                ; output are :  coords_ra and coords_dec
+      
+            
+                call_qbary,  jd=jdUTC, barydir=barypath, czi=czi, coords=coords                
+                bary_correc = cgNumber_Formatter(czi,DECIMALS=3) ; Barycentric Correction
+      
+      
+                ; For future reference only stellar files
+                file_nm_to_save=  stregex(obs_file[i], 'chi([0-9]+).([0-9]+).fits', /extract)
+                stellar_bary_correc.add, {file_name:file_nm_to_save , correction:czi } ; Meant to be output
+
+        endif else begin
+
+          ;>>Default for non-stellar files
+          bary_correc = '0.0' ; Barycentric Correction
+          JD          = '0.0'
+          coords_ra   = '00:00:00'
+          coords_dec  = '00:00:00'
+
+        endelse
+     
        
         
        
@@ -730,8 +899,9 @@ pro logmaker_v2, rawdir, $
       
         
         
+    
         
-        
+
         ;-------------------------------------------------------
         ; >>Priting  all collected information from observation
         ;--------------------------------------------------------
@@ -752,11 +922,11 @@ pro logmaker_v2, rawdir, $
                 if last ne first then st_numW = first+'-'+last else st_numW = first
                 ;       if last ne first then st_numW =  ' '+strtrim(first,2)+'-'+strtrim(last,2) else st_numW = first
                
-                if keyword_Set(barycorr) then begin
-                       printf,1, strcompress(st_numW,/rem)+'    ', ' ', _QUARTZ, i2[i-1], holder, JD, bary_correc , st_exptime[i-1], binarr[i-1], slitarr[i-1],  ' ', propID[i-1], comment1[i-1], format=extended_form
-                endif else begin
-                        printf,1, strcompress(st_numW,/rem)+'    ', ' ', _QUARTZ, i2[i-1], holder , st_exptime[i-1], binarr[i-1], slitarr[i-1],  ' ', propID[i-1], comment1[i-1], format=form1
-                endelse
+              
+               ;printf,1, strcompress(st_numW,/rem)+'    ', ' ', _QUARTZ, i2[i-1], holder, JD, bary_correc , st_exptime[i-1], binarr[i-1], slitarr[i-1],  ' ', propID[i-1], comment1[i-1], format=extended_form
+               printf,1, strcompress(st_numW,/rem), _QUARTZ,     binarr[i],   slitarr[i],  coords_ra,  coords_dec, st_exptime[i],  exptm[i], ccd_temp[i],  air_mass[i],JD, bary_correc, max_intensity[i]   , format=extended_form
+
+
                                 
                 counter_num = intarr(nobs)   ;reset counter array to zeros after printing.
                 counter     = intarr(nobs+1)
@@ -773,11 +943,11 @@ pro logmaker_v2, rawdir, $
                     ;         if last ne first then st_numW =  ' '+strtrim(first,2)+'-'+strtrim(last,2) else st_numW = first
 
                     
-                    if keyword_Set(barycorr) then begin
-                          printf,1, strcompress(st_numW,/rem)+'    ', ' ', _QUARTZ, i2[i-1], holder,JD, bary_correc ,  st_exptime[i-1], binarr[i-1], slitarr[i-1],  ' ', propID[i-1], comment1[i-1], format=extended_form
-                    endif else begin
-                          printf,1, strcompress(st_numW,/rem)+'    ', ' ', _QUARTZ, i2[i-1], holder,  st_exptime[i-1], binarr[i-1], slitarr[i-1],  ' ', propID[i-1], comment1[i-1], format=form1
-                    endelse
+                    
+                    ;printf,1, strcompress(st_numW,/rem)+'    ', ' ', _QUARTZ, i2[i-1], holder,JD, bary_correc ,  st_exptime[i-1], binarr[i-1], slitarr[i-1],  ' ', propID[i-1], comment1[i-1], format=extended_form
+                    printf,1, strcompress(st_numW,/rem), _QUARTZ,     binarr[i],   slitarr[i],  coords_ra,  coords_dec, st_exptime[i],  exptm[i], ccd_temp[i],  air_mass[i],JD, bary_correc, max_intensity[i]   , format=extended_form
+
+
                                         
                     counter_num = intarr(nobs)   ;reset counter to zeros after printing.
                     counter     = intarr(nobs+1)
@@ -795,11 +965,11 @@ pro logmaker_v2, rawdir, $
                     if last ne first then st_numW = first+'-'+last else st_numW = first
                     ;         if last ne first then st_numW =  ' '+strtrim(first,2)+'-'+strtrim(last,2) else st_numW = first
                     
-                    if keyword_Set(barycorr) then begin
-                       printf,1, strcompress(st_numW,/rem)+'    ', ' ', _QUARTZ, i2[i-1], holder, JD, bary_correc , st_exptime[i-1], binarr[i-1], slitarr[i-1],  ' ', propID[i-1], comment1[i-1], format=extended_form
-                    endif else begin
-                       printf,1, strcompress(st_numW,/rem)+'    ', ' ', _QUARTZ, i2[i-1], holder , st_exptime[i-1], binarr[i-1], slitarr[i-1],  ' ', propID[i-1], comment1[i-1], format=form1
-                    endelse
+                   
+                    ;printf,1, strcompress(st_numW,/rem)+'    ', ' ', _QUARTZ, i2[i-1], holder, JD, bary_correc , st_exptime[i-1], binarr[i-1], slitarr[i-1],  ' ', propID[i-1], comment1[i-1], format=extended_form
+                    printf,1, strcompress(st_numW,/rem), _QUARTZ,     binarr[i],   slitarr[i],  coords_ra,  coords_dec, st_exptime[i],  exptm[i], ccd_temp[i],  air_mass[i],JD, bary_correc, max_intensity[i]    , format=extended_form
+
+
                     
                     counter_num = intarr(nobs)   ;reset counter to zeros after printing.
                     counter     = intarr(nobs+1)
@@ -817,13 +987,13 @@ pro logmaker_v2, rawdir, $
                 if last ne first then st_numW = first+'-'+last else st_numW = first
                 ;       if last ne first then st_numW =  ' '+strtrim(first,2)+'-'+strtrim(last,2) else st_numW = first
                 
-                if keyword_Set(barycorr) then begin
-                    printf,1, strcompress(st_numW,/rem)+'     ', ' ', _QUARTZ, i2[i], holder, JD, bary_correc,  st_exptime[i], binarr[i], slitarr[i],  ' ', propID[i], comment1[i], format=extended_form
+                
+               ; printf,1, strcompress(st_numW,/rem)+'     ', ' ', _QUARTZ, i2[i], holder, JD, bary_correc,  st_exptime[i], binarr[i], slitarr[i],  ' ', propID[i], comment1[i], format=extended_form
+               
+               printf,1, strcompress(st_numW,/rem), _QUARTZ,     binarr[i],   slitarr[i],  coords_ra,  coords_dec, st_exptime[i],  exptm[i], ccd_temp[i],  air_mass[i],JD, bary_correc, max_intensity[i]    , format=extended_form
 
-                endif else begin
-                    printf,1, strcompress(st_numW,/rem)+'     ', ' ', _QUARTZ, i2[i], holder,  st_exptime[i], binarr[i], slitarr[i],  ' ', propID[i], comment1[i], format=form1
 
-                endelse
+                
             
             endif
         endif ;i ne 0
@@ -834,13 +1004,11 @@ pro logmaker_v2, rawdir, $
 
         if counter[i] eq 0 and endflag eq 0 then begin
           
-            if keyword_Set(barycorr) then begin 
-                printf,1, st_num, ' ', objName, i2[i], midtime,JD, bary_correc ,st_exptime[i], binarr[i], slitarr[i],  ' ', propID[i], comment1[i], format=extended_form
-                print, st_num, ' ', objName, i2[i], midtime,JD, bary_correc,  st_exptime[i], binarr[i], slitarr[i], ' ', propID[i], comment1[i], format=extended_form
-            endif else begin
-                printf,1, st_num, ' ', objName, i2[i], midtime ,st_exptime[i], binarr[i], slitarr[i],  ' ', propID[i], comment1[i], format=form2
-                print, st_num, ' ', objName, i2[i], midtime,  st_exptime[i], binarr[i], slitarr[i], ' ', propID[i], comment1[i], format=form2
-            endelse
+            printf,1, st_num,  objName, binarr[i],   slitarr[i],  coords_ra,  coords_dec, st_exptime[i],  exptm[i], ccd_temp[i],  air_mass[i],JD, bary_correc, max_intensity[i]    , format=extended_form
+            
+            print, st_num,  objName,     binarr[i],   slitarr[i],  coords_ra,  coords_dec, st_exptime[i],  exptm[i], ccd_temp[i],  air_mass[i],JD, bary_correc, max_intensity[i]    , format=extended_form
+
+
             
         endif
 
