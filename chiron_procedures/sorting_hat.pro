@@ -149,7 +149,7 @@ pretag = redpar.prefix_tag
 ;#####################################################
 
 ;readcol,logsheet, skip=9, obnm, objnm, i2, mdpt, juDate,baryCorrec,  exptm, bin, slit, f='(a5, a13, a4, D14,    D20,   a15, a8, a3, a6)'
-readcol,logsheet, skip=9, obnm, objnm, i2, mdpt, juDate,baryCorrec,  exptm, bin, slit, f='(a10 , a14, a4, a14, a20, a15, a8, a6,  a8, a16, a18 )'
+readcol,logsheet, skip=9, obnm, objnm, bin, slit, ra, dec,  mdpt,  exptm , ccdTem, airMass,juDate,baryCorrec, f='(a10,     a15,       a8,    a10 ,   a14,   a14,     a28,      a12,     a12,      a10,     a17,    a14   )'
 
 ;now to expand the quartz items in the logsheet:
 ;print, 'obnm before is: ', obnm       ; These are all file numbers E.g. 1001  1002  .....
@@ -164,7 +164,7 @@ for qi=0, n_elements(qcombs)-1 do begin ;Converts ranges found in log sheet to t
 	ncombs = long(qfini) - long(qinit) + 1
 	nobnm = lindgen(ncombs) + long(qinit)
 	nobjnm = strarr(ncombs)+objnm[qcombs[qi]]
-	ni2 = strarr(ncombs)+i2[qcombs[qi]]
+	;ni2 = strarr(ncombs)+i2[qcombs[qi]]
 	nmdpt = strarr(ncombs)+mdpt[qcombs[qi]]
 	nexptm = strarr(ncombs)+exptm[qcombs[qi]]
 	nbin = strarr(ncombs)+bin[qcombs[qi]]
@@ -173,7 +173,7 @@ for qi=0, n_elements(qcombs)-1 do begin ;Converts ranges found in log sheet to t
 	if qcombs[qi] eq 0 then begin  ; First file number
 	  obnm = [strt(nobnm, f='(I04)'), obnm[(qcombs[qi]+1):*]]
 	  objnm = [nobjnm, objnm[(qcombs[qi]+1):*]]
-	  i2 = [ni2, i2[(qcombs[qi]+1):*]]
+	  ;i2 = [ni2, i2[(qcombs[qi]+1):*]]
 	  mdpt = [nmdpt, mdpt[(qcombs[qi]+1):*]]
 	  exptm = [nexptm, exptm[(qcombs[qi]+1):*]]
 	  bin = [nbin, bin[(qcombs[qi]+1):*]]
@@ -182,7 +182,7 @@ for qi=0, n_elements(qcombs)-1 do begin ;Converts ranges found in log sheet to t
 	if qcombs[qi] ne n_elements(obnm)-1 and qcombs[qi] ne 0 then begin   ; All file numbers in between 
 	  obnm = [obnm[0:(qcombs[qi]-1)], strt(nobnm, f='(I04)'), obnm[(qcombs[qi]+1):*]]                                      ; Observation Number
 	  objnm = [objnm[0:(qcombs[qi]-1)], nobjnm, objnm[(qcombs[qi]+1):*]]                                                   ; Object Number
-	  i2 = [i2[0:(qcombs[qi]-1)], ni2, i2[(qcombs[qi]+1):*]]                                                               ; I2
+	 ; i2 = [i2[0:(qcombs[qi]-1)], ni2, i2[(qcombs[qi]+1):*]]                                                               ; I2
 	  mdpt = [mdpt[0:(qcombs[qi]-1)], nmdpt, mdpt[(qcombs[qi]+1):*]]                                                       ; Mid -Time (Universtal Time) 
 	  exptm = [exptm[0:(qcombs[qi]-1)], nexptm, exptm[(qcombs[qi]+1):*]]                                                   ; Exposure Time 
 	  bin = [bin[0:(qcombs[qi]-1)], nbin, bin[(qcombs[qi]+1):*]]                                                           ; Binninng
@@ -191,7 +191,7 @@ for qi=0, n_elements(qcombs)-1 do begin ;Converts ranges found in log sheet to t
 	if qcombs[qi] eq n_elements(obnm)-1 then begin  ; Last File number
 	  obnm = [obnm[0:(qcombs[qi]-1)], strt(nobnm, f='(I04)')]
 	  objnm = [objnm[0:(qcombs[qi]-1)], nobjnm]
-	  i2 = [i2[0:(qcombs[qi]-1)], ni2]
+	  ;i2 = [i2[0:(qcombs[qi]-1)], ni2]
 	  mdpt = [mdpt[0:(qcombs[qi]-1)], nmdpt]
 	  exptm = [exptm[0:(qcombs[qi]-1)], nexptm]
 	  bin = [bin[0:(qcombs[qi]-1)], nbin]
@@ -211,7 +211,7 @@ ut = gettime(mdpt) ; floating-point hours, >24h in the morning
 ;### Creates log structure which has information about ALL raw files. 
 ;#####################################################
 
-createLogStructures,redpar,obnm,objnm, /doFromScratch   ; uncomment this for production 
+;createLogStructures,redpar,obnm,objnm, /doFromScratch   ; uncomment this for production 
 
 
 

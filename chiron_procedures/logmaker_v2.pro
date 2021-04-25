@@ -50,6 +50,7 @@ pro call_qbary, jd=jdUTC, barydir=barydir,czi=czi,coords=coords
   ;--------  
   pm = [0.d0,0.d0]  ; pass dummy values for  proper motion
   
+  
 
  
     ; ***********************************************
@@ -58,8 +59,8 @@ pro call_qbary, jd=jdUTC, barydir=barydir,czi=czi,coords=coords
     if debug gt 0 then begin
         ; >>Input needed for qbary.pro
         print,  ' ------------------------------------   '
-        print, 'coords : '  ; RA & DEC, in [hours,degrees] eg. [1.75,-15.9d]
-        print, string( coords)
+        print, 'coordinates : '  ; RA & DEC, in [hours,degrees] eg. [1.75,-15.9d]
+        print, 'RA : '+strt(coords[0])+ '  DEC : '+strt(coords[1])
         print, 'pm     : ' + string(pm)       ; proper motion [ra,dec] in ARCsec/year [optional]
         print, 'epoch  : ' + string(epoch)
         print, 'barydir: ' + string(barydir)   ; Barycentric directory
@@ -235,7 +236,7 @@ pro logmaker_v2, rawdir, $
   nofoc =nofoc, $
   date=date, $ 
   star_name =star_name,$  ; Name of the stellar object. This name HAS TO BE compatible with SIMBAD 
-  stellar_bary_correc=stellar_bary_correc
+  stellar_bary_correc=stellar_bary_correc   ; Used as output to return all the bary correction of given star
 
 
 
@@ -312,7 +313,7 @@ pro logmaker_v2, rawdir, $
     answer=''
     print,'Hey! this log file exists already - are you sure you want'
     read,' to overwrite? (y/n)', answer
-    if answer eq 'n' then stop
+    if answer eq 'n' then return 
   endif
   if (~keyword_set(noarchive) and nlogs) then $
     spawn, 'cp '+logname+' '+nextname(logpath+'archive/'+rawdir+'.log'+'_old', '')
@@ -469,8 +470,9 @@ pro logmaker_v2, rawdir, $
   ;form2 is for quartz exposures
   form2='(a10, a1, a13, a4, a14,    a8,  a6,  a-8,  a1,    a15,    a-40)'
    
-  ;                (#obs,   objname,   bin,   slit ,    ra ,  dec     time1     time2     ccdTe,   airmas    jd    bary    maxInt)
-  extended_form = '(a10,     a15,       a8,    a10 ,   a14,   a14,     a10,      a12,     a12,      a10,     a17,    a14,    a10    )'
+  ;                (#obs,   objname,   bin,   slit ,    ra ,  dec     time1     time2     ccdTe,   airmas    jd    bary  )
+  ;extended_form = '(a10,     a15,       a8,    a10 ,   a14,   a14,     a28,      a12,     a12,      a10,     a17,    a14,    a10    )' 
+  extended_form = '(a10,     a15,       a8,    a10 ,   a14,   a14,     a28,      a12,     a12,      a10,     a17,    a14   )' ; got rid of max intensity for now
   
 
 
@@ -529,11 +531,11 @@ pro logmaker_v2, rawdir, $
       printf,1, str_ech, '     ', str_xdisp, '                  Foc FWHM: '+focfwhm
       printf,1,'-------------------------------------------------------------------------------------'
     
-      printf,1,'     Obs           Object     Bin     Slit          RA            DEC     Date-midUT    Exp      CCDTemp     AirMass           JD(bary)        BCV     MaxInt'
+      printf,1,'     Obs           Object     Bin     Slit          RA            DEC             Date-midUT            Exp      CCDTemp     AirMass           JD(bary)        BCV     '
       
       
-      print,   '     Obs           Object     Bin     Slit          RA            DEC     Date-midUT    Exp      CCDTemp     AirMass           JD(bary)        BCV     MaxInt'
-      printf,1,'   number            Name                         (h:m:s)      (d:ms:s)     (hms)       (s)                                      (m/s)     '
+      print,   '     Obs           Object     Bin     Slit          RA            DEC             Date-midUT             Exp      CCDTemp     AirMass           JD(bary)        BCV     '
+      printf,1,'   number            Name                         (h:m:s)      (d:ms:s)          (y-m-dTh:m:s)           (s)                                                   (m/s)     '
    
 
 
@@ -585,7 +587,7 @@ pro logmaker_v2, rawdir, $
   slitarr     = strarr(nobs) ;  [4 ] Slit type E.g. slicer.. 
   ; found independently         [5 ] coords_ra   : Right Ascension             
   ; found independently         [6 ]  coords_dec  : Declination                 
-  st_exptime  = strarr(nobs) ;  [7 ] DateMid-Time 
+  em_date_time = strarr(nobs);  [7 ] DateMid-Time : em_date_time
   exptm       = fltarr(nobs) ;  [8 ] Exposure Time
   ccd_temp    =strarr(nobs)  ;  [9 ]  temperature of CCD                    CREATE 
   air_mass    =strarr(nobs)  ;  [10]  Air mass                              CREATE 
@@ -695,8 +697,8 @@ pro logmaker_v2, rawdir, $
         
         ; >> [4] Exp time : exptime
         ;-----------------------------
-        st_exptime[i] = strt(exptime, f='(f5.2)')
-        if exptime ge 10 then st_exptime[i]=strt(exptime, f='(i5)')
+;        st_exptime[i] = strt(exptime, f='(f5.2)')
+;        if exptime ge 10 then st_exptime[i]=strt(exptime, f='(i5)')
         
         ;st_starttime = strcompress(Starttime,/remove_all) ; Commented cause not used
         ;st_starttime = strmid(st_starttime,0,strlen(Starttime)-4)
@@ -826,7 +828,9 @@ pro logmaker_v2, rawdir, $
         
         ; >> [] JD, czi : Julian Date and relativistic redshift ,RA (coords_ra)AND  DECLINATION (coords_dec)
         ; -----------------------------
-        
+          em_date_time[i]=sxpar(hd,'EMMNWOB', count=mid_time_match)
+          
+          if mid_time_match le 0 then em_date_time[i] = 'y-m-d-00:00:00'
         
           if objName ne 'iodine' and objName ne 'thar' $ ; Only for stellar file
               and objName ne 'focus' and objName ne 'junk' and objName ne 'dark' $
@@ -839,19 +843,18 @@ pro logmaker_v2, rawdir, $
                 ; ------------
                 ; Define JD  
                 ; ------------
-                em_date_time=sxpar(hd,'EMMNWOB', count=mid_time_match)
                 
                 if mid_time_match gt 0 then begin
       
                   ;date
-                  em_date=strmid(em_date_time, 0, 10)
+                  em_date=strmid(em_date_time[i], 0, 10)
                   em_date = strsplit(em_date, '-',/extract)
                   year    =em_date[0]
                   month   =em_date[1]
                   dd      =em_date[2]
       
                   ;time
-                  em_time=strmid(em_date_time, 11, strlen(em_time))
+                  em_time=strmid(em_date_time[i], 11, strlen(em_time))
                   em_time =strsplit(em_time, ':', /extract)
                   hour    =em_time[0]
                   minutes =em_time[1] + (em_time[1]/60.0) ; *Including decimales
@@ -912,7 +915,7 @@ pro logmaker_v2, rawdir, $
             ; Printing for FLATS groups
             ;------------------------------------
     
-            ;last observation was a qtz, this one is not, end grouping
+            ;A >> Last observation was a qtz, this one is not, end grouping
             if counter[i] eq 0 and counter[i-1] eq 1 then begin
                 endflag=0
                 wfirst = where(counter eq 1)
@@ -921,10 +924,12 @@ pro logmaker_v2, rawdir, $
                 last  = counter_num[wfirst[numfirst-1]]  & last = strt(last, f='(I04)')
                 if last ne first then st_numW = first+'-'+last else st_numW = first
                 ;       if last ne first then st_numW =  ' '+strtrim(first,2)+'-'+strtrim(last,2) else st_numW = first
-               
+                
+                
+
               
                ;printf,1, strcompress(st_numW,/rem)+'    ', ' ', _QUARTZ, i2[i-1], holder, JD, bary_correc , st_exptime[i-1], binarr[i-1], slitarr[i-1],  ' ', propID[i-1], comment1[i-1], format=extended_form
-               printf,1, strcompress(st_numW,/rem), _QUARTZ,     binarr[i],   slitarr[i],  coords_ra,  coords_dec, st_exptime[i],  exptm[i], ccd_temp[i],  air_mass[i],JD, bary_correc, max_intensity[i]   , format=extended_form
+               printf,1, strcompress(st_numW,/rem), _QUARTZ,     binarr[i-1],   slitarr[i-1],  '00:00:00',  '00:00:00', em_date_time[i-1],  exptm[i-1], ccd_temp[i-1],  air_mass[i-1],'0.0', '0.0' , format=extended_form
 
 
                                 
@@ -932,7 +937,8 @@ pro logmaker_v2, rawdir, $
                 counter     = intarr(nobs+1)
             endif
       
-            ;last observation was a qtz, this is qtz, but different decknm
+      
+            ;B >> Last observation was a qtz, this is qtz, but different decknm
             if counter[i] eq 1 and counter[i-1] eq 1 then begin
                 if (decknm[i] ne decknm[i-1]) then begin
                     wfirst = where(counter eq 1)
@@ -941,11 +947,12 @@ pro logmaker_v2, rawdir, $
                     last  = counter_num[wfirst[numfirst-2]]  & last = strt(last, f='(I04)')
                     if last ne first then st_numW = first+'-'+last else st_numW = first
                     ;         if last ne first then st_numW =  ' '+strtrim(first,2)+'-'+strtrim(last,2) else st_numW = first
-
+                    
+      
                     
                     
                     ;printf,1, strcompress(st_numW,/rem)+'    ', ' ', _QUARTZ, i2[i-1], holder,JD, bary_correc ,  st_exptime[i-1], binarr[i-1], slitarr[i-1],  ' ', propID[i-1], comment1[i-1], format=extended_form
-                    printf,1, strcompress(st_numW,/rem), _QUARTZ,     binarr[i],   slitarr[i],  coords_ra,  coords_dec, st_exptime[i],  exptm[i], ccd_temp[i],  air_mass[i],JD, bary_correc, max_intensity[i]   , format=extended_form
+                    printf,1, strcompress(st_numW,/rem), _QUARTZ,     binarr[i-1],   slitarr[i-1],   '00:00:00',  '00:00:00', em_date_time[i-1],  exptm[i-1], ccd_temp[i-1],  air_mass[i-1],'0.0', '0.0', format=extended_form
 
 
                                         
@@ -955,7 +962,7 @@ pro logmaker_v2, rawdir, $
                 endif          
             endif
       
-            ;last observation was a qtz, this is a qtz, but different exptm
+            ;C >> Last observation was a qtz, this is a qtz, but different exptm
             if counter[i] eq 1 and counter[i-1] eq 1 then begin
                 if (exptm[i] ne exptm[i-1]) then begin
                     wfirst = where(counter eq 1)
@@ -965,9 +972,10 @@ pro logmaker_v2, rawdir, $
                     if last ne first then st_numW = first+'-'+last else st_numW = first
                     ;         if last ne first then st_numW =  ' '+strtrim(first,2)+'-'+strtrim(last,2) else st_numW = first
                     
-                   
+                    
+              
                     ;printf,1, strcompress(st_numW,/rem)+'    ', ' ', _QUARTZ, i2[i-1], holder, JD, bary_correc , st_exptime[i-1], binarr[i-1], slitarr[i-1],  ' ', propID[i-1], comment1[i-1], format=extended_form
-                    printf,1, strcompress(st_numW,/rem), _QUARTZ,     binarr[i],   slitarr[i],  coords_ra,  coords_dec, st_exptime[i],  exptm[i], ccd_temp[i],  air_mass[i],JD, bary_correc, max_intensity[i]    , format=extended_form
+                    printf,1, strcompress(st_numW,/rem), _QUARTZ,     binarr[i-1],   slitarr[i-1],  '00:00:00',  '00:00:00', em_date_time[i-1],  exptm[i-1], ccd_temp[i-1],  air_mass[i-1],'0.0', '0.0'   , format=extended_form
 
 
                     
@@ -977,7 +985,7 @@ pro logmaker_v2, rawdir, $
                 endif
             endif
       
-            ;last observation in the directory
+            ;D >> Last observation in the directory
             if i eq nobs-1 and counter[i] eq 1 then begin
                 endflag=4
                 wfirst = where(counter eq 1)
@@ -987,15 +995,21 @@ pro logmaker_v2, rawdir, $
                 if last ne first then st_numW = first+'-'+last else st_numW = first
                 ;       if last ne first then st_numW =  ' '+strtrim(first,2)+'-'+strtrim(last,2) else st_numW = first
                 
+                ;default values
+                bary_correc = '0.0' ; Barycentric Correction
+                JD          = '0.0'
+                coords_ra   = '00:00:00'
+                coords_dec  = '00:00:00'
+                
                 
                ; printf,1, strcompress(st_numW,/rem)+'     ', ' ', _QUARTZ, i2[i], holder, JD, bary_correc,  st_exptime[i], binarr[i], slitarr[i],  ' ', propID[i], comment1[i], format=extended_form
                
-               printf,1, strcompress(st_numW,/rem), _QUARTZ,     binarr[i],   slitarr[i],  coords_ra,  coords_dec, st_exptime[i],  exptm[i], ccd_temp[i],  air_mass[i],JD, bary_correc, max_intensity[i]    , format=extended_form
+               printf,1, strcompress(st_numW,/rem), _QUARTZ,     binarr[i-1],   slitarr[i-1],  coords_ra,  coords_dec, em_date_time[i],  exptm[i], ccd_temp[i],  air_mass[i],JD, bary_correc   , format=extended_form
 
-
-                
             
             endif
+
+
         endif ;i ne 0
         
         
@@ -1004,9 +1018,9 @@ pro logmaker_v2, rawdir, $
 
         if counter[i] eq 0 and endflag eq 0 then begin
           
-            printf,1, st_num,  objName, binarr[i],   slitarr[i],  coords_ra,  coords_dec, st_exptime[i],  exptm[i], ccd_temp[i],  air_mass[i],JD, bary_correc, max_intensity[i]    , format=extended_form
+            printf,1, st_num,  objName, binarr[i],   slitarr[i],  coords_ra,  coords_dec, em_date_time[i],  exptm[i], ccd_temp[i],  air_mass[i],JD, bary_correc    , format=extended_form
             
-            print, st_num,  objName,     binarr[i],   slitarr[i],  coords_ra,  coords_dec, st_exptime[i],  exptm[i], ccd_temp[i],  air_mass[i],JD, bary_correc, max_intensity[i]    , format=extended_form
+            print, st_num,  objName,     binarr[i],   slitarr[i],  coords_ra,  coords_dec, em_date_time[i],  exptm[i], ccd_temp[i],  air_mass[i],JD, bary_correc   , format=extended_form
 
 
             

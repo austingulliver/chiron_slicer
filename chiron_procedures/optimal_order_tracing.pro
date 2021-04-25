@@ -173,7 +173,7 @@ function all_order_peaks, flat, redpar, method_str= method_str
       
       
 ;    if method_str eq 'from_scratch' then begin      
-          above_noise_level=15.0 ; Defines how many times bgger(wrt to the Background) the intensity values should get picked
+          above_noise_level=5.0 ; Defines how many times bgger(wrt to the Background) the intensity values should get picked
                                  ; Found experimentally. Change if neccesary 
                                 
           middle = flat[  round(n_rows/2.0),*]
@@ -780,6 +780,9 @@ function optimal_order_tracing, img, redpar
   ; >> define n  templates (for each order)
   ;------------------------------  
   
+
+  
+  
   templates = define_templates(flat , redpar) ; n orders structure  with middle, up and down for every order (central column)
   
 
@@ -877,7 +880,7 @@ debug_flag = 0
  endfor
  
  
-  ;debug = 1
+  debug = 1
 if debug gt 0 then begin       
     p=plot(order_ys[0, *] )    
     for ord_idx = 1L, n_elements(templates.middle )-1 do begin

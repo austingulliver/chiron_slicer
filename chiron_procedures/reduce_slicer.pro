@@ -13,6 +13,9 @@
 ;  
 ;  E.g.
 ;      reduce_slicer, 181103, star_name='HR2943', /post_process
+;      
+;  E.g. (To produce master stellar)
+;      reduce_slicer, 210128, /post_process , /combine_stellar
 ;  
 ;  
 ;  History :
@@ -38,7 +41,17 @@ common CONSTANTS,autom,automJPL,autokm,cms,ckm,radtosec,pctoAU,$
   century,precise,ddtor,msun,msung,mearth,mmoon,$
   mmoong,rearth,rearthkm,rsun,rsunkm,Gcgs,G,angstrom
 
-; Some validation 
+; Constants/Variables + paths
+
+
+spawn, 'cd', pwddir  ;Updated to a Windows command
+case pwddir of
+  'C:\Users\mrstu': ctparfn = 'C:\Users\mrstu\idlworkspace_yalecalibration\chiron_procedures\ctio.par'
+  'C:\Users\gulliver': ctparfn = 'C:\F disk\ctio.par'
+  ELSE : ctparfn=!NULL
+  ; E.g. 'your_current_directory': ctparfn = 'absolute_path_to_ctio.par'
+  ; Note: Let the program run. It will stop with the message bellow. Copy/Paste the printes direcotory in 'your_current_directory'
+endcase
 
 
 
@@ -60,7 +73,7 @@ if ~keyword_set(no_log) then begin ; If this is keyword is set then is expected 
       endif else begin
           ; Run bary Correction as well 
           ; It is very important to get the name of the start Correct to run the barycorrection successfully  
-          logmaker_v2, strt(night), /nofoc, prefix='chi', star_name=star_name, stellar_bary_correc=stellar_bary_correc, /barycorr
+          logmaker_v2, strt(night), /nofoc, prefix='chi', star_name=star_name, stellar_bary_correc=stellar_bary_correc
           ;   stellar_bary_correc(Output): is a list wich elements are strucutres with the form {file_name:obs_file[i] , correction:czi }
       endelse
 
@@ -108,6 +121,46 @@ do_shift=1
 ;To do post processing we expecting to run it along with sorting_hat for now. FIX SO THEY ARE INDEPENDENT IN THE FUTURE 
 
 if keyword_set (post_process) then begin
+  
+        ; Collecting missing info if any of the other 2 tags were not set.
+        if keyword_set(no_reduction) then begin
+          
+          redpar = readpar(ctparfn) 
+          redpar.imdir = strt(night)+'\' ; setting some extra variables that will get used.
+          redpar.prefix ='chi'+strt(night) +'.'
+          
+          
+        endif else redpar=redpar ;else use the same as in sorting_hat
+      
+    
+        if keyword_set(no_log) then begin
+            ; Need to obtain the 'stellar_bary_correct' by reading the existing sheet
+            logsheet = redpar.rootdir+redpar.logdir+'20'+strmid(strt(night), 0, 2)+'\' +strt(night)+'.log'          
+            readcol,logsheet, skip=9, obnm, objnm, bin, slit, ra, dec,  mdpt,  exptm , ccdTem, airMass,juDate,baryCorrec, f='(a10,     a15,       a8,    a10 ,   a14,   a14,     a28,      a12,     a12,      a10,     a17,    a14   )'
+            
+            ; need to obtain 
+            ; For future reference only stellar files
+            bary_indices = where(float(baryCorrec) ne 0.0, c_bary )
+            
+            if c_bary le 0 then stop, 'reduce_slicer:  STOP : No barycentric correction were identifies from the .log file. '
+            obnm = obnm[ bary_indices]
+            baryCorrec = baryCorrec[bary_indices]
+            stellar_bary_correc=list()
+            
+            for index = 0L, n_elements(obnm)-1 do begin
+              stellar_bary_correc.Add, {file_name:obnm[index] , correction:baryCorrec[index] } ; Meant to be output
+            endfor
+      
+         endif
+   
+   
+    
+    
+  
+  
+  
+  
+    
     print, '**************************************************'
     print, 'Runing Post processing for '+strt(night)+'......'
     print, '**************************************************'
@@ -129,10 +182,10 @@ if keyword_set (post_process) then begin
        ; Produce mean barycentric correction
        array_all_bary = list()
        foreach structure, stellar_bary_correc do begin
-              array_all_bary.ADD, structurecorrection
+              array_all_bary.ADD, structure.correction
        endforeach
        
-       bary_mean= array_all_bary.toarray()
+       bary_mean= float(array_all_bary.toarray() )
        bary_mean=mean(bary_mean)
 
         
@@ -145,12 +198,7 @@ if keyword_set (post_process) then begin
 
       
       
-    for index = 0L, n_elements(stellar_bary_correc)-1 do begin
-          
-
-
-    endfor
-
+ 
         
     foreach structure, stellar_bary_correc do begin ; Iterate of each file to post process 
          
@@ -172,7 +220,7 @@ if keyword_set (post_process) then begin
         ;# Wavelength Shift
         ;##################
         
-        if (do_shift eq 1) and ~keyword_set(no_log) and ~keyword_set(no_bary) then begin
+        if (do_shift eq 1)  then begin
             print, '**************************************************'
             print, 'Shifting wavelengths for night '+strt(night)+'......'
             print, '**************************************************'
@@ -185,12 +233,8 @@ if keyword_set (post_process) then begin
             sxaddpar, hd, 'HISTORY', history_str
             
             
-        endif else  if (do_shift eq 0) then begin
-            print, "REDUCE_SLICER :  The Spectra has NOT been shifted to compensate for the barycentric correction "
-        endif else begin         
-            print, '*REDUCE_SLICER : The keyword post_process was set but the no_bary and no_log were also set. '
-            stop, ' Please remove the keyword no_log and no_bary to continue. '
-        endelse
+        endif else   print, "REDUCE_SLICER :  The Spectra has NOT been shifted to compensate for the barycentric correction "
+   
     
         ;##################
         ;# Cut spectra

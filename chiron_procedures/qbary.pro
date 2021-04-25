@@ -63,7 +63,7 @@ jdt = total(jdUTC)              ; jdUTC can be double(2)
 ;		Calculate barycentric velocity of earth, in 2000 COORDS.
 ;		-------------------------------------------
 
-timeconv,jdUTC,jdTDT,TDB=jdTDB  ; Convert to TDT & TDB timescales
+timeconv,jdUTC,jdTDT,TDB=jdTDB, /silent  ; Convert to TDT & TDB timescales
 jplaneteph,'Earth','SSB',jdTDB,pos,Vorbday,barydir=barydir ; JPL Ephemeris takes TDB
 Vorb = Vorbday/secperday        ; Convert to AU/sec
 Vorbms = Vorb*autokm*1.d3       ; Convert to m/s 
