@@ -160,7 +160,7 @@ end
 function all_order_peaks, flat, redpar, method_str= method_str
   compile_opt idl2
 
-    debug=1
+    debug=0
     
     ;; USE THIS SECTION TO MANUALLY ADD OR REMOVE PEAKS. Refer to the plot by setting debug =1 
     ; DON'T FORGET TO COME BACK HERE AND LEAVE THEM EMPTY ONCE IS
@@ -880,7 +880,7 @@ debug_flag = 0
  endfor
  
  
-  debug = 1
+;  debug = 1
 if debug gt 0 then begin       
     p=plot(order_ys[0, *] )    
     for ord_idx = 1L, n_elements(templates.middle )-1 do begin

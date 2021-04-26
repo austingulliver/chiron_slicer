@@ -211,7 +211,7 @@ ut = gettime(mdpt) ; floating-point hours, >24h in the morning
 ;### Creates log structure which has information about ALL raw files. 
 ;#####################################################
 
-;createLogStructures,redpar,obnm,objnm, /doFromScratch   ; uncomment this for production 
+createLogStructures,redpar,obnm,objnm, /doFromScratch   ; uncomment this for production 
 
 
 
@@ -336,18 +336,18 @@ if keyword_set(reduce) then begin
 
         ; This section was added with the objective to clean CR (get rid of CR) before the actual reduction takes place
         ; This section makes use of the Python bridge. For more information read :https://www.l3harrisgeospatial.com/docs/python.html
-        
-        if keyword_set(remove_cr) then begin 
-          PRINT, ' '
-          print, 'SORTING-HAT:                    >>> Cleaning CR <<< '
-          print, ' '          
-          remove_cr = clean_cr_py(redpar, log ) ; Returns remove_cr in case there were not enough files and 
-                                                ; and LaCosmic has to run.    
-                                                ; If remove_cr = 1 then LaCosmic will remove the CR
-                                                ; If remove_cr = 1 then all files were cleaned or all files were already cleaned.      
-        endif 
-        
-        
+;        
+;        if keyword_set(remove_cr) then begin 
+;          PRINT, ' '
+;          print, 'SORTING-HAT:                    >>> Cleaning CR <<< '
+;          print, ' '          
+;          remove_cr = clean_cr_py(redpar, log ) ; Returns remove_cr in case there were not enough files and 
+;                                                ; and LaCosmic has to run.    
+;                                                ; If remove_cr = 1 then LaCosmic will remove the CR
+;                                                ; If remove_cr = 1 then all files were cleaned or all files were already cleaned.      
+;        endif 
+;        
+;        
        
         
         

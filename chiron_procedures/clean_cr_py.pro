@@ -16,8 +16,8 @@ pro clean_cosmic_rays, log, fileStructuresIdx, refStr
   silent = 1
   np     = Python.Import('numpy')
   astropy  = Python.Import('astropy.stats')
-  limit_mad= 10 ; a pixel value needs to be 'limit_mad' times bigger than the rest of the pixel values to be identified as an outlier
-  
+  limit_mad= 3 ; a pixel value needs to be 'limit_mad' times bigger than the rest of the pixel values to be identified as an outlier
+               ; Previously -10
   
   
   
@@ -59,18 +59,26 @@ pro clean_cosmic_rays, log, fileStructuresIdx, refStr
     img_data = readfits(path,img_header, /silent) 
     img_data =np.array(img_data)
     
-    history_str = 'CR-CLEANED:CR removed on '+todayDate+'. '+strtrim(string(files_num),2)+ ' ' +refStr +' files used to find each pixel MAD.'
-                  ; The statement "CR-CLEANED" serves as reference to identify if the file has been cleaned previouly. Do not remove.
-    
-    sxaddpar, img_header, 'HISTORY', history_str
+  
     
     exclude = ((img_data - master_median) / master_abs_mad) gt limit_mad
+    
+    n_crs = np.count_nonzero(exclude)
+    
     img_data[exclude] = 0
     mask = np.multiply( exclude , master_median)
     img_data = np.add(img_data,  mask) 
     
     writefits,  path, img_data, img_header  
-    if silent eq 0 then print,"CLEAN_CR_PY: File : "+path+  "had "+strtrim(string(np.count_nonzero(exclude)),2)+" Cosmic Rays. It has been cleaned and overwritten successfully."
+    
+    print,"CLEAN_CR_PY: File : "+path+  "had "+strtrim(string(np.count_nonzero(exclude)),2)+" Cosmic Rays. It has been cleaned and overwritten successfully."
+    
+    
+    history_str = 'CR-CLEANED : '+todayDate+' : ' + strt(n_crs)+ ' CRs removed using MAD = ' +STRT(limit_mad) + ' from : '  +strt(files_num) + '' + refStr +'files'
+    ; The statement "CR-CLEANED" serves as reference to identify if the file has been cleaned previouly. Do not remove.
+
+    sxaddpar, img_header, 'HISTORY', history_str
+    
     
 
   endforeach
