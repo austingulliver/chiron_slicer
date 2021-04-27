@@ -33,7 +33,7 @@ no_reduction =no_reduction, $          ; If set it wont reduce the spectra of th
 combine_stellar = combine_stellar, $   ; If reduction step is run this determines if reduction should consider  individual frames or
                                       ; collect them to produce a master stellar 
 post_process = post_process, $        ; Post processing includes shift found from  barycentric correction +  splice the spectra          
-star_name=star_name                   ; Name of the Star. IT MUST BE INSERTED AS ONE WORD E.G 'HR2943'  (as opposed to 'HR 2943'  )
+;star_name=star_name                   ; Name of the Star. IT MUST BE INSERTED AS ONE WORD E.G 'HR2943'  (as opposed to 'HR 2943'  )
 
 constants
 common CONSTANTS,autom,automJPL,autokm,cms,ckm,radtosec,pctoAU,$
@@ -73,7 +73,7 @@ if ~keyword_set(no_log) then begin ; If this is keyword is set then is expected 
       endif else begin
           ; Run bary Correction as well 
           ; It is very important to get the name of the start Correct to run the barycorrection successfully  
-          logmaker_v2, strt(night), /nofoc, prefix='chi', star_name=star_name, stellar_bary_correc=stellar_bary_correc
+          logmaker_v2, strt(night), /nofoc, prefix='chi', stellar_bary_correc=stellar_bary_correc
           ;   stellar_bary_correc(Output): is a list wich elements are strucutres with the form {file_name:obs_file[i] , correction:czi }
       endelse
 
@@ -130,6 +130,7 @@ if keyword_set (post_process) then begin
           redpar.prefix ='chi'+strt(night) +'.'
           
           
+          
         endif else redpar=redpar ;else use the same as in sorting_hat
       
     
@@ -148,7 +149,7 @@ if keyword_set (post_process) then begin
             stellar_bary_correc=list()
             
             for index = 0L, n_elements(obnm)-1 do begin
-              stellar_bary_correc.Add, {file_name:obnm[index] , correction:baryCorrec[index] } ; Meant to be output
+              stellar_bary_correc.Add, {file_name:redpar.prefix+strt(obnm[index])+'.fits' , correction:baryCorrec[index] } ; Meant to be output
             endfor
       
          endif

@@ -235,8 +235,9 @@ pro logmaker_v2, rawdir, $
   noarchive=noarchive, $
   nofoc =nofoc, $
   date=date, $ 
-  star_name =star_name,$  ; Name of the stellar object. This name HAS TO BE compatible with SIMBAD 
   stellar_bary_correc=stellar_bary_correc   ; Used as output to return all the bary correction of given star
+ ; star_name =star_name,$  ; Name of the stellar object. This name HAS TO BE compatible with SIMBAD 
+
 
 
 
@@ -470,9 +471,9 @@ pro logmaker_v2, rawdir, $
   ;form2 is for quartz exposures
   form2='(a10, a1, a13, a4, a14,    a8,  a6,  a-8,  a1,    a15,    a-40)'
    
-  ;                (#obs,   objname,   bin,   slit ,    ra ,  dec     time1     time2     ccdTe,   airmas    jd    bary  )
+  ;                (#obs,   objname,   bin,   slit ,    ra ,  dec     time1     time2     ccdTe,   airmas    jd    bary      intensity )
   ;extended_form = '(a10,     a15,       a8,    a10 ,   a14,   a14,     a28,      a12,     a12,      a10,     a17,    a14,    a10    )' 
-  extended_form = '(a10,     a15,       a8,    a10 ,   a14,   a14,     a28,      a12,     a12,      a10,     a17,    a14   )' ; got rid of max intensity for now
+  extended_form = '(a10,     a15,       a8,    a10 ,   a14,   a14,     a28,      a12,     a12,      a10,     a17,    a14,       a14)' ; got rid of max intensity for now
   
 
 
@@ -531,10 +532,10 @@ pro logmaker_v2, rawdir, $
       printf,1, str_ech, '     ', str_xdisp, '                  Foc FWHM: '+focfwhm
       printf,1,'-------------------------------------------------------------------------------------'
     
-      printf,1,'     Obs           Object     Bin     Slit          RA            DEC             Date-midUT            Exp      CCDTemp     AirMass           JD(bary)        BCV     '
+      printf,1,'     Obs           Object     Bin     Slit          RA            DEC             Date-midUT            Exp      CCDTemp     AirMass           JD(bary)        BCV     Intensity'
       
       
-      print,   '     Obs           Object     Bin     Slit          RA            DEC             Date-midUT             Exp      CCDTemp     AirMass           JD(bary)        BCV     '
+      print,   '     Obs           Object     Bin     Slit          RA            DEC             Date-midUT             Exp      CCDTemp     AirMass           JD(bary)        BCV    Intensity  '
       printf,1,'   number            Name                         (h:m:s)      (d:ms:s)          (y-m-dTh:m:s)           (s)                                                   (m/s)     '
    
 
@@ -589,11 +590,11 @@ pro logmaker_v2, rawdir, $
   ; found independently         [6 ]  coords_dec  : Declination                 
   em_date_time = strarr(nobs);  [7 ] DateMid-Time : em_date_time
   exptm       = fltarr(nobs) ;  [8 ] Exposure Time
-  ccd_temp    =strarr(nobs)  ;  [9 ]  temperature of CCD                    CREATE 
-  air_mass    =strarr(nobs)  ;  [10]  Air mass                              CREATE 
+  ccd_temp    =strarr(nobs)  ;  [9 ]  temperature of CCD                   
+  air_mass    =strarr(nobs)  ;  [10]  Air mass                               
   ;found independently       ;  [11]  JD: Modified Julian Date
   ;found independently       ;  [12] bary_correc  : Barycentric Correction 
-  max_intensity = strarr(nobs); [13] Maximum Intensity                      CREATE 
+  max_intensity = strarr(nobs); [13] sum of squared intens                     
   
   
   ;Used in a different script
@@ -772,7 +773,7 @@ pro logmaker_v2, rawdir, $
               
               ccd_temp[i] =strt(sxpar(header,'CCDTEMP'))
               air_mass[i]= strt(sxpar(header,'AIRMASS'))
-              max_intensity[i] =strt(sxpar(header,'MAXEXP'))  ; how to find max intensity ? for now maximum exposure time in ms (expmeter)
+              max_intensity[i] =strt(sxpar(header,'EMAVGSQ'))  ; how to find max intensity ? for now maximum exposure time in ms (expmeter)
               
               ;comment1[i]=' '
           endif
@@ -837,7 +838,10 @@ pro logmaker_v2, rawdir, $
               and objName ne 'bias' and objName ne 'quartz' and objName ne 'master_stellar' then begin
               
               ;IF start then we actual  JD, bary_correc, coords_ra and coords_dec
-              
+                
+                
+                ; If object name is longer than expected then cut it.
+                if strlen(objName) gt 12 then objName = strmid(objName.trim(),0,12)
                  
                  
                 ; ------------
@@ -868,7 +872,7 @@ pro logmaker_v2, rawdir, $
                 JD    = cgNumber_Formatter(jdUTC, DECIMALS=6) ;String format 
                 
                 
-                if keyword_Set(star_name) then objName = star_name
+;                if keyword_Set(star_name) then objName = star_name
 
                 ; ------------
                 ; Define coords ra and dec 
@@ -929,7 +933,7 @@ pro logmaker_v2, rawdir, $
 
               
                ;printf,1, strcompress(st_numW,/rem)+'    ', ' ', _QUARTZ, i2[i-1], holder, JD, bary_correc , st_exptime[i-1], binarr[i-1], slitarr[i-1],  ' ', propID[i-1], comment1[i-1], format=extended_form
-               printf,1, strcompress(st_numW,/rem), _QUARTZ,     binarr[i-1],   slitarr[i-1],  '00:00:00',  '00:00:00', em_date_time[i-1],  exptm[i-1], ccd_temp[i-1],  air_mass[i-1],'0.0', '0.0' , format=extended_form
+               printf,1, strcompress(st_numW,/rem), _QUARTZ,     binarr[i-1],   slitarr[i-1],  '00:00:00',  '00:00:00', em_date_time[i-1],  exptm[i-1], ccd_temp[i-1],  air_mass[i-1],'0.0', '0.0' , '0.0', format=extended_form
 
 
                                 
@@ -952,7 +956,7 @@ pro logmaker_v2, rawdir, $
                     
                     
                     ;printf,1, strcompress(st_numW,/rem)+'    ', ' ', _QUARTZ, i2[i-1], holder,JD, bary_correc ,  st_exptime[i-1], binarr[i-1], slitarr[i-1],  ' ', propID[i-1], comment1[i-1], format=extended_form
-                    printf,1, strcompress(st_numW,/rem), _QUARTZ,     binarr[i-1],   slitarr[i-1],   '00:00:00',  '00:00:00', em_date_time[i-1],  exptm[i-1], ccd_temp[i-1],  air_mass[i-1],'0.0', '0.0', format=extended_form
+                    printf,1, strcompress(st_numW,/rem), _QUARTZ,     binarr[i-1],   slitarr[i-1],   '00:00:00',  '00:00:00', em_date_time[i-1],  exptm[i-1], ccd_temp[i-1],  air_mass[i-1],'0.0', '0.0', '0.0', format=extended_form
 
 
                                         
@@ -975,7 +979,7 @@ pro logmaker_v2, rawdir, $
                     
               
                     ;printf,1, strcompress(st_numW,/rem)+'    ', ' ', _QUARTZ, i2[i-1], holder, JD, bary_correc , st_exptime[i-1], binarr[i-1], slitarr[i-1],  ' ', propID[i-1], comment1[i-1], format=extended_form
-                    printf,1, strcompress(st_numW,/rem), _QUARTZ,     binarr[i-1],   slitarr[i-1],  '00:00:00',  '00:00:00', em_date_time[i-1],  exptm[i-1], ccd_temp[i-1],  air_mass[i-1],'0.0', '0.0'   , format=extended_form
+                    printf,1, strcompress(st_numW,/rem), _QUARTZ,     binarr[i-1],   slitarr[i-1],  '00:00:00',  '00:00:00', em_date_time[i-1],  exptm[i-1], ccd_temp[i-1],  air_mass[i-1],'0.0', '0.0'   , '0.0', format=extended_form
 
 
                     
@@ -1004,7 +1008,7 @@ pro logmaker_v2, rawdir, $
                 
                ; printf,1, strcompress(st_numW,/rem)+'     ', ' ', _QUARTZ, i2[i], holder, JD, bary_correc,  st_exptime[i], binarr[i], slitarr[i],  ' ', propID[i], comment1[i], format=extended_form
                
-               printf,1, strcompress(st_numW,/rem), _QUARTZ,     binarr[i-1],   slitarr[i-1],  coords_ra,  coords_dec, em_date_time[i],  exptm[i], ccd_temp[i],  air_mass[i],JD, bary_correc   , format=extended_form
+               printf,1, strcompress(st_numW,/rem), _QUARTZ,     binarr[i-1],   slitarr[i-1],  coords_ra,  coords_dec, em_date_time[i],  exptm[i], ccd_temp[i],  air_mass[i],JD, bary_correc, max_intensity[i]  , format=extended_form
 
             
             endif
@@ -1018,9 +1022,9 @@ pro logmaker_v2, rawdir, $
 
         if counter[i] eq 0 and endflag eq 0 then begin
           
-            printf,1, st_num,  objName, binarr[i],   slitarr[i],  coords_ra,  coords_dec, em_date_time[i],  exptm[i], ccd_temp[i],  air_mass[i],JD, bary_correc    , format=extended_form
+            printf,1, st_num,  objName, binarr[i],   slitarr[i],  coords_ra,  coords_dec, em_date_time[i],  exptm[i], ccd_temp[i],  air_mass[i],JD, bary_correc, max_intensity[i]    , format=extended_form
             
-            print, st_num,  objName,     binarr[i],   slitarr[i],  coords_ra,  coords_dec, em_date_time[i],  exptm[i], ccd_temp[i],  air_mass[i],JD, bary_correc   , format=extended_form
+            print, st_num,  objName,     binarr[i],   slitarr[i],  coords_ra,  coords_dec, em_date_time[i],  exptm[i], ccd_temp[i],  air_mass[i],JD, bary_correc ,max_intensity[i]  , format=extended_form
 
 
             

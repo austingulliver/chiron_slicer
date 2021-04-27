@@ -149,7 +149,7 @@ pretag = redpar.prefix_tag
 ;#####################################################
 
 ;readcol,logsheet, skip=9, obnm, objnm, i2, mdpt, juDate,baryCorrec,  exptm, bin, slit, f='(a5, a13, a4, D14,    D20,   a15, a8, a3, a6)'
-readcol,logsheet, skip=9, obnm, objnm, bin, slit, ra, dec,  mdpt,  exptm , ccdTem, airMass,juDate,baryCorrec, f='(a10,     a15,       a8,    a10 ,   a14,   a14,     a28,      a12,     a12,      a10,     a17,    a14   )'
+readcol,logsheet, skip=9, obnm, objnm, bin, slit, ra, dec,  mdpt,  exptm , ccdTem, airMass,juDate,baryCorrec, intensity, f='(a10,     a15,       a8,    a10 ,   a14,   a14,     a28,      a12,     a12,      a10,     a17,    a14 , a17  )'
 
 ;now to expand the quartz items in the logsheet:
 ;print, 'obnm before is: ', obnm       ; These are all file numbers E.g. 1001  1002  .....
