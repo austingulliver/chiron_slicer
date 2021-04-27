@@ -473,7 +473,7 @@ pro logmaker_v2, rawdir, $
    
   ;                (#obs,   objname,   bin,   slit ,    ra ,  dec     time1     time2     ccdTe,   airmas    jd    bary      intensity )
   ;extended_form = '(a10,     a15,       a8,    a10 ,   a14,   a14,     a28,      a12,     a12,      a10,     a17,    a14,    a10    )' 
-  extended_form = '(a10,     a15,       a8,    a10 ,   a14,   a14,     a28,      a12,     a12,      a10,     a17,    a14,       a14)' ; got rid of max intensity for now
+  extended_form = '(a10,     a15,       a8,    a10 ,   a14,   a14,     a28,      a12,     a12,      a10,     a17,    a14,       a17)' ; got rid of max intensity for now
   
 
 
@@ -532,10 +532,10 @@ pro logmaker_v2, rawdir, $
       printf,1, str_ech, '     ', str_xdisp, '                  Foc FWHM: '+focfwhm
       printf,1,'-------------------------------------------------------------------------------------'
     
-      printf,1,'     Obs           Object     Bin     Slit          RA            DEC             Date-midUT            Exp      CCDTemp     AirMass           JD(bary)        BCV     Intensity'
+      printf,1,'     Obs           Object     Bin     Slit          RA            DEC             Date-midUT            Exp      CCDTemp     AirMass           JD(bary)        BCV        Intensity'
       
       
-      print,   '     Obs           Object     Bin     Slit          RA            DEC             Date-midUT             Exp      CCDTemp     AirMass           JD(bary)        BCV    Intensity  '
+      print,   '     Obs           Object     Bin     Slit          RA            DEC             Date-midUT             Exp      CCDTemp     AirMass           JD(bary)        BCV       Intensity  '
       printf,1,'   number            Name                         (h:m:s)      (d:ms:s)          (y-m-dTh:m:s)           (s)                                                   (m/s)     '
    
 
