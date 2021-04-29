@@ -35,8 +35,9 @@ combine_stellar = combine_stellar, $   ; If reduction step is run this determine
 post_process = post_process, $        ; Post processing includes shift found from  barycentric correction +  splice the spectra          
 ;star_name=star_name                   ; Name of the Star. IT MUST BE INSERTED AS ONE WORD E.G 'HR2943'  (as opposed to 'HR 2943'  )
 
-constants
-common CONSTANTS,autom,automJPL,autokm,cms,ckm,radtosec,pctoAU,$
+constants ; running the procedure
+
+COMMON CONSTANTS,autom,automJPL,autokm,cms,ckm,radtosec,pctoAU,$
   yeartosec,yrtos,ltyr,lightyear,pctom,secperday,daytosec,$
   century,precise,ddtor,msun,msung,mearth,mmoon,$
   mmoong,rearth,rearthkm,rsun,rsunkm,Gcgs,G,angstrom
@@ -240,7 +241,7 @@ if keyword_set (post_process) then begin
         ;##################
         ;# Cut spectra
         ;##################
-        
+       
         if (cut_spectra eq 1) then begin 
           print, '**************************************************'
           print, ' Cutting the spectra for night '+strt(night)+'......'
@@ -248,7 +249,7 @@ if keyword_set (post_process) then begin
           
           ; pass array along with type of cut 
           splice_type= 'pixel_cut_of_3200px'
-          new_cube= splice_spectrum( data_cube, splice_type)
+          new_cube= splice_spectrum( data_cube, splice_type, /maskArtifact)
           
           history_str = ' The orders were spliced using '+ splice_type
           sxaddpar, hd, 'HISTORY', history_str
