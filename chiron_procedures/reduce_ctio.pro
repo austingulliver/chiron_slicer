@@ -40,9 +40,11 @@ endif
 outdir= redpar.rootdir + redpar.iodspecdir + date + '/'
 if ~file_test(outdir) then spawn, 'mkdir '+outdir
 
+
+
 ; Try to read from the disk previously saved flats
 if ~keyword_set (flatset) then begin
-     name = redpar.rootdir+redpar.flatdir+prefix+mode+'.flat'
+     name = redpar.rootdir+redpar.flatdir+prefix+mode+'.sum' 
      tmp = file_search(name, count=flatcount)
      if flatcount eq 0 then begin
        print, 'REDUCE_CTIO: FLATS are not given at input, not found on disk, returning.'
@@ -215,7 +217,7 @@ if redpar.slicerflat eq 0 or mode ne 'slicer' then begin
                
                print, ''
   	           print ,"-----------------------------------------------------------"
-  	           print, '>> WARNING <<  No NEW order traces made. Order traces restored from night: '+strt(redpar.date)
+  	           print, '>> WARNING <<  NO NEW order traces made. Order traces restored from night: '+strt(nights_nums[night_idx])
   	           print,"-----------------------------------------------------------"
   	           print, ''
   	           
@@ -236,7 +238,7 @@ if redpar.slicerflat eq 0 or mode ne 'slicer' then begin
           	  
           	  order_trace_file = redpar.rootdir+redpar.orderdir+prefix+mode+'.orc'
           	  wdsk, orc, order_trace_file, /new
-          	  print, 'REDUCE_CTIO: Order Coefficients are stored from : '
+          	  print, 'REDUCE_CTIO: The new Order Coefficients are stored in : '
           	  print, order_trace_file
           	  ;         if redpar.debug then stop, 'Debug stop after order location, .c to continue'
   	endelse

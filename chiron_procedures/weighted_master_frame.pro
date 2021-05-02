@@ -168,7 +168,7 @@ function weighted_master_frame, data_cube, typeStr
       master_frame= dblarr(n_cols, n_rows)   
       foreach column, columns do begin
         foreach row, rows do begin
-          values = reform(data_cube[column, row, *]) ; value to evaluate on
+          values = reform(data_cube[column, row, *]) ; values to evaluate on
 
 
 
@@ -176,18 +176,43 @@ function weighted_master_frame, data_cube, typeStr
           std_val = stddev(values)
           params= [ 1, mean_val, std_val] ;Paramters for the gaussian 
           
-          weights = gaussian(values, params)   ; y: probability evaluated at the values passed
+          weights = gaussian(values, params, /double)   ; returns array of Gaussian evaluated at  values passed : the weights 
+                                               ;  assigned to each pixel 
+          ;Weights return values from [0,1] are the probabbilities. The closest to the mean the higher the value 
+          ; Need to normalize each weights such that the sum of all weights equals 1
+          
+         
+          dummy = where(weights eq 0, num_of_zeros)
+          
+          if num_of_zeros eq n_elements(weights) then begin
+            ; This is not a normal distribution. Thus, all the weights equal to zero. 
+            ; we assign the median value but since all values are equal this makes no difference.
+            out_mean =median(values)
+            
+            
+            
+          endif else begin
+            ; proceed as normal 
+            
+            weighted_values= (values *weights ) /total(weights)
+            ; each weight gets normalized divided by the total sum of weights and then we multiple  each normalized
+            ; weight by its value to obtain the sum of the values to equal the original value
+
+
+            out_mean =total(weighted_values )
+            
+          endelse
           
           
-          values= (values *weights ) /total(weights)
-          
-          out_mean= mean(values) *100.0  
+          ;Last check JUST to be %100 sure            
+           if out_mean eq 0.0 or ~finite(out_mean) then out_mean =median(values)
 
 ;          print, 'modified mean: ' +strt(out_mean) + ' | mean: '+strt(mean_val)
 ;          print, ' '
           master_frame[column, row] =out_mean
         endforeach
       endforeach
+      
      
       
        

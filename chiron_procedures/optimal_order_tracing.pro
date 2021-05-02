@@ -60,7 +60,7 @@ end
 function cross_correlate, i_swath,i_template , column_i,  scipy_signal, prev_local_row=prev_local_row, idx_order=idx_order, debug=debug 
       compile_opt idl2
       
-    
+      debug=0
       i_swath = reform(i_swath)
       min_val_swath =  min(i_swath)  ; Bring everything down to 0 level momentarely       
       i_swath = double(i_swath - min_val_swath)        
@@ -189,8 +189,8 @@ function all_order_peaks, flat, redpar, method_str= method_str
               
           idx_peaks = find_peaks(middle, noise_level ,read_out_noise=redpar.ron, above_noise=above_noise_level) ; The value of 10.0 was experimentally found
           
-    
-          print, 'Number of peaks detected : '+string(n_elements(idx_peaks))      
+        
+          if debug eq 1 then print, 'Number of peaks detected : '+string(n_elements(idx_peaks))      
           peak_intensities = middle[idx_peaks]  
           
     
@@ -763,7 +763,7 @@ function optimal_order_tracing, img, redpar
   ;------------------------------
   ; >> Constants
   ;------------------------------
-  debug    =  redpar.debug
+  debug    = 0; redpar.debug
   flat     = img
   img_size = size(flat)      ;size of image passed: e.g. Master Flat  4112 x 1366 for the slicer mode
   n_columns   = img_size[1]     ;number of rows in image
@@ -786,7 +786,7 @@ function optimal_order_tracing, img, redpar
   templates = define_templates(flat , redpar) ; n orders structure  with middle, up and down for every order (central column)
   
 
-  if debug gt 0 then print, " ** Templates recognizition  Sucessfull *** "
+  if debug gt 0 then stop, " ** Templates recognizition  Sucessfull *** "
   
   ;------------------------------
   ; >> Cross-correlate every order 
