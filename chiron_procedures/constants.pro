@@ -3,10 +3,12 @@ pro constants
 ; To use this program, first call it w/in your program w/o arguements
 ; Then put a line in your program identical to the one below:
 
-common CONSTANTS,autom,automJPL,autokm,cms,ckm,radtosec,pctoAU,$
+common CONSTANTS,autom,automJPL,autokm,cms,ckm,radtosec,pctoAU,
 	yeartosec,yrtos,ltyr,lightyear,pctom,secperday,daytosec,$
 	century,precise,ddtor,msun,msung,mearth,mmoon,$
-	mmoong,rearth,rearthkm,rsun,rsunkm,Gcgs,G,angstrom
+	mmoong,rearth,rearthkm,rsun,rsunkm,Gcgs,G 
+	
+	;angstrom
 
 ; You should probably copy the above line EXACTLY, even if you don't use
 ; all those constants since they will get confused otherwise.
@@ -46,5 +48,6 @@ rsun=6.95987d8			;m
 rsunkm=rsun/1000.d0		;km
 Gcgs=6.673231d-8		;dyn cm^2/gm^2
 G=6.673231d-11			;N  m^2/kg^2
+
 
 end

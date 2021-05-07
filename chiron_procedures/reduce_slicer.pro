@@ -35,16 +35,13 @@ combine_stellar = combine_stellar, $   ; If reduction step is run this determine
 post_process = post_process, $        ; Post processing includes shift found from  barycentric correction +  splice the spectra          
 ;star_name=star_name                   ; Name of the Star. IT MUST BE INSERTED AS ONE WORD E.G 'HR2943'  (as opposed to 'HR 2943'  )
 
-constants ; running the procedure
 
-COMMON CONSTANTS,autom,automJPL,autokm,cms,ckm,radtosec,pctoAU,$
-  yeartosec,yrtos,ltyr,lightyear,pctom,secperday,daytosec,$
-  century,precise,ddtor,msun,msung,mearth,mmoon,$
-  mmoong,rearth,rearthkm,rsun,rsunkm,Gcgs,G,angstrom
+constants ; running the procedure
+COMMON CONSTANTS,autom,automJPL,autokm,cms
 
 ; Constants/Variables + paths
 
-
+cms=cms
 spawn, 'cd', pwddir  ;Updated to a Windows command
 case pwddir of
   'C:\Users\mrstu': ctparfn = 'C:\Users\mrstu\idlworkspace_yalecalibration\chiron_procedures\ctio.par'

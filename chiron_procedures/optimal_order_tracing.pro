@@ -853,7 +853,19 @@ debug_flag = 0
           local_row= cross_correlate( i_swath,i_template , forward_x, scipy_signal, prev_local_row=prev_local_row, idx_order=ord_idx , debug =debug )
           sz_swath= size(i_swath)
           
-          order_ys[ord_idx,forward_x] = (order_ys[ord_idx,forward_x-1] - round(sz_swath[2]/2.0 ) ) + local_row            
+          order_ys[ord_idx,forward_x] = (order_ys[ord_idx,forward_x-1] - round(sz_swath[2]/2.0 ) ) + local_row     
+          
+          ;Seems to be giving issues for no apparent reason. We force the last values assuming that the 
+          ; the problem does not happend often and also aware that this might screw the template depending how far along the
+          ;the order is present.
+          
+          low = order_ys[ord_idx,forward_x] -slicer_width
+          
+          high = 
+          
+          
+          
+                 
           i_swath = flat [ *,  order_ys[ord_idx,forward_x] -slicer_width : order_ys[ord_idx,forward_x] +slicer_width-1  ]          
            prev_local_row = local_row  -(order_ys[ord_idx,forward_x] - order_ys[ord_idx,forward_x-1] )
 
