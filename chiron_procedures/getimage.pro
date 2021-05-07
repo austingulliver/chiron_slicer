@@ -13,7 +13,7 @@
 ;
 ;
 ;NOTES :
-;     Image gets rotated at the  end expect for e.g. (for slicer) 4112 x1432
+;     Image gets rotated at the  end. Expect :e.g. ( slicer) 4112 x 1366
 ;CREATION:
 ; AT Oct 6, 2011
 ;
@@ -28,13 +28,17 @@ function getimage, file, redpar, header=header, geom=geom
 ;   name = redpar.rootdir + redpar.rawdir + file ; omit rootdir and datdir
    name =  file ; for full name  
 
-   tmp = findfile(name, count=c)
-   if (c eq 0) then begin ; file not found
+   
+   if  ~file_test(name)  then begin ; file not found
      print, 'File '+name+' is not found, return ZERO'
      return, 0
     endif
-
-    im = float(readfits(name,header))
+    
+    if  ~keyword_set(header) then begin
+      header = headfits(name)
+    endif else header= header
+    
+    im = float(readfits(name))
     ; returns CCD geometry in a structure 
     if ~keyword_set(geom) then geom = chip_geometry(name, hdr=header, redpar=redpar)
 	  namps = n_elements(strsplit(sxpar(header, 'amplist'), ' '))

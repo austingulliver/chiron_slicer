@@ -37,7 +37,10 @@ post_process = post_process, $        ; Post processing includes shift found fro
 
 
 constants ; running the procedure
-COMMON CONSTANTS,autom,automJPL,autokm,cms
+COMMON all_constants,autom,automJPL,autokm,cms,ckm,radtosec,pctoAU,$
+  yeartosec,yrtos,ltyr,lightyear,pctom,secperday,daytosec,$
+  century,precise,ddtor,msun,msung,mearth,mmoon,$
+  mmoong,rearth,rearthkm,rsun,rsunkm,Gcgs,G,angstrom
 
 ; Constants/Variables + paths
 
@@ -95,13 +98,8 @@ if ~keyword_set(no_reduction) then begin
       print, '**************************************************'
     
       sorting_hat, strt(night), mode='slicer', /reduce, /getthid, /iod2fits, combine_stellar=combine_stellar ,$
-                   thar_soln='wvc_slicer_171218.sav',redpar =redpar, /remove_cr   ; ,/remove_cr thar_soln was added
-      ;sorting_hat, night, mode=modes[i], /reduce, /getthid, /iod2fits ,thar_soln='wvc_slicer_171218.sav'
-    
+                   thar_soln='wvc_slicer_171218.sav',redpar =redpar  
 
-      ; 1) make it return the redpar. !!!! TO FIX
-      ; add redpar for object name   as objectname
- 
   
 endif
 

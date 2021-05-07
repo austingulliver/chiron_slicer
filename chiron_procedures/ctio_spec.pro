@@ -43,14 +43,82 @@ if n_params() lt 5 then begin
 endif
 
 print,''
+
 print,'CTIO_SPEC: Entering routine. Extracting file ....'
 ;cancel previous erros 
 CATCH, /CANCEL
 
-print,'CTIO_SPEC: Raw File      >>',spfname
+print,'CTIO_SPEC: Raw File  >> ',spfname.substring(strpos( spfname, 'chi', /REVERSE_SEARCH) )
 
-; Read the image file
-im = getimage(spfname, redpar, header=head)  
+
+
+;*******************************************************
+;   Flat Fielding  BEFORE extraction
+;*******************************************************
+;
+;If variable remove_cr:2 in the ctio.par file then we remove CR in this section using La Cosmic 
+;
+
+if cosmics  eq 2    then begin
+    
+  print, '         Removing CR s.  Please Wait ..........    '
+  
+  
+  ;Time info to place in header once cr's removed
+  todayDate = SYSTIME()
+  todayDate = strmid(todayDate,20,4) + strmid(todayDate,3,7)
+  
+  ;Read only the header : 
+  frame_hdr = headfits(spfname)
+  
+  ; To run La Cosmic I need
+  ; 1) The gain 
+  gain= float(sxpar(frame_hdr,'gain11'))
+  ; 2) Th noise 
+  rn = float(sxpar(frame_hdr,'ron11'))  
+  
+  input_frame= spfname
+  mask_frame = input_frame.insert("-mask", spfname.IndexOf('.fits') )
+  input_frame= spfname
+  cleaned_frame = input_frame.insert("-out", spfname.IndexOf('.fits') )
+  
+  
+  la_cosmic,spfname,gain=gain,readn=rn,sigclip='21.5', /verbose ; ,sigfrac=0.75          ; out: file with image to be cleaned
+                                                            ; gain: Gain of the CCD (< 0 to estimate) (default=-1.0)
+                                                            ; readn:  Readnoise of CCD (default=0.0)
+                                                            ; Th result of lacosmic are 2 files created 1 contains the cleaned image and the other contains the mask
+                                                            ; file out (pchi181103.xxxx.fits) has not being alteared
+                                                            ; Two files are created  as output of calling this procedur
+   
+   ; Once image is read in memory
+   ; delete the frames created by la_comics
+   mask_cr= readfits(mask_frame)
+   dummy= where(mask_cr EQ 1, n_crs )
+   print, '         -> Frame : '+ spfname.substring(strpos( spfname, 'chi', /REVERSE_SEARCH) )+  ' has ' + strt(n_crs) + ' cosmic rays'
+   
+   file_delete, mask_frame
+   
+   head=frame_hdr ; this works as input and output
+   ; I need to pass the header reference of the original file as input. 
+   im = getimage(cleaned_frame, redpar, header=head)
+   ; It will output the header 'head'
+     
+
+   history_str = 'CR-CLEANED : '+todayDate+' : ' + strt(n_crs)+ ' CRs removed using LaCosmic.
+   ; The statement "CR-CLEANED" serves as reference to identify if the file has been cleaned previouly. Do not remove.
+
+   sxaddpar, head, 'HISTORY', history_str
+   
+   file_delete, cleaned_frame
+   
+   
+   
+   
+   
+
+  
+  
+endif else im = getimage(spfname, redpar, header=head)  ; Retrieve the image as normal.  
 
 
 

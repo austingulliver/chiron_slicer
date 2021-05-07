@@ -1,6 +1,6 @@
 ;+
 ; :Description:
-;
+;  Used to get the boxcar extraction of the frame (im) passed as an argument.
 ;-
 
 ;+

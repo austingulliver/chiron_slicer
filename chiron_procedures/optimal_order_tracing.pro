@@ -766,8 +766,8 @@ function optimal_order_tracing, img, redpar
   debug    = 0; redpar.debug
   flat     = img
   img_size = size(flat)      ;size of image passed: e.g. Master Flat  4112 x 1366 for the slicer mode
-  n_columns   = img_size[1]     ;number of rows in image
-  n_rows      = img_size[2]     ;number of cols in image
+  n_columns   = img_size[1]     ;number of columns in image
+  n_rows      = img_size[2]     ;number of rows in image
  
   nord     = redpar.nords    ;total number of orders
   iord     = findgen(nord)   ;Generated Orders in range [0,nord]  
@@ -859,14 +859,14 @@ debug_flag = 0
           ; the problem does not happend often and also aware that this might screw the template depending how far along the
           ;the order is present.
           
-          low = order_ys[ord_idx,forward_x] -slicer_width
+          low = order_ys[ord_idx,forward_x] -slicer_width > 0
           
-          high = 
+          high = order_ys[ord_idx,forward_x] +slicer_width-1   < n_rows
           
           
           
                  
-          i_swath = flat [ *,  order_ys[ord_idx,forward_x] -slicer_width : order_ys[ord_idx,forward_x] +slicer_width-1  ]          
+          i_swath = flat [ *, low : high ]          
            prev_local_row = local_row  -(order_ys[ord_idx,forward_x] - order_ys[ord_idx,forward_x-1] )
 
         ENDFOR

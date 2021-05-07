@@ -1,10 +1,8 @@
 {redpar,                                               ; named structure, passed by reference
 rootdir: 'C:\Users\mrstu\idlworkspace_yalecalibration\chiron\',             ; root directory. All other paths are relative to rootdir
-debugging:  'debugging\',                              ; directory use to save debugging plots
 logdir:  'tous\mir7\logsheets\',                       ; log sheets 
 logstdir:  'tous\mir7\logstructs\',                    ; log sheets 
 iodspecdir: 'tous\mir7\iodspec\',                      ; reduced spectra in RDSK/WRDSK format
-plotsdir: '\nfs\morgan\chiron\results\chi\red\plots\', ; directory to put encapsulated postscript and PNG plots  THIS HAS TO BE MODIFIED FOR US
 fitsdir:    'tous\mir7\fitspec\',                      ; reduced spectra in FITS format
 thiddir:    'tous\mir7\thid\wavfile\',                 ; wav saved in in *.dat files, not used
 thidfiledir: 'tous\mir7\thid\thidfile\',               ; thid saved in *.thid files
@@ -70,6 +68,13 @@ debug: 0,                                              ; 1 in debug mode, with p
                                                        ;3. Stops in debugging locations. Plots to screen. Prints a lot. 
                                                        ;4. Everything. Run this when CHIRON has been modified to determine new order locations. 
                                                        ;Once finished, copy the new best fit order locations to the "pkcoefs" tag above.
+remove_crs:2,                                          ; Cosmic Rays only get remove from  flats and stellar exposures.
+                                                       ; 0 : Do not remove Cosmic Rays 
+                                                       ; 1 : Remove CR's by sigma Clipping. To change the value used for sigma refer to clean_cr_py.
+                                                       ;     Notice, there must be at least 3 frames (flats, and  stellar ).
+                                                       ;     This does not identify'bad' pixels.
+                                                       ; 2 : Remove CR's using La Cosmic
+                                                       ;     Notice, removing CR's using LaCosmic applies to each individual frame. Thus, there is no constraint in the number of frames.
 pixel_not_extracted: -2,                               ; Number of pixels no extracted from the default xwids for each mode. This must be an integer, even number 
                                                        ; E.g. Slice has 12 pixels. If pixel_no_extracted:4 then pixels extracted are 8 (4 up-4 down)
                                                        ; If int is negative then it will extract more pixel E.g. if -2 then for slicer it will extract 7 up and 7 down 

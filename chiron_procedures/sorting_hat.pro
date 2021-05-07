@@ -51,8 +51,7 @@
 pro sorting_hat, night, run=run, iod2fits=iod2fits, reduce=reduce, $
 doppler=doppler, doptag=doptag, end_check=end_check, skip=skip, $
 thar_soln=thar_soln, getthid=getthid, mode = mode, obsnm=obsnm, $
-bin11 = bin11, flatsonly=flatsonly, tharonly=tharonly, combine_stellar=combine_stellar, $
-remove_cr=remove_cr, redpar =redpar 	
+bin11 = bin11, flatsonly=flatsonly, tharonly=tharonly, combine_stellar=combine_stellar, redpar =redpar 	
 
 angstrom = '!6!sA!r!u!9 %!6!n'
 
@@ -720,8 +719,22 @@ if keyword_set(iod2fits) then begin
       endfor
       hd = [hd, string('THARFNAM', format='(A-8)')+'= '+"'"+string(thidfile_name+"'", format='(A-'+strt(remlen)+')')]
       hd = [hd,endhd]
+      
+      
+      ; Due to space constraint delete directory keywords from headers :
+      sxdelpar, hd, 'LOGSTDIR'
+      sxdelpar, hd, 'LOGDIR'
+      sxdelpar, hd, 'IODSPECD'
+      sxdelpar, hd, 'FITSDIR'
+      sxdelpar, hd, 'THIDFILE'
+      sxdelpar, hd, 'FLATDIR'
+      sxdelpar, hd, 'ORDERDIR'
+      sxdelpar, hd, 'BIASDIR'
+      sxdelpar, hd, 'CUSTOMTH'
+      sxdelpar, hd, 'THIDDIR'
+      
 
-      ;now change the NAXIS and NAXISn values to reflect the reduced data:
+      ;now change the NAXIS and NAXISn values to reflect the reduced data + ADD thid related keywords:
       specsz = size(spec)
       ;fxaddpar, hd, 'OBJECT', 'master_stellar', 'This file was produced by combining '+ string (n_found)+ ' stellar images. '   ; This statment is replaced within reduce_ctio.pro
       fxaddpar, hd, 'NAXIS', specsz[0], 'Number of data axes'
@@ -792,7 +805,20 @@ if keyword_set(iod2fits) then begin
             				hd = [hd, string('THARFNAM', format='(A-8)')+'= '+"'"+string(thidfile_name+"'", format='(A-'+strt(remlen)+')')]
             				hd = [hd,endhd]
             				
-            				;now change the NAXIS and NAXISn values to reflect the reduced data:
+
+            				; Due to space constraint delete directory keywords from headers :
+            				sxdelpar, hd, 'LOGSTDIR'
+            				sxdelpar, hd, 'LOGDIR'
+            				sxdelpar, hd, 'IODSPECD'
+            				sxdelpar, hd, 'FITSDIR'
+            				sxdelpar, hd, 'THIDFILE'
+            				sxdelpar, hd, 'FLATDIR'
+            				sxdelpar, hd, 'ORDERDIR'
+            				sxdelpar, hd, 'BIASDIR'
+            				sxdelpar, hd, 'CUSTOMTH'
+            				sxdelpar, hd, 'THIDDIR'
+            				
+            				;now change the NAXIS and NAXISn values to reflect the reduced data + ADD thid related keywords:
             				specsz = size(spec)
             				fxaddpar, hd, 'NAXIS', specsz[0], 'Number of data axes'
             				fxaddpar, hd, 'NAXIS1', specsz[1], 'Axis 1 length: 0=wavelength, 1=spectrum'

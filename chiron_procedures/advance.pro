@@ -30,7 +30,7 @@ function advance,radec,epoch0,jdnow, pm,p=p,nov=nov,silent=silent,verbose=verbos
   ;
   ;       DEFINE CONSTANTS
   constants
-  common CONSTANTS,autom,automJPL,autokm,cms,ckm,radtosec,pctoAU,$
+  common all_constants,autom,automJPL,autokm,cms,ckm,radtosec,pctoAU,$
     yeartosec,yrtos,ltyr,lightyear,pctom,secperday,daytosec,$
     century,precise,ddtor,msun,msung,mearth,mmoon,$
     mmoong,rearth,rearthkm,rsun,rsunkm,Gcgs,G,angstrom
