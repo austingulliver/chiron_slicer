@@ -49,7 +49,7 @@
 ;-
 ;
 pro sorting_hat, night, run=run, iod2fits=iod2fits, reduce=reduce, $
-doppler=doppler, doptag=doptag, end_check=end_check, skip=skip, $
+doptag=doptag, end_check=end_check, skip=skip, $
 thar_soln=thar_soln, getthid=getthid, mode = mode, obsnm=obsnm, $
 bin11 = bin11, flatsonly=flatsonly, tharonly=tharonly, combine_stellar=combine_stellar, redpar =redpar 	
 
@@ -210,7 +210,7 @@ ut = gettime(mdpt) ; floating-point hours, >24h in the morning
 ;### Creates log structure which has information about ALL raw files. 
 ;#####################################################
 
-createLogStructures,redpar,obnm,objnm, /doFromScratch   ; uncomment this for production 
+;createLogStructures,redpar,obnm,objnm, /doFromScratch   ; uncomment this for production 
 
 
 
@@ -532,7 +532,8 @@ print, ' '
     	        
         		  isfn = iodspec_path+pretag+run+thar[i]       		   		  
         		  rdsk, t, isfn,1 ;reading ThAr file       		 
-        		  print, 'SORTING_HAT: ThAr obs ', thar[i], ' ', strt((1d2*i)/(num_thar-1),f='(F8.2)'),'% complete.'       		  
+        		  print, ''
+        		  print, 'SORTING_HAT: ----------ThAr obs ', thar[i], ' ', strt((1d2*i)/(num_thar-1),f='(F8.2)'),'% complete.----------'       		  
         		  rawfn = redpar.rootdir+redpar.rawdir+redpar.imdir+run+thar[i]+'.fits'       	        		  
         		  header = headfits(rawfn)
         		  
@@ -708,7 +709,7 @@ if keyword_set(iod2fits) then begin
       endhd = hd[-1]
       hd = hd[0:n_elements(hd)-2]
 
-      for ii=0, nt-1 do begin
+      for ii=0, nt-1 do begin; Due to space constraint delete directory keywords from headers
         remlen = 78 - strlen(tnms[ii]+' = ')
         vals = redpar.(ii)
         val = strt(vals[0])
@@ -721,7 +722,7 @@ if keyword_set(iod2fits) then begin
       hd = [hd,endhd]
       
       
-      ; Due to space constraint delete directory keywords from headers :
+;      ; Due to space constraint delete directory keywords from headers :
       sxdelpar, hd, 'LOGSTDIR'
       sxdelpar, hd, 'LOGDIR'
       sxdelpar, hd, 'IODSPECD'
@@ -732,11 +733,12 @@ if keyword_set(iod2fits) then begin
       sxdelpar, hd, 'BIASDIR'
       sxdelpar, hd, 'CUSTOMTH'
       sxdelpar, hd, 'THIDDIR'
-      
+;      
 
       ;now change the NAXIS and NAXISn values to reflect the reduced data + ADD thid related keywords:
       specsz = size(spec)
       ;fxaddpar, hd, 'OBJECT', 'master_stellar', 'This file was produced by combining '+ string (n_found)+ ' stellar images. '   ; This statment is replaced within reduce_ctio.pro
+      fxaddpar, hd, 'BZERO', 0, 'offset data range to that of unsigned short'; added so data does not get shifted when read       
       fxaddpar, hd, 'NAXIS', specsz[0], 'Number of data axes'
       fxaddpar, hd, 'NAXIS1', specsz[1], 'Axis 1 length: 0=wavelength, 1=spectrum'
       fxaddpar, hd, 'NAXIS2', specsz[2], 'Axis 2 length: extracted pixels along each echelle order'
@@ -793,7 +795,7 @@ if keyword_set(iod2fits) then begin
             				endhd = hd[-1]
             				hd = hd[0:n_elements(hd)-2]
             				
-            				for ii=0, nt-1 do begin            				  
+            				for ii=0, nt-1 do begin  ; Due to space constraint, delete directory keywords from headers :       				  
               				  remlen = 78 - strlen(tnms[ii]+' = ')
               				  vals = redpar.(ii)
               				  val = strt(vals[0])
@@ -806,7 +808,7 @@ if keyword_set(iod2fits) then begin
             				hd = [hd,endhd]
             				
 
-            				; Due to space constraint delete directory keywords from headers :
+            				; Due to space constraint, delete directory keywords from headers :
             				sxdelpar, hd, 'LOGSTDIR'
             				sxdelpar, hd, 'LOGDIR'
             				sxdelpar, hd, 'IODSPECD'
@@ -820,6 +822,7 @@ if keyword_set(iod2fits) then begin
             				
             				;now change the NAXIS and NAXISn values to reflect the reduced data + ADD thid related keywords:
             				specsz = size(spec)
+            				fxaddpar, hd, 'BZERO', 0, 'offset data range to that of unsigned short'; added so data does not get shifted when read 
             				fxaddpar, hd, 'NAXIS', specsz[0], 'Number of data axes'
             				fxaddpar, hd, 'NAXIS1', specsz[1], 'Axis 1 length: 0=wavelength, 1=spectrum'
             				fxaddpar, hd, 'NAXIS2', specsz[2], 'Axis 2 length: extracted pixels along each echelle order'
@@ -878,17 +881,6 @@ endif ;iod2fits
 
 
 
-;##############################################
-;################# Doppler ####################
-;##############################################
-if keyword_set(doppler) then begin
-		x1=where(bin eq redpar.binnings[modeidx] and slit eq redpar.modes[modeidx] and 	objnm ne 'quartz' and objnm ne 'junk',n_found)
-		if n_found gt 0 then print,'Number of '+mode[modeidx]+' observations: ',n_found
-    ; Oct 15 2011: plug the Doppler:
-    print, 'SORTING_HAT : Doppler is not yet operational in sorting_hat. Returning.' ;Inherited from Yale
-    return
-endif ; doppler
-	
 	
 	
 	
