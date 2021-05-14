@@ -55,6 +55,13 @@ pro clean_cosmic_rays, log, fileStructuresIdx, refStr
   todayDate = SYSTIME()
   todayDate = strmid(todayDate,20,4) + strmid(todayDate,3,7) 
   
+  
+  
+  
+;  meanclip, data_cube, out_mean, out_sigma, CLIPSIG=3, MAXITER=5, /double  
+;  master_frame[column, row] =out_mean
+  
+  
   foreach path, paths do begin
     img_data = readfits(path,img_header, /silent) 
     img_data =np.array(img_data)
@@ -130,7 +137,7 @@ FUNCTION clean_cr_py, redpar, log
   ;####################################
   
   flatsLogIdx   = where( (STRLOWCASE(strt(log.object)) eq 'quartz' ) and (strt(log.ccdsum) eq binning) and  (STRLOWCASE(strt(log.decker)) eq 'slicer')  and  (log.crcleaned eq 0 )  , ctF)
-  biasLogIdx    = where( (STRLOWCASE(strt(log.object)) eq 'bias'   ) and (strt(log.ccdsum) eq binning) and  (STRLOWCASE(strt(log.decker)) eq 'slicer')  and  (log.crcleaned eq 0 )  , ctB)
+;  biasLogIdx    = where( (STRLOWCASE(strt(log.object)) eq 'bias'   ) and (strt(log.ccdsum) eq binning) and  (STRLOWCASE(strt(log.decker)) eq 'slicer')  and  (log.crcleaned eq 0 )  , ctB)
   objectsLogIdx = where( (STRLOWCASE(strt(log.imgtype)) eq 'object') and (strt(log.ccdsum) eq binning) and  (STRLOWCASE(strt(log.decker)) eq 'slicer')  and  (log.crcleaned eq 0 )  ,  ctO )
 
 
@@ -140,15 +147,15 @@ FUNCTION clean_cr_py, redpar, log
   ;#1) Find cosmics Rays + Overwrite Files
   ;####################################
   
-  totalCount = ctF + ctB  + ctO
+  totalCount = ctF  + ctO
   if totalCount  eq 0 then RETURN, 0                        ; There is nothing to clea. Also,do not remove CR later on with LaCosmic.  
-  if (ctF lt 3)  or  (ctB lt 3) or  (ctO lt 3) then RETURN, 1 ; This algorithim won't work. We take care of cosmic rays using LaCosmic
+  if (ctF lt 3)  or  (ctO lt 3) then RETURN, 1 ; This algorithim won't work. We take care of cosmic rays using LaCosmic
    
  
   PRINT, 'CLEAN_CR_PY: Cleaning Cosmic Rays from ' +strtrim(string(ctF),2 )+ ' FLAT files. Please wait....'
   clean_cosmic_rays, log, flatsLogIdx,   'flats' 
-  PRINT, 'CLEAN_CR_PY: Cleaning Cosmic Rays from ' +strtrim(string(ctF),2 )+ ' BIAS files. Please wait....'
-  clean_cosmic_rays, log, biasLogIdx,    'bias'
+;  PRINT, 'CLEAN_CR_PY: Cleaning Cosmic Rays from ' +strtrim(string(ctF),2 )+ ' BIAS files. Please wait....'
+;  clean_cosmic_rays, log, biasLogIdx,    'bias'
   PRINT, 'CLEAN_CR_PY: Cleaning Cosmic Rays from ' +strtrim(string(ctF),2 )+ ' STELLAR files. Please wait....'
   clean_cosmic_rays, log, objectsLogIdx, 'stellar'
     

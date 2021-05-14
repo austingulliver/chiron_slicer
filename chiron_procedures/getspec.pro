@@ -48,7 +48,7 @@
 
 
 
-pro getspec,im,orc,xwd,spec,sky = sky, cosmics = cosmics, diff = replace, $
+pro getspec,im,orc,xwd,spec,sky = sky, diff = replace, $
   optspec=optspec, gain=gain, ron=ron, redpar = redpar
 
 if n_params() lt 4 then begin
@@ -197,7 +197,8 @@ endif else begin
     
     
       if n_elements(sky) eq 0 then sky=im*0.
-      if keyword_set(cosmics) then remove_cosmics, im, orc, xwd, sky, spec = optspec, cosmics = replace, mask = mask, fwhm = seeing, gain=gain, ron=ron
+      
+      if redpar.remove_crs eq 3 then  remove_cosmics, im, orc, xwd, sky, spec = optspec, cosmics = replace, mask = mask, fwhm = seeing, gain=gain, ron=ron
     
       imsz = size(im)
       maskim = dblarr(imsz[1], imsz[2])
