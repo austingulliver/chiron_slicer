@@ -210,7 +210,7 @@ ut = gettime(mdpt) ; floating-point hours, >24h in the morning
 ;### Creates log structure which has information about ALL raw files. 
 ;#####################################################
 
-;createLogStructures,redpar,obnm,objnm, /doFromScratch   ; uncomment this for production 
+createLogStructures,redpar,obnm,objnm, /doFromScratch   ; uncomment this for production 
 
 
 
