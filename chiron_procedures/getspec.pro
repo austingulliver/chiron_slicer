@@ -83,9 +83,11 @@ if (mode eq 'slicer') then begin
   ytarr = dblarr(ncol,nord)
   
   ;*******************************************************
-  ;   LaCosmic applied  prior the the extraction and 1 frame at the time . 
+  ;   Yales Legacy code  applied  prior the the extraction and 1 frame at the time . 
   ;*******************************************************
-  
+  if n_elements(sky) eq 0 then sky=im*0
+  if redpar.remove_crs eq 3 then  remove_cosmics, im, orc, xwd, sky, spec = optspec, cosmics = replace, mask = mask, fwhm = seeing, gain=gain, ron=ron, redpar =redpar
+
   
   ;*******************************************************
   ;  Boxcar Extraction 

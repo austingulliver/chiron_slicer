@@ -71,8 +71,9 @@ nrow = sz(2)                    ;number of rows
 rspec = fltarr(ncol)            ;init rough spctrum
 imin = round(ymin) > 0          ;bottom row of order
 imax = round(ymax) < (nrow-1)   ;top row of order
+
 for i = 0, ncol-1 do begin      ;loop over columns
-  rspec(i) = total(im(i, imin(i):imax(i))) ;mash 1 column
+  rspec[i] = total(im[i, imin(i):imax(i)]) ;mash 1 column
 endfor
 izero = where(rspec eq 0, nzero) ;look for identically zero
 if nzero gt 0 then rspec(izero) = 1.0 ;set to value close to zero

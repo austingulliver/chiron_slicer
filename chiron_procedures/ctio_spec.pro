@@ -59,7 +59,7 @@ print,'CTIO_SPEC: Raw File  >> ',spfname.substring(strpos( spfname, 'chi', /REVE
 ;If variable remove_cr:2 in the ctio.par file then we remove CR in this section using La Cosmic 
 ;
 
-if cosmics  eq 2    then begin
+if redpar.remove_crs eq 2    then begin
     
   print, '         Removing CR s.  Please Wait ..........    '
   

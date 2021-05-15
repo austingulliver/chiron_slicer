@@ -1,4 +1,4 @@
-pro remove_cosmics, im, orc, xwd, sky, mask = mask, spec = spec, cosmics = replace, fwhm = fwhm, sig = sig, gain=gain, ron=ron
+pro remove_cosmics, im, orc, xwd, sky, mask = mask, spec = spec, cosmics = replace, fwhm = fwhm, sig = sig, gain=gain, ron=ron, redpar =redpar
 ;+
 ; NAME:remove_cosmics
 ;
@@ -48,10 +48,14 @@ pro remove_cosmics, im, orc, xwd, sky, mask = mask, spec = spec, cosmics = repla
 
   trace, 10, 'Removing cosmic rays -- this takes a bit'
   
+  mode = strt(redpar.modes[redpar.mode])
+  
+  
   dims = (size(im))(1:2)        ;dims=[ncol,nrow]
   ncol = dims[0]
   nrow = dims[1]
-  nord = n_elements(orc[0, *])  ;# of orders
+  if (mode eq 'slicer') then  nord = n_elements(orc[ *, 0])   else  nord = n_elements(orc[0, *])  ;# of orders
+
   spec = fltarr(ncol, nord)     ;initialize output spectrum
   ix = indgen(ncol)             ;x indices
   fwhms = fltarr(nord)          ;initialize fwhm parameter
@@ -64,8 +68,8 @@ pro remove_cosmics, im, orc, xwd, sky, mask = mask, spec = spec, cosmics = repla
   for iord = 0, nord-1 do begin
     
     print, format = '(a," ",$)', strtrim(string(iord), 2) ;keep the user up to date
-
-    ycen = poly(indgen(ncol), orc[*, iord])     ;find the orders
+    if (mode eq 'slicer') then ycen = reform(orc[ iord,*]) else ycen = poly(indgen(ncol), orc[*, iord])   
+    ;ycen = poly(indgen(ncol), orc[*, iord])     ;find the orders
 
     ymin = (ycen - xwd/2.-2) > 0.               ;top and bottom of orders +1 to be safe
     ymax = (ycen + xwd/2.+2) < (nrow - 1)

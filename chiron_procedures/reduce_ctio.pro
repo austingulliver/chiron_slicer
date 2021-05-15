@@ -433,7 +433,7 @@ if keyword_set(combine_stellar) then begin
       writefits,  fname_master_stellar, master_stellar, hd   
       
              
-      CTIO_SPEC,prefix,fname_master_stellar,out_mast_stellar,redpar, orc, xwid=xwid, flat=ff  , cosmics= redpar.remove_crs 
+      CTIO_SPEC,prefix,fname_master_stellar,out_mast_stellar,redpar, orc, xwid=xwid, flat=ff  
       
 ;      stop, '  CHECK OF EXTRACTED MASTER STELLAR '
   
@@ -442,7 +442,7 @@ endif else begin
       
       FOR i=0,nrec-1 do begin
           redpar.seqnum = recnums[i]   
-          CTIO_SPEC,prefix,spfnames[i],outfnames[i],redpar, orc, xwid=xwid, flat=ff, cosmics= redpar.remove_crs   ;put it back to remove CR /cosmics
+          CTIO_SPEC,prefix,spfnames[i],outfnames[i],redpar, orc, xwid=xwid, flat=ff ;put it back to remove CR /cosmics
       ENDFOR
   
 endelse
