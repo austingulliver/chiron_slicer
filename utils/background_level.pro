@@ -63,7 +63,7 @@ function background_level, y_values, noise_width=noise_width, noise_str = noise_
        collected_minima = list()
        ref_indices = list()
        
-       if not keyword_Set(section_width) then stop, '>> Error << If linear_fragments_band option selected then fill section_width'
+       if not keyword_Set(section_width) then stop, '>> Error << If the linear_fragments_band option is selected then the fill section_width var must be passed'
        
        end_section = -1.0
        while (end_section lt n_elements(y_values)-1 ) do begin ; Iterating over each section to find the minima             

@@ -1,5 +1,5 @@
 pro reduce_ctio,  redpar, mode, flatset=flatset, thar=thar, $                   
-   order_ind=order_ind,  star=star, date=date, combine_stellar=combine_stellar, mstr_stellar_name= mstr_stellar_name
+   order_ind=order_ind,  star=star, date=date, combine_stellar=combine_stellar, mstr_stellar_names= mstr_stellar_names
 
 ; Batch job to drive raw reduction for CTIO
 ; Based on 12-Mar-2011 DF revised for the e2v-4k chip 
@@ -379,66 +379,71 @@ if redpar.debug gt 1 then STOP
 ;*************************************  Reduce Stellar Spectrum 
 
 if keyword_set(combine_stellar) then begin
-      
-      print, 'REDUCE_CTIO: * Please wait... ( Creating Master Stellar )'
-      ; >> find dimenesions of img
-      im_ref = double(readfits( spfnames[0])) 
-      sz = size(im_ref)
-      n_col = sz[1]          ;# columns in image
-      n_row = sz[2]          ;# rows in image 
-      
-      data_cube =  dblarr(   n_col,n_row, nrec)
-      
-    
-      
-      FOR i=0,nrec-1 do begin ; Iterate over every Stellar image          
-          data = double(readfits( spfnames[i], hd)) 
-          data_cube[*,*,i] = data       
-      ENDFOR
-      
-      
-      nsize = size(data_cube)
-      combined_files= nsize[3]
-      combined_files = strtrim(string(combined_files), 1)
-      
+  
+     ; Iterate over the created dictionary. Key-> star name and Value-> List of observation numbers 
+     ; It will create the same number of master stellars as entries in the dictionary 
+     mstr_stellar_names=list() ; name of the created master stellars, return for future reference
+     name_idx=0
+     foreach star_name_key,  combine_stellar.Keys() do begin         
+          
+         ; All obervation numbers for the current night 
+         recnums = strt(combine_stellar[star_name_key].ToArray(), f='(I4.4)')  ; convert to string with leading zeros         
+         spfnames = indir + prefix + recnums +'.fits' ; string array of spectrum(STARS) file names
+         
+         nrec = n_elements(spfnames)
+         print, 'REDUCE_CTIO: * Please wait... ( Creating Master Stellar )'
+         ; >> find dimenesions of img
+         im_ref = double(readfits( spfnames[0]))
+         sz = size(im_ref)
+         n_col = sz[1]          ;# columns in image
+         n_row = sz[2]          ;# rows in image
+         data_cube =  dblarr(   n_col,n_row, nrec)
+
+         FOR i=0,nrec-1 do begin ; Iterate over every Stellar image
+           data = double(readfits( spfnames[i], hd))
+           data_cube[*,*,i] = data
+         ENDFOR
+
+         nsize = size(data_cube)
+         combined_files= nsize[3]
+         combined_files = strtrim(string(combined_files), 1)
+
+
+
+         ;Calculating MASTER (mean/median) stellar :
+         ;---------------------------
+         master_stellar= weighted_master_frame(data_cube, redpar.master_stellar )
+         ;      if redpar.master_stellar eq 'mean' then begin
+         ;        master_stellar = mean(data_cube, /double, dimen=3)
+         ;      endif else if redpar.master_stellar eq 'median' then begin
+         ;        master_stellar = median(data_cube, /double, dimen=3)
+         ;      endif else stop, 'REDUCE_CTIO: >> ERROR << The variable master_stellar can only be median or mean. Please change its value in the ctio.par file'
+
+         ;  Naming convention for the master stellar is
+         ;  wmchiYYMMDD_XXX_LLL.fits   where the extra m stands for master
+         ;  XXX corresponds to the observation number of the first exposure used to create  the master
+         ; stellar and LLL is the number of exposures used to create the master stellar.
+
+         mstr_stellar_names.Add, 'm'+prefix +recnums[0]+'_'+strtrim(string(n_elements(recnums)),2)
+         fname_master_stellar = indir + mstr_stellar_names[name_idx]+'.fits'    ; Saved in corresponding raw directory
+         out_mast_stellar= outdir + redpar.prefix_tag+mstr_stellar_names[name_idx]
+
+         ; >> Creating ranges of file used to append to Header
+         range_files= make_range_from_vector(star)
+
+         history_str = 'MASTER STELLAR frame made of ' + strtrim(string(combined_files),2)+ ' files: '+range_files
+         sxaddpar, hd, 'HISTORY', history_str
+         writefits,  fname_master_stellar, master_stellar, hd
+         CTIO_SPEC,prefix,fname_master_stellar,out_mast_stellar,redpar, orc, xwid=xwid, flat=ff
+         name_idx=name_idx+1
+     endforeach
      
       
-      
-       
-      ;Calculating MASTER (mean/median) stellar :
-      ;---------------------------
-      master_stellar= weighted_master_frame(data_cube, redpar.master_stellar )
-;      if redpar.master_stellar eq 'mean' then begin
-;        master_stellar = mean(data_cube, /double, dimen=3)
-;      endif else if redpar.master_stellar eq 'median' then begin
-;        master_stellar = median(data_cube, /double, dimen=3)
-;      endif else stop, 'REDUCE_CTIO: >> ERROR << The variable master_stellar can only be median or mean. Please change its value in the ctio.par file'
 
- 
-      
-      ;  Naming convention for the master stellar is  
-      ;  wmchiYYMMDD_XXX_LLL.fits   where the extra m stands for master 
-      ;  XXX corresponds to the observation number of the first exposure used to create  the master
-      ; stellar and LLL is the number of exposures used to create the master stellar. 
-      
-      mstr_stellar_name ='m'+prefix +recnums[0]+'_'+strtrim(string(n_elements(recnums)),2)
-      fname_master_stellar = indir + mstr_stellar_name+'.fits'    ; Saved in corresponding raw directory       
-      out_mast_stellar= outdir + redpar.prefix_tag+mstr_stellar_name
-      
-      ; >> Creating ranges of file used to append to Header      
-      range_files= make_range_from_vector(star)      
-      
-      history_str = 'MASTER STELLAR frame made of ' + strtrim(string(combined_files),2)+ ' files: '+range_files
-      sxaddpar, hd, 'HISTORY', history_str
-      writefits,  fname_master_stellar, master_stellar, hd   
-      
-             
-      CTIO_SPEC,prefix,fname_master_stellar,out_mast_stellar,redpar, orc, xwid=xwid, flat=ff  
       
 ;      stop, '  CHECK OF EXTRACTED MASTER STELLAR '
   
 endif else begin
-      
       
       FOR i=0,nrec-1 do begin
           redpar.seqnum = recnums[i]   

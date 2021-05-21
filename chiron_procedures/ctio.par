@@ -68,7 +68,7 @@ debug: 0,                                              ; 1 in debug mode, with p
                                                        ;3. Stops in debugging locations. Plots to screen. Prints a lot. 
                                                        ;4. Everything. Run this when CHIRON has been modified to determine new order locations. 
                                                        ;Once finished, copy the new best fit order locations to the "pkcoefs" tag above.
-remove_crs:3,                                          ; Cosmic Rays only get remove from  flats and stellar exposures.
+remove_crs:0,                                          ; Cosmic Rays only get remove from  flats and stellar exposures.
                                                        ; 0 : Do not remove Cosmic Rays 
                                                        ; 1 : Remove CR's by sigma Clipping. To change the value used for sigma refer to clean_cr_py.
                                                        ;     Notice, there must be at least 3 frames (flats, and  stellar ).
@@ -79,12 +79,12 @@ remove_crs:3,                                          ; Cosmic Rays only get re
 pixel_not_extracted: -2,                               ; Number of pixels no extracted from the default xwids for each mode. This must be an integer, even number 
                                                        ; E.g. Slice has 12 pixels. If pixel_no_extracted:4 then pixels extracted are 8 (4 up-4 down)
                                                        ; If int is negative then it will extract more pixel E.g. if -2 then for slicer it will extract 7 up and 7 down 
-use_prev_tracing: 0,                                   ; If 1 then it used the previous order tracing stored. Only use if such file exist. Default value is 0
+use_prev_tracing: 1,                                   ; If 1 then it used the previous order tracing stored. Only use if such file exist. Default value is 0
                                                        ; The following options apply for the master_bias, master_flat, master_stellar: The possible options are : 'median' , 'mean' ,'sum' , 'mean_clipping'
                                                        ; 'abs_error' , 'squared_error' and 'bayesian' . For more information about each one read the procedure weighted_master_frame.pro
 master_bias:'median',                                  ; Can only take 2 string values 'median' or 'mean'. Used to calculate the mean/median of all bias frames and create master bias.
 master_flat:'median',                                  ; Can only take 2 string values 'median' or 'mean'. Used to calculate the mean/median of all flat frames and create master flat.
-master_stellar: 'bayesian',                              ; Can only take 2 string values 'median' or 'mean'. Used to calculate the mean/median of all stellar frames and create master master.
-flat_from_scratch: 1,                                  ; If 1 create the master flat from scratch every time program runs, if 0 then program restores existing file in memory for given night
+master_stellar: 'median',                              ; Can only take 2 string values 'median' or 'mean'. Used to calculate the mean/median of all stellar frames and create master master.
+flat_from_scratch:1,                                  ; If 1 create the master flat from scratch every time program runs, if 0 then program restores existing file in memory for given night
 bias_from_scratch: 1}                                  ; If 1 Creates master bias from scratch regardless if such file exists already
 

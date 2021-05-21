@@ -407,6 +407,28 @@ if keyword_set(reduce) then begin
         		starindx=where(objnm1 ne 'iodine' and objnm1 ne 'thar' $
         			             and objnm1 ne 'focus' and objnm1 ne 'junk' and objnm1 ne 'dark' $
                            and objnm1 ne 'bias' and objnm1 ne 'quartz' and objnm1 ne 'master_stellar', num_star)
+            
+            
+            
+            
+            
+            ; out of the star indices I want to classify them in a dictionary to find out if there is more than  1 start
+            ; Run of combine_stellar tag is set . 
+            
+            
+            if keyword_set (combine_stellar) then begin               
+                combine_stellars=dictionary() ; Where the keys are the star names and the values are lists with all the the corresponding observation numbers 
+                foreach idx_star, starindx do begin 
+                  
+                    if combine_stellars.HasKey( objnm1[idx_star] ) then begin 
+                      combine_stellars[ objnm1[idx_star] ].Add,  fix(obnm1[idx_star]) ; Add the obersevation number                   
+                    endif else begin
+                      combine_stellars[ objnm1[idx_star] ]= list(obnm1[idx_star] )
+                    endelse
+                    
+                endforeach
+            endif else combine_stellars = !NULL
+
              
             
                                        
@@ -422,10 +444,10 @@ if keyword_set(reduce) then begin
             ;################## Actual Reduction #################
             ;##################################################### 
             if redpar.flat_from_scratch eq 0 then begin
-                  reduce_ctio, redpar, mode, star=star, thar=thar, date=night, combine_stellar=combine_stellar, mstr_stellar_name=mstr_stellar_name ; Since not flatset passed then it will try to restore master flat for the present night            
+                  reduce_ctio, redpar, mode, star=star, thar=thar, date=night, combine_stellar=combine_stellars, mstr_stellar_names=mstr_stellar_names ; Since not flatset passed then it will try to restore master flat for the present night            
                   
             endif else if redpar.flat_from_scratch eq 1 then begin
-                  reduce_ctio, redpar, mode, flatset=flatset, star=star, thar=thar, date=night, combine_stellar=combine_stellar, mstr_stellar_name=mstr_stellar_name ; Actual reduction code
+                  reduce_ctio, redpar, mode, flatset=flatset, star=star, thar=thar, date=night, combine_stellar=combine_stellars, mstr_stellar_names=mstr_stellar_names ; Actual reduction code
                   ;flatset : array containning the file numbers ONLY of quartz/flat files
                   ;thar : "   "    "                            ONLY thar and iodine files
                   ;start: "   "   "                             ONLY  start itself
@@ -687,68 +709,72 @@ if keyword_set(iod2fits) then begin
      ; 1) Reduces "master" Stellar image
      ;*******************************************************   
      if  keyword_set ( combine_stellar ) then  begin
-      
-      path_mst_stellar= iodspec_path+pretag+mstr_stellar_name
-         
-      rdsk,spectra_all_stellar,path_mst_stellar,1   ; Reading previously saved spectra (intensities only)
-      rdsk,hd,path_mst_stellar,2                    ; Reading header of file above
-      sz=size(spectra_all_stellar)  &   ncol=sz[1]    &    nord=sz[2]
-      spec=dblarr(2,ncol,nord)      
-      w = ww[0,*,*]                      ; Since we dealing wiht "master" we arbitrary choose 1st wavesolution  
-      thidfile_name = thidfiles[0]       ; Used on Header 
-      spec[0,*,*]=w                      ; Wavelengths for all oders
-      spec[1,*,*]=spectra_all_stellar    ; Intensities for all orders (Spectrum )
-      
-      outfile=pretag+mstr_stellar_name+'.fits' ; Final fits file name.
-      
-      ;   Modifying "master" stellar  fits headers:
-      ;*******************************************************
-      
-      nt = n_tags(redpar) ;number of tags in the redpar structure
-      tnms = string(tag_names(redpar), format='(A-8)')
-      endhd = hd[-1]
-      hd = hd[0:n_elements(hd)-2]
+      foreach mstr_stellar_name, mstr_stellar_names do begin
 
-      for ii=0, nt-1 do begin; Due to space constraint delete directory keywords from headers
-        remlen = 78 - strlen(tnms[ii]+' = ')
-        vals = redpar.(ii)
-        val = strt(vals[0])
-        for j=1, n_elements(vals)-1 do begin
-          val += ', '+strt(vals[j])
-        endfor
-        hd = [hd, tnms[ii]+'= '+"'"+string(val+"'", format='(A-'+strt(remlen)+')')]
-      endfor
-      hd = [hd, string('THARFNAM', format='(A-8)')+'= '+"'"+string(thidfile_name+"'", format='(A-'+strt(remlen)+')')]
-      hd = [hd,endhd]
+            path_mst_stellar= iodspec_path+pretag+mstr_stellar_name
+    
+            rdsk,spectra_all_stellar,path_mst_stellar,1   ; Reading previously saved spectra (intensities only)
+            rdsk,hd,path_mst_stellar,2                    ; Reading header of file above
+            sz=size(spectra_all_stellar)  &   ncol=sz[1]    &    nord=sz[2]
+            spec=dblarr(2,ncol,nord)
+            w = ww[0,*,*]                      ; Since we dealing wiht "master" we arbitrary choose 1st wavesolution
+            thidfile_name = thidfiles[0]       ; Used on Header
+            spec[0,*,*]=w                      ; Wavelengths for all oders
+            spec[1,*,*]=spectra_all_stellar    ; Intensities for all orders (Spectrum )
+    
+            outfile=pretag+mstr_stellar_name+'.fits' ; Final fits file name.
+    
+            ;   Modifying "master" stellar  fits headers:
+            ;*******************************************************
+    
+            nt = n_tags(redpar) ;number of tags in the redpar structure
+            tnms = string(tag_names(redpar), format='(A-8)')
+            endhd = hd[-1]
+            hd = hd[0:n_elements(hd)-2]
+    
+            for ii=0, nt-1 do begin; Due to space constraint delete directory keywords from headers
+              remlen = 78 - strlen(tnms[ii]+' = ')
+              vals = redpar.(ii)
+              val = strt(vals[0])
+              for j=1, n_elements(vals)-1 do begin
+                val += ', '+strt(vals[j])
+              endfor
+              hd = [hd, tnms[ii]+'= '+"'"+string(val+"'", format='(A-'+strt(remlen)+')')]
+            endfor
+            hd = [hd, string('THARFNAM', format='(A-8)')+'= '+"'"+string(thidfile_name+"'", format='(A-'+strt(remlen)+')')]
+            hd = [hd,endhd]
+    
+    
+            ;      ; Due to space constraint delete directory keywords from headers :
+            sxdelpar, hd, 'LOGSTDIR'
+            sxdelpar, hd, 'LOGDIR'
+            sxdelpar, hd, 'IODSPECD'
+            sxdelpar, hd, 'FITSDIR'
+            sxdelpar, hd, 'THIDFILE'
+            sxdelpar, hd, 'FLATDIR'
+            sxdelpar, hd, 'ORDERDIR'
+            sxdelpar, hd, 'BIASDIR'
+            sxdelpar, hd, 'CUSTOMTH'
+            sxdelpar, hd, 'THIDDIR'
+            ;
+    
+            ;now change the NAXIS and NAXISn values to reflect the reduced data + ADD thid related keywords:
+            specsz = size(spec)
+            ;fxaddpar, hd, 'OBJECT', 'master_stellar', 'This file was produced by combining '+ string (n_found)+ ' stellar images. '   ; This statment is replaced within reduce_ctio.pro
+            fxaddpar, hd, 'BZERO', 0, 'offset data range to that of unsigned short'; added so data does not get shifted when read
+            fxaddpar, hd, 'NAXIS', specsz[0], 'Number of data axes'
+            fxaddpar, hd, 'NAXIS1', specsz[1], 'Axis 1 length: 0=wavelength, 1=spectrum'
+            fxaddpar, hd, 'NAXIS2', specsz[2], 'Axis 2 length: extracted pixels along each echelle order'
+            fxaddpar, hd, 'NAXIS3', specsz[3], 'Axis 3 length: number of echelle orders extracted'
+            fxaddpar, hd, 'RESOLUTN', thid.resol, 'Resolution determined from the ThAr.'
+            fxaddpar, hd, 'THIDNLIN', thid.nlin, 'Number of ThAr lines used for wavelength solution.'
+    
+    
+            writefits,fits_path+outfile, spec,hd
+            print, 'SORTING_HAT:  Writing: ', outfile, ' '
+        
+      endforeach
       
-      
-;      ; Due to space constraint delete directory keywords from headers :
-      sxdelpar, hd, 'LOGSTDIR'
-      sxdelpar, hd, 'LOGDIR'
-      sxdelpar, hd, 'IODSPECD'
-      sxdelpar, hd, 'FITSDIR'
-      sxdelpar, hd, 'THIDFILE'
-      sxdelpar, hd, 'FLATDIR'
-      sxdelpar, hd, 'ORDERDIR'
-      sxdelpar, hd, 'BIASDIR'
-      sxdelpar, hd, 'CUSTOMTH'
-      sxdelpar, hd, 'THIDDIR'
-;      
-
-      ;now change the NAXIS and NAXISn values to reflect the reduced data + ADD thid related keywords:
-      specsz = size(spec)
-      ;fxaddpar, hd, 'OBJECT', 'master_stellar', 'This file was produced by combining '+ string (n_found)+ ' stellar images. '   ; This statment is replaced within reduce_ctio.pro
-      fxaddpar, hd, 'BZERO', 0, 'offset data range to that of unsigned short'; added so data does not get shifted when read       
-      fxaddpar, hd, 'NAXIS', specsz[0], 'Number of data axes'
-      fxaddpar, hd, 'NAXIS1', specsz[1], 'Axis 1 length: 0=wavelength, 1=spectrum'
-      fxaddpar, hd, 'NAXIS2', specsz[2], 'Axis 2 length: extracted pixels along each echelle order'
-      fxaddpar, hd, 'NAXIS3', specsz[3], 'Axis 3 length: number of echelle orders extracted'
-      fxaddpar, hd, 'RESOLUTN', thid.resol, 'Resolution determined from the ThAr.'
-      fxaddpar, hd, 'THIDNLIN', thid.nlin, 'Number of ThAr lines used for wavelength solution.'
-
-
-      writefits,fits_path+outfile, spec,hd
-      print, 'SORTING_HAT:  Writing: ', outfile, ' '
 
       
       

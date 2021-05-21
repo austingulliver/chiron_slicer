@@ -165,6 +165,11 @@ function weighted_master_frame, data_cube, typeStr
     ;**************************************************
     'bayesian': begin
       
+      if ! (n_frames > 3 ) then begin
+        print,  '************************************** WARNING **************************************'
+        print,  '    Master file  created with the  BAYESIAN technique, using less than 3 exposures'
+      endif
+      
       master_frame= dblarr(n_cols, n_rows)   
       foreach column, columns do begin
         foreach row, rows do begin
