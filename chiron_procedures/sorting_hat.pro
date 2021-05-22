@@ -419,11 +419,15 @@ if keyword_set(reduce) then begin
             if keyword_set (combine_stellar) then begin               
                 combine_stellars=dictionary() ; Where the keys are the star names and the values are lists with all the the corresponding observation numbers 
                 foreach idx_star, starindx do begin 
-                  
-                    if combine_stellars.HasKey( objnm1[idx_star] ) then begin 
-                      combine_stellars[ objnm1[idx_star] ].Add,  fix(obnm1[idx_star]) ; Add the obersevation number                   
+                  refined_key = objnm1[idx_star]
+                  refined_key = refined_key.replace( ' ', '') ; Get Rid of any dash 
+                  refined_key = refined_key.replace( '-', '') ; get rid of empty space
+                  refined_key = 'star_'+refined_key
+                  ;first characters cannot be number : We simple append 'star' at the beginnign 
+                    if combine_stellars.HasKey( refined_key ) then begin 
+                      combine_stellars[ refined_key ].Add,  fix(obnm1[idx_star]) ; Add the obersevation number                   
                     endif else begin
-                      combine_stellars[ objnm1[idx_star] ]= list(obnm1[idx_star] )
+                      combine_stellars[ refined_key ]= list(obnm1[idx_star] )
                     endelse
                     
                 endforeach
