@@ -165,7 +165,7 @@ function weighted_master_frame, data_cube, typeStr
     ;**************************************************
     'bayesian': begin
       
-      if ! (n_frames > 3 ) then begin
+      if not (n_frames ge 3 ) then begin
         print,  '************************************** WARNING **************************************'
         print,  '    Master file  created with the  BAYESIAN technique, using less than 3 exposures'
       endif

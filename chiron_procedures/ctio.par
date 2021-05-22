@@ -68,7 +68,7 @@ debug: 0,                                              ; 1 in debug mode, with p
                                                        ;3. Stops in debugging locations. Plots to screen. Prints a lot. 
                                                        ;4. Everything. Run this when CHIRON has been modified to determine new order locations. 
                                                        ;Once finished, copy the new best fit order locations to the "pkcoefs" tag above.
-remove_crs:0,                                          ; Cosmic Rays only get remove from  flats and stellar exposures.
+remove_crs:2,                                          ; Cosmic Rays only get remove from  flats and stellar exposures.
                                                        ; 0 : Do not remove Cosmic Rays 
                                                        ; 1 : Remove CR's by sigma Clipping. To change the value used for sigma refer to clean_cr_py.
                                                        ;     Notice, there must be at least 3 frames (flats, and  stellar ).
