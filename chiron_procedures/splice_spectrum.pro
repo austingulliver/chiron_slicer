@@ -18,13 +18,13 @@ n_orders= size_cube[3]
 n_wavelengths= size_cube[2]
 
 
-artifact_indices =[ 680,730]
+artifact_indices =[646,764];[ 680,730]
 
 if keyword_set(maskArtifact) then begin
    ; Identify the order where the mask is needed
    ; All blue orders(indexed orders after 63). Orders at this point are reversed so
    ; we need to count backwards.
-   n_order_to_mask= n_orders-63 ; 63 is the number of red orders (orders that don't have the artifact)
+   n_order_to_mask= n_orders-60 ; 63 is the number of red orders (orders that don't have the artifact)
    
    for order_idx = 0L, n_order_to_mask-1 do begin
         

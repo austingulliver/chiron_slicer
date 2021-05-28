@@ -44,7 +44,7 @@ COMMON all_constants,autom,automJPL,autokm,cms,ckm,radtosec,pctoAU,$
 
 ; Constants/Variables + paths
 
-cms=cms
+cms = 2.99792458d8 ; Constant. Workaroung sometimes constanst does not give back expected value 
 spawn, 'cd', pwddir  ;Updated to a Windows command
 case pwddir of
   'C:\Users\mrstu': ctparfn = 'C:\Users\mrstu\idlworkspace_yalecalibration\chiron_procedures\ctio.par'
@@ -109,12 +109,13 @@ endif
 ;#####################################################
 ;#  Determine name of the files to be considered for either barycentric  and  splice 
 ;#####################################################
+print, '**************************************************'
+print, 'Runing Post processing for '+strt(night)+'......'
+print, '**************************************************'
 
 
 cut_spectra=1
 do_shift=1
-
-;To do post processing we expecting to run it along with sorting_hat for now. FIX SO THEY ARE INDEPENDENT IN THE FUTURE 
 
 if keyword_set (post_process) then begin
   
@@ -123,75 +124,107 @@ if keyword_set (post_process) then begin
           
           redpar = readpar(ctparfn) 
           redpar.imdir = strt(night)+'\' ; setting some extra variables that will get used.
-          redpar.prefix ='chi'+strt(night) +'.'
-          
-          
-          
+          redpar.prefix ='chi'+strt(night) +'.'      
         endif else redpar=redpar ;else use the same as in sorting_hat
       
-    
-        if keyword_set(no_log) then begin
+      
+      
+        ;##################
+        ;# Collect bary correction individually or in groups
+        ;##################
+        if keyword_set(no_log) then begin ; Else we keep the stellar_bary_correc create by logmaker_v2
             ; Need to obtain the 'stellar_bary_correct' by reading the existing sheet
             logsheet = redpar.rootdir+redpar.logdir+'20'+strmid(strt(night), 0, 2)+'\' +strt(night)+'.log'          
-            readcol,logsheet, skip=9, obnm, objnm, bin, slit, ra, dec,  mdpt,  exptm , ccdTem, airMass,juDate,baryCorrec, f='(a10,     a15,       a8,    a10 ,   a14,   a14,     a28,      a12,     a12,      a10,     a17,    a14   )'
+            readcol,logsheet, skip=9, obnm, objnm, bin, slit, ra, dec,  mdpt,  exptm , ccdTem, airMass,juDate,baryCorrec, intensity,f='(a10,     a15,       a8,    a10 ,   a14,   a14,     a28,      a12,     a12,      a10,     a17,    a14 , a17  )'
             
-            ; need to obtain 
-            ; For future reference only stellar files
-            bary_indices = where(float(baryCorrec) ne 0.0, c_bary )
             
-            if c_bary le 0 then stop, 'reduce_slicer:  STOP : No barycentric correction were identifies from the .log file. '
-            obnm = obnm[ bary_indices]
-            baryCorrec = baryCorrec[bary_indices]
-            stellar_bary_correc=list()
+               ;>>  master files 
+               
+               ; Get all bary correction in 1 array
+               ; stellar_bary_correc(Output): is a list wich elements are structures with the format {file_name:obs_file[i] , correction:czi }
+               if keyword_set(combine_stellar) then begin
+
+                   ; Search for master file just created
+                   str_file_type=  redpar.rootdir+ redpar.fitsdir+ redpar.imdir +redpar.prefix_tag+'m'+redpar.prefix+'*.fits'
+                   post_process_files = file_search(str_file_type, count = count_master) ; look for the data files. Name of the file itself
+  
+                   ;Extract File information from those found master file  :
+                   if count_master le 0  then stop, 'reduce_slicer:  STOP : No master files found for post process. Check the files exist within the directory '
+                   stellar_bary_correc=list()
+                   for index = 0L, count_master-1 do begin
+                        file_name =post_process_files[index]
+                        file_name =file_name.extract("[0-9]{4}_[0-9]+")
+                        split = strsplit(file_name, '_', /extract)
+                        obnm_matches = indgen( LONG(split[1]) )+LONG(split[0])
+                        
+                        indices=list()
+                        foreach obnm_candidate, obnm_matches do begin                          
+                          match_idx= where(obnm eq obnm_candidate, nn)                          
+                          if nn gt 0  then indices.Add, match_idx             
+                        endforeach
+                        indices=indices.ToArray() ; All the indices for the current master file  
+                        
+                        bary_corrections= float(baryCorrec[indices])
+                        bary_mean =mean(bary_corrections)
+                        
+                        stellar_bary_correc.add, {file_name:post_process_files[index] , correction:bary_mean}
+
+
+                   endfor
+                   
             
-            for index = 0L, n_elements(obnm)-1 do begin
-              stellar_bary_correc.Add, {file_name:redpar.prefix+strt(obnm[index])+'.fits' , correction:baryCorrec[index] } ; Meant to be output
-            endfor
+
+  
+  
+  
+  
+;                   if count_master lt 1 then stop, 'REDUCE_SLICER: None Master stellar files found within the directory.'
+;  
+;                   ; Produce mean barycentric correction
+;                   array_all_bary = list()
+;                   foreach structure, stellar_bary_correc do begin
+;                     array_all_bary.ADD, structure.correction
+;                   endforeach
+;  
+;                   bary_mean= float(array_all_bary.toarray() )
+;                   bary_mean=mean(bary_mean)
+;  
+;  
+;                   ; overwrite stellar_bary_correc
+;                   stellar_bary_correc=list()
+;                   stellar_bary_correc.add, {file_name:post_process_files[0] , correction:bary_mean}
+
+
+               
+               
+             
+               
+              
+             endif else begin
+                  ; >> For all individual files  
+                  bary_indices = where(float(baryCorrec) ne 0.0, c_bary )
+                  if c_bary le 0 then stop, 'reduce_slicer:  STOP : No barycentric correction were identifies from the .log file. '
+                  obnm = obnm[ bary_indices]
+                  baryCorrec = baryCorrec[bary_indices]
+                  stellar_bary_correc=list()
+    
+                  for index = 0L, n_elements(obnm)-1 do begin
+                    stellar_bary_correc.Add, {file_name:redpar.prefix+strt(obnm[index])+'.fits' , correction:baryCorrec[index] } ; Meant to be output
+                  endfor
+           
+              
+             endelse
+             
+    
       
          endif
    
    
     
-    
-  
-  
-  
-  
-    
-    print, '**************************************************'
-    print, 'Runing Post processing for '+strt(night)+'......'
-    print, '**************************************************'
-    
-    
-    ;##################
-    ;# Collect files for post-process 
-    ;##################
-    
-    ; Get all bary correction in 1 array
-    ; stellar_bary_correc(Output): is a list wich elements are structures with the format {file_name:obs_file[i] , correction:czi }
-    if keyword_set(combine_stellar) then begin 
-       
-       ; Search for master file just created
-       str_file_type=  redpar.rootdir+ redpar.fitsdir+ redpar.imdir +redpar.prefix_tag+'m'+redpar.prefix+'*.fits'
-       post_process_files = file_search(str_file_type, count = count_master) ; look for the data files. Name of the file itself       
-       if count_master ne 1 then stop, 'REDUCE_SLICER: None or more than one master stellar files found within the directory.' 
-       
-       ; Produce mean barycentric correction
-       array_all_bary = list()
-       foreach structure, stellar_bary_correc do begin
-              array_all_bary.ADD, structure.correction
-       endforeach
-       
-       bary_mean= float(array_all_bary.toarray() )
-       bary_mean=mean(bary_mean)
+     
 
-        
-       ; overwrite stellar_bary_correc
-       stellar_bary_correc=list()
-       stellar_bary_correc.add, {file_name:post_process_files[0] , correction:bary_mean}
-       
-       
-    endif ; Else we keep the stellar_bary_correc create by logmaker_v2
+    
+
 
       
       
@@ -218,9 +251,9 @@ if keyword_set (post_process) then begin
         ;##################
         
         if (do_shift eq 1)  then begin
-            print, '**************************************************'
+            print, ''
             print, 'Shifting wavelengths for night '+strt(night)+'......'
-            print, '**************************************************'
+            print, ''
             
             data_cube[0,*,*]=data_cube[0,*,*]*(1+ ( structure.correction / cms )  )
             ;recall radial velocity is in [m/s] . cms is brought from different procedure. CMS is the speed of light in[m/s]
@@ -238,9 +271,10 @@ if keyword_set (post_process) then begin
         ;##################
        
         if (cut_spectra eq 1) then begin 
-          print, '**************************************************'
+          print, ''
           print, ' Cutting the spectra for night '+strt(night)+'......'
-          print, '**************************************************'
+          print, ''
+          
           
           ; pass array along with type of cut 
           splice_type= 'pixel_cut_of_3200px'
@@ -250,12 +284,36 @@ if keyword_set (post_process) then begin
           sxaddpar, hd, 'HISTORY', history_str
            
         endif else print, "REDUCE_SLICER :  The Spectra has NOT been reduced in size "
-    
-    
+        
+        
+        
+        ;#####################################################
+        ;# 3) Smooth Spectra
+        ;#####################################################
+        ; Retrieves master flat : 1 per night and smooth it 
+;        flats_dir = redpar.rootdir  + redpar.flatdir+  redpar.prefix + 'slicer.flat.fits'
+;        flats=readfits(flats_dir)
+;        flat =reverse(reverse(reform(flats[*,*,1]),2),1) ; I want to pick the one with the original (no altered)
+;
+;        ; Altear the data cube to match with expected input for splice_spectrum
+;        sz =size(flats)
+;        nord =  sz[2]
+;        ncol =  sz[1]
+;        flat_cube=dblarr(2,ncol,nord) ; It will fill with 0.0 and We don't care about (0,*,*)
+;        
+;        for index = 0L, nord-1 do begin
+;          flat_cube[1,*,index] = flat[*,index]    
+;        endfor
+;        splice_type= 'pixel_cut_of_3200px'
+;        new_flat= splice_spectrum( flat_cube, splice_type, /maskArtifact)
+;        new_flat=reform(new_flat[1,*,*])
+
+        
+       
        
         
         ;#####################################################
-        ;# 3) Store in directory  post_procesed
+        ;# 4) Store in directory  post_procesed
         ;#####################################################
 
         processed_file_path =  redpar.rootdir + redpar.fitsdir + redpar.imdir  +'post_processed\'        

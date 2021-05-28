@@ -36,7 +36,7 @@ gain:   1.0,                                           ; actual gain [el/adu] (*
 binning: [1,1],             			       ; will contain actual binning [row,col] from the header (*)
 mode:  0,                      			       ; index of the actual mode (*)
 biasmode: 0,                                           ; 0: use median/mean bias frame, 1: use median overscan row
-flatnorm:  0,                  			       ;If 0 Master Flat is either the product of the MEAN or MEDIAN of all flats . If 1 then flat IS normalized  and then put back to normal before finding MEAN MEDIAN.               
+flatnorm:  1,                  			       ;If 0 Master Flat is either the product of the MEAN or MEDIAN of all flats . If 1 then flat IS normalized  and then put back to normal before finding MEAN MEDIAN.               
                                                        ;       flatnorm Options:
                                                        ;       0. The master flat was NOT normalized before being calculated. Spectra are not flattened.
                                                        ;       1. The master flat was NOT normalized before being calculated. Spectra are flattened AFTER extraction.
@@ -68,7 +68,7 @@ debug: 0,                                              ; 1 in debug mode, with p
                                                        ;3. Stops in debugging locations. Plots to screen. Prints a lot. 
                                                        ;4. Everything. Run this when CHIRON has been modified to determine new order locations. 
                                                        ;Once finished, copy the new best fit order locations to the "pkcoefs" tag above.
-remove_crs:2,                                          ; Cosmic Rays only get remove from  flats and stellar exposures.
+remove_crs:0,                                          ; Cosmic Rays only get remove from  flats and stellar exposures.
                                                        ; 0 : Do not remove Cosmic Rays 
                                                        ; 1 : Remove CR's by sigma Clipping. To change the value used for sigma refer to clean_cr_py.
                                                        ;     Notice, there must be at least 3 frames (flats, and  stellar ).
