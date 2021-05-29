@@ -316,8 +316,11 @@ endif else if (redpar.flatnorm eq 1) or (redpar.flatnorm eq 3) then begin
                   
               
     
-    name = redpar.rootdir+redpar.flatdir+prefix+mode+'.flat'
+    name = string(34B) + redpar.rootdir+redpar.flatdir+prefix+mode+'.flat' +string(34B)
 ;    fitsname = redpar.rootdir+redpar.flatdir+prefix+mode+'.flat.fits'
+
+
+ 
     wdsk, flat, name, /new
 ;    writefits, fitsname, flat ; Saves the same file but as the fits version 
     
