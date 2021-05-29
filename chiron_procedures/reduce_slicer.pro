@@ -174,32 +174,7 @@ if keyword_set (post_process) then begin
                    
             
 
-  
-  
-  
-  
-;                   if count_master lt 1 then stop, 'REDUCE_SLICER: None Master stellar files found within the directory.'
-;  
-;                   ; Produce mean barycentric correction
-;                   array_all_bary = list()
-;                   foreach structure, stellar_bary_correc do begin
-;                     array_all_bary.ADD, structure.correction
-;                   endforeach
-;  
-;                   bary_mean= float(array_all_bary.toarray() )
-;                   bary_mean=mean(bary_mean)
-;  
-;  
-;                   ; overwrite stellar_bary_correc
-;                   stellar_bary_correc=list()
-;                   stellar_bary_correc.add, {file_name:post_process_files[0] , correction:bary_mean}
-
-
-               
-               
              
-               
-              
              endif else begin
                   ; >> For all individual files  
                   bary_indices = where(float(baryCorrec) ne 0.0, c_bary )

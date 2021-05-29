@@ -314,12 +314,12 @@ endif else if (redpar.flatnorm eq 1) or (redpar.flatnorm eq 3) then begin
                   ;                                                                     [*,*,2] : Smoothed Spectrum          
                   ;xwid (input) Order width: For e.g. 12 for slicer    
                   
-                 
+              
     
     name = redpar.rootdir+redpar.flatdir+prefix+mode+'.flat'
-    fitsname = redpar.rootdir+redpar.flatdir+prefix+mode+'.flat.fits'
+;    fitsname = redpar.rootdir+redpar.flatdir+prefix+mode+'.flat.fits'
     wdsk, flat, name, /new
-    writefits, fitsname, flat ; Saves the same file but as the fits version 
+;    writefits, fitsname, flat ; Saves the same file but as the fits version 
     
    
     print, 'REDUCE_CTIO: The stellar spectrum is flattend, AFTER extraction.'
