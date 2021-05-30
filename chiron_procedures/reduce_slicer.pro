@@ -109,9 +109,6 @@ endif
 ;#####################################################
 ;#  Determine name of the files to be considered for either barycentric  and  splice 
 ;#####################################################
-print, '**************************************************'
-print, 'Runing Post processing for '+strt(night)+'......'
-print, '**************************************************'
 
 
 cut_spectra=1
@@ -119,12 +116,18 @@ do_shift=1
 
 if keyword_set (post_process) then begin
   
+        print, ''
+        print, 'Runing Post processing for '+strt(night)+'......'
+        print, ''
+  
         ; Collecting missing info if any of the other 2 tags were not set.
         if keyword_set(no_reduction) then begin
           
           redpar = readpar(ctparfn) 
           redpar.imdir = strt(night)+'\' ; setting some extra variables that will get used.
-          redpar.prefix ='chi'+strt(night) +'.'      
+          redpar.prefix ='chi'+strt(night) +'.'    
+          
+          redpar.logdir =  redpar.logdir  + '20'+strmid(strt(night), 0, 2)+'\' 
         endif else redpar=redpar ;else use the same as in sorting_hat
       
       
@@ -135,7 +138,7 @@ if keyword_set (post_process) then begin
 ;        if keyword_set(no_log) then begin ; Else we keep the stellar_bary_correc create by logmaker_v2
             ; Need to obtain the 'stellar_bary_correct' by reading the existing sheet
             ; This can be improved if  taken the variable already created in sorting_hat
-            logsheet = redpar.rootdir+redpar.logdir+'20'+strmid(strt(night), 0, 2)+'\' +strt(night)+'.log'          
+            logsheet = redpar.rootdir+redpar.logdir+strt(night)+'.log'          
             readcol,logsheet, skip=9, obnm, objnm, bin, slit, ra, dec,  mdpt,  exptm , ccdTem, airMass,juDate,baryCorrec, intensity,f='(a10,     a15,       a8,    a10 ,   a14,   a14,     a28,      a12,     a12,      a10,     a17,    a14 , a17  )'
             
             

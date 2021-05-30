@@ -1,6 +1,6 @@
 {redpar,                                               ; named structure, passed by reference
 rootdir: 'C:\Users\mrstu\idlworkspace_yalecalibration\chiron\',             ; root directory. All other paths are relative to rootdir
-logdir:  'tous\mir7\logsheets\',                       ; log sheets 
+logdir:  'tous\mir7\logsheets\',                        ; log sheets 
 logstdir:  'tous\mir7\logstructs\',                    ; log sheets 
 iodspecdir: 'tous\mir7\iodspec\',                      ; reduced spectra in RDSK/WRDSK format
 fitsdir:    'tous\mir7\fitspec\',                      ; reduced spectra in FITS format
