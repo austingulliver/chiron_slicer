@@ -296,6 +296,28 @@ endelse
 if (redpar.flatnorm eq 0) then begin 
     ff=1.0 ; Dividing stellar img by 1 will make no difference
     print, 'REDUCE_CTIO: The Spectrum is not  flattend '
+    
+    ; For now even though we are not using it. We want ot create teh extracted version of the flat 
+    ; fo further analtsis 
+    ; ;--------------------------------------------------------------------------------------------
+    ;if redpar.debug then stop, 'REDUCE_CTIO: debug stop before getting flat'
+
+    flat = getflat(sum, orc, xwid, redpar, im_arr=im_arr) ; Master Flat gets input into this method
+    ;sum (input) Master Flat found as as a MEAN or MEDIAN of im_arr
+    ;im_arr (input) images used to create Master Flat
+    ;flat (output)  Cube-form: extracted spectrum from master flat where  [*,*,0] : Flat Spectrum /Smoothed
+    ;                                                                     [*,*,1] : Flat Spectrum
+    ;                                                                     [*,*,2] : Smoothed Spectrum
+    ;xwid (input) Order width: For e.g. 12 for slicer
+
+
+
+    name =  redpar.rootdir+redpar.flatdir+prefix+mode+'.flat' 
+    ;    fitsname = redpar.rootdir+redpar.flatdir+prefix+mode+'.flat.fits'
+
+
+
+    wdsk, flat, name, /new
 
   
  

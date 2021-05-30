@@ -132,8 +132,9 @@ if keyword_set (post_process) then begin
         ;##################
         ;# Collect bary correction individually or in groups
         ;##################
-        if keyword_set(no_log) then begin ; Else we keep the stellar_bary_correc create by logmaker_v2
+;        if keyword_set(no_log) then begin ; Else we keep the stellar_bary_correc create by logmaker_v2
             ; Need to obtain the 'stellar_bary_correct' by reading the existing sheet
+            ; This can be improved if  taken the variable already created in sorting_hat
             logsheet = redpar.rootdir+redpar.logdir+'20'+strmid(strt(night), 0, 2)+'\' +strt(night)+'.log'          
             readcol,logsheet, skip=9, obnm, objnm, bin, slit, ra, dec,  mdpt,  exptm , ccdTem, airMass,juDate,baryCorrec, intensity,f='(a10,     a15,       a8,    a10 ,   a14,   a14,     a28,      a12,     a12,      a10,     a17,    a14 , a17  )'
             
@@ -192,7 +193,7 @@ if keyword_set (post_process) then begin
              
     
       
-         endif
+;         endif
    
    
     

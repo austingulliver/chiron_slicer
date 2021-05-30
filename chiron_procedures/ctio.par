@@ -36,7 +36,7 @@ gain:   1.0,                                           ; actual gain [el/adu] (*
 binning: [1,1],             			       ; will contain actual binning [row,col] from the header (*)
 mode:  0,                      			       ; index of the actual mode (*)
 biasmode: 0,                                           ; 0: use median/mean bias frame, 1: use median overscan row
-flatnorm:  1,                  			       ;If 0 Master Flat is either the product of the MEAN or MEDIAN of all flats . If 1 then flat IS normalized  and then put back to normal before finding MEAN MEDIAN.               
+flatnorm:  0,                  			       ;If 0 Master Flat is either the product of the MEAN or MEDIAN of all flats . If 1 then flat IS normalized  and then put back to normal before finding MEAN MEDIAN.               
                                                        ;       flatnorm Options:
                                                        ;       0. The master flat was NOT normalized before being calculated. Spectra are not flattened.
                                                        ;       1. The master flat was NOT normalized before being calculated. Spectra are flattened AFTER extraction.
