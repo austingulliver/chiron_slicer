@@ -87,12 +87,12 @@ master_flat:'median',                                  ; Can only take 2 string 
 master_stellar: 'bayesian',                              ; Can only take 2 string values 'median' or 'mean'. Used to calculate the mean/median of all stellar frames and create master master.
 flat_from_scratch:1,                                   ; If 1 create the master flat from scratch every time program runs, if 0 then program restores existing file in memory for given night
 bias_from_scratch: 1,                                  ; If 1 Creates master bias from scratch regardless if such file exists already
-                                                       ; x                                           x 
-                                                       ;         |   Post Processs  Section   | 
-                                                       ; x                                           x 
+    ; x                                           x 
+    ;         |   Post Processs  Section   | 
+    ; x                                           x 
                                                        ; 0 :  Spectra does not get divided by the flat 
-                                                       ; 1 :  Spectra gets divided by Flat . The division takes place AFTER EXTRACTION. To divide BEFORE extraction  look into "flatnorm" and set this parameter to 0
-                                                       ; 2 :  Spectra gets divided by SMOOTH Flat . The division takes place AFTER EXTRACTION. To divide BEFORE extraction  look into "flatnorm" and set this parameter to 0
+                                                       ; 1 :  Spectra gets divided by Flat . The division takes place AFTER EXTRACTION. To divide BEFORE extraction  look into "flatnorm" and set div_spec_by to 0
+                                                       ; 2 :  Spectra gets divided by SMOOTH Flat . The division takes place AFTER EXTRACTION. To divide BEFORE extraction  look into "flatnorm" and set div_spec_by to 0
 div_spec_by: 1}                                        ; Look at options above.
 
 

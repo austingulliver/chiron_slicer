@@ -267,25 +267,29 @@ if keyword_set (post_process) then begin
         
         
         ;#####################################################
-        ;# 3) Smooth Spectra
+        ;# 3) Flattened spectrum after extraction 
         ;#####################################################
-        ; Retrieves master flat : 1 per night and smooth it 
-;        flats_dir = redpar.rootdir  + redpar.flatdir+  redpar.prefix + 'slicer.flat.fits'
-;        flats=readfits(flats_dir)
-;        flat =reverse(reverse(reform(flats[*,*,1]),2),1) ; I want to pick the one with the original (no altered)
-;
-;        ; Altear the data cube to match with expected input for splice_spectrum
-;        sz =size(flats)
-;        nord =  sz[2]
-;        ncol =  sz[1]
-;        flat_cube=dblarr(2,ncol,nord) ; It will fill with 0.0 and We don't care about (0,*,*)
-;        
-;        for index = 0L, nord-1 do begin
-;          flat_cube[1,*,index] = flat[*,index]    
-;        endfor
-;        splice_type= 'pixel_cut_of_3200px'
-;        new_flat= splice_spectrum( flat_cube, splice_type, /maskArtifact)
-;        new_flat=reform(new_flat[1,*,*])
+        
+        ; to finish 
+        if redpar.div_spec_by gt 0 then begin 
+          produce_cube_flats, night
+          
+          flat_names= ['_flat.fits', '_smooth_flat.fits']
+          name = strt(night)+flat_names[redpar.div_spec_by -1]
+          name = redpar.rootdir+ redpar.flatdir+ 'cube_flats\'  +name
+          
+          flat=readfits(name)  ; reads 2 x 3200 x 73
+          new_cube[1,*,*] =  new_cube[1,*,*] / flat[1,*,*]
+          
+          
+          
+          history_str = ' Spectra was divided by flat  '
+          sxaddpar, hd, 'HISTORY', history_str
+          
+          
+
+        endif 
+        
 
         
        
