@@ -218,32 +218,13 @@ if keyword_set (post_process) then begin
          endif else file_name = structure.file_name ; for master stellar we already modfied the name of the file 
          
          ;Read data: this data is the output of sorting_hat
-         data_cube = readfits(file_name, hd) ; recall data come in the form [2,4112,74] where [0,*,*] -> wavelength          
+         new_cube = readfits(file_name, hd) ; recall data come in the form [2,4112,74] where [0,*,*] -> wavelength          
          
          
          
          
 
-        
-        ;##################
-        ;# Wavelength Shift
-        ;##################
-        
-        if (do_shift eq 1)  then begin
-            print, ''
-            print, 'Shifting wavelengths for night '+strt(night)+'......'
-            print, ''
-            
-            data_cube[0,*,*]=data_cube[0,*,*]*(1+ ( structure.correction / cms )  )
-            ;recall radial velocity is in [m/s] . cms is brought from different procedure. CMS is the speed of light in[m/s]
-            new_cube= data_cube
-            ;Make remark in header
-            history_str = ' Wavelength (bary)corrected by a factor of : '+ strt(structure.correction)
-            sxaddpar, hd, 'HISTORY', history_str
-            
-            
-        endif else   print, "REDUCE_SLICER :  The Spectra has NOT been shifted to compensate for the barycentric correction "
-   
+      
     
         ;##################
         ;# Cut spectra
@@ -257,7 +238,7 @@ if keyword_set (post_process) then begin
           
           ; pass array along with type of cut 
           splice_type= 'pixel_cut_of_3200px'
-          new_cube= splice_spectrum( data_cube, splice_type, /maskArtifact)
+          new_cube= splice_spectrum( new_cube, splice_type, /maskArtifact)
           
           history_str = ' The orders were spliced using '+ splice_type
           sxaddpar, hd, 'HISTORY', history_str
@@ -289,6 +270,27 @@ if keyword_set (post_process) then begin
           
 
         endif 
+        
+        
+        
+        ;##################
+        ;# Wavelength Shift
+        ;##################
+
+        if (do_shift eq 1)  then begin
+          print, ''
+          print, 'Shifting wavelengths for night '+strt(night)+'......'
+          print, ''
+
+          new_cube[0,*,*]=new_cube[0,*,*]*(1+ ( structure.correction / cms )  )
+          ;recall radial velocity is in [m/s] . cms is brought from different procedure. CMS is the speed of light in[m/s]
+          ;Make remark in header
+          history_str = ' Wavelength (bary)corrected by a factor of : '+ strt(structure.correction)
+          sxaddpar, hd, 'HISTORY', history_str
+
+
+        endif else   print, "REDUCE_SLICER :  The Spectra has NOT been shifted to compensate for the barycentric correction "
+
         
 
         
