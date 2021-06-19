@@ -283,9 +283,9 @@ if keyword_set (post_process) then begin
           print, ''
 
           new_cube[0,*,*]=new_cube[0,*,*]*(1+ ( structure.correction / cms )  )
-          ;recall radial velocity is in [m/s] . cms is brought from different procedure. CMS is the speed of light in[m/s]
+          ;recall radial velocity is in [m/s] . cms is brought from different procedure. CMS is the speed of light in [m/s]
           ;Make remark in header
-          history_str = ' Wavelength (bary)corrected by a factor of : '+ strt(structure.correction)
+          history_str = ' Wavelength (bary)corrected by a factor of : '+ strt(structure.correction) + ' [m/s]'
           sxaddpar, hd, 'HISTORY', history_str
 
 
