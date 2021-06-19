@@ -339,8 +339,10 @@ if keyword_set(reduce) then begin
         if redpar.remove_crs eq 1  then begin 
           PRINT, ' '
           print, 'SORTING-HAT:                    >>> Cleaning CR <<< '
-          print, ' '          
-          remove_cr = clean_cr_py(redpar, log ) ; Returns remove_cr in case there were not enough files and 
+          print, ' '       
+          
+          removeCRs_sigma_clip, redpar, log   
+                                                ; Returns STATUS in case there were not enough files and 
                                                 ; and LaCosmic has to run.    
                                                 ; If remove_cr = 1 then LaCosmic will remove the CR
                                                 ; If remove_cr = 1 then all files were cleaned or all files were already cleaned.      

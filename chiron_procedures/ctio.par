@@ -68,11 +68,11 @@ debug: 0,                                              ; 1 in debug mode, with p
                                                        ;3. Stops in debugging locations. Plots to screen. Prints a lot. 
                                                        ;4. Everything. Run this when CHIRON has been modified to determine new order locations. 
                                                        ;Once finished, copy the new best fit order locations to the "pkcoefs" tag above.
-remove_crs:2,                                          ; Cosmic Rays only get remove from  flats and stellar exposures.
+remove_crs:3,                                          ; Cosmic Rays only get remove from  flats and stellar exposures.
                                                        ; 0 : Do not remove Cosmic Rays 
-                                                       ; 1 : Remove CR's by sigma Clipping. To change the value used for sigma refer to clean_cr_py.
+                                                       ; 1 : Remove CR's by sigma Clipping. To change the value used for sigma refer to removecrs_sigma_clip and the value for the variable limit_mad.
                                                        ;     Notice, there must be at least 3 frames (flats, and  stellar ).
-                                                       ;     This does not identify'bad' pixels.
+                                                       ;     This propcedure does not identify'bad' pixels.
                                                        ; 2 : Remove CR's using La Cosmic 
                                                        ; 3 : Remove CR's using Yale's legacy code
                                                        ;     Notice, removing CR's using LaCosmic applies to each individual frame. Thus, there is no constraint in the number of frames.
@@ -93,6 +93,6 @@ bias_from_scratch: 1,                                  ; If 1 Creates master bia
                                                        ; 0 :  Spectra does not get divided by the flat 
                                                        ; 1 :  Spectra gets divided by Flat . The division takes place AFTER EXTRACTION. To divide BEFORE extraction  look into "flatnorm" and set div_spec_by to 0
                                                        ; 2 :  Spectra gets divided by SMOOTH Flat . The division takes place AFTER EXTRACTION. To divide BEFORE extraction  look into "flatnorm" and set div_spec_by to 0
-div_spec_by: 1}                                        ; Look at options above.
+div_spec_by: 0}                                        ; Look at options above.
 
 
