@@ -83,7 +83,7 @@ if redpar.remove_crs eq 2    then begin
   cleaned_frame = input_frame.insert("-out", spfname.IndexOf('.fits') )
   
   
-  la_cosmic,spfname,gain=gain,readn=rn,sigclip='18.0', /verbose ; ,sigfrac=0.75          ; out: file with image to be cleaned
+  la_cosmic,spfname,gain=gain,readn=rn,sigclip='21.0', /verbose ; ,sigfrac=0.75          ; out: file with image to be cleaned
                                                             ; gain: Gain of the CCD (< 0 to estimate) (default=-1.0)
                                                             ; readn:  Readnoise of CCD (default=0.0)
                                                             ; Th result of lacosmic are 2 files created 1 contains the cleaned image and the other contains the mask

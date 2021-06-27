@@ -771,9 +771,17 @@ pro logmaker_v2, rawdir, $
               binarr[i] = bin[0]+'x'+bin[1] ;<< [5] Bin
               slitarr[i] = '  '+strt(decknm[i]) ; [6] Slit
               
-              ccd_temp[i] =strt(sxpar(header,'CCDTEMP'))
-              air_mass[i]= strt(sxpar(header,'AIRMASS'))
-              max_intensity[i] =strt(sxpar(header,'EMAVGSQ'))  ; how to find max intensity ? for now maximum exposure time in ms (expmeter)
+              
+              ccd_temp_i =strt(sxpar(header,'CCDTEMP'))      
+              air_mass_i = strt(sxpar(header,'AIRMASS'))
+              max_intensity_i = strt(sxpar(header,'EMAVGSQ'))   
+              
+              IF STRLEN(ccd_temp_i) GT 0 THEN  ccd_temp[i]      = ccd_temp_i ELSE  ccd_temp[i] = '0.0' ; 0.0 Default value if not in header 
+              IF STRLEN(air_mass_i) GT 0 THEN  air_mass[i]      = air_mass_i ELSE  air_mass[i] = '0.0'
+              IF STRLEN(max_intensity_i) GT 0 THEN  max_intensity[i] = max_intensity_i ELSE  max_intensity[i] = '0.0'
+               
+        
+              ; how to find max intensity ? for now maximum exposure time in ms (expmeter)
               
               ;comment1[i]=' '
           endif

@@ -14,17 +14,18 @@ pro clean_cosmic_rays, log, fileStructuresIdx, refStr
   ;####################################
   ;#1) Constants to be used
   ;####################################
-
-  print, 'CLEAN_CR_PY: Cleaning all CRs from ' +refStr+ ' ....'
+  print, ' '
+  print, 'CR_REMOVE: Cleaning all CRs from ' +refStr+ ' ....'
   print, ' '
   silent = 1
-  limit_mad= 3 ; pixel within a pixel set will be considered as a CR if the difference between 
+  limit_mad=9; pixel within a pixel set will be considered as a CR if the difference between 
                ; the median and the pixel value is more than (limit_mad) times its median deviation
   files_num = n_elements(log.filename[fileStructuresIdx]) ;  Field of structure was arbitrarily choosen
   IF files_num le 3 THEN stop, 'CLEAN_CR_PY: The number of ' +strt(refStr) + ' is not enough. Please, change your choice in the CTIO.PAR'
 
-  n_columns =  fix(strt((log.naxis1[fileStructuresIdx])[0]   )) ; Arbitrarily choosen strucutre
-  n_rows    =  fix(strt((log.naxis2[fileStructuresIdx])[0]   ))
+  n_columns =  fix(strt((log.naxis1[fileStructuresIdx])[0]   ), TYPE=3) ; Arbitrarily choosen strucutre
+  n_rows    =  fix(strt((log.naxis2[fileStructuresIdx])[0]   ), TYPE=3)
+   
 
 
 
@@ -73,7 +74,7 @@ pro clean_cosmic_rays, log, fileStructuresIdx, refStr
     
     pos=stregex(path, 'chi([0-9]+)\.([0-9]+)\.fits$', length=len)
 
-    print,"CLEAN_CR_PY:  Found  "  + strt(n_crs)+" CRs  in file : "+strmid(path, pos, len)
+    print,"CR_ROMOVE:  Found  "  + strt(n_crs)+" CRs  in file : "+strmid(path, pos, len)+ '  ( '+strt(float(n_crs)/float(n_columns*n_rows))+' % of img)'
     history_str = 'CR-CLEANED : '+todayDate+' : ' + strt(n_crs)+ ' CRs removed using MAD = ' +STRT(limit_mad) + ' from : '  +strt(files_num) + '' + refStr +'files'
     ; The statement "CR-CLEANED" serves as reference to identify if the file has been cleaned previouly. Do not remove.
 
@@ -159,8 +160,13 @@ PRO removeCRs_sigma_clip, redpar, log
   if (totalCount  eq 0) OR (ctF lt 3)  OR  (ctO lt 3) then begin  
    ; There is nothing to clea. Also,do not remove CR later on with LaCosmic.
    ; This algorithim won't work. We take care of cosmic rays using LaCosmic
-        PRINT, ' '
-        stop, ' || WARNING ||There were not enough valid files found to remove CRs using Sigma Clipping. Please, change the variable | remove_crs | in the CTIO.PAR accordingly OR type  .cont  to keep running without CR removal.'
+        PRINT,  ' '
+        PRINT, '                                         || WARNING || '
+        print, '  There were not enough valid files found to remove CRs using the Sigma Clipping strategy  '
+        print, ' Please, change the variable | remove_crs | in the CTIO.PAR accordingly OR type  .cont  to keep running without CR removal.'
+        print, ' Notice that files previously considered have been marked with the word CR-CLEANED in their fits header. These files will not be considered'
+        print, ' You could remove this word from the headers of paste fresh copies in the raw directory. (Just be aware these files have been already cleaned ) '
+        stop, ''
         return 
    endif 
 
