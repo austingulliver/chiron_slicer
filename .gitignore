@@ -27,3 +27,5 @@ Default/*
 *chiron_procedures/ctio.par
 research/*
 *.zip
+*.tar
+*.gzip
