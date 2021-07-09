@@ -72,17 +72,29 @@ rspec = fltarr(ncol)            ;init rough spctrum
 imin = round(ymin) > 0          ;bottom row of order
 imax = round(ymax) < (nrow-1)   ;top row of order
 
+
+;------------------------
+; Extract order 
+;------------------------
 for i = 0, ncol-1 do begin      ;loop over columns
-  rspec[i] = total(im[i, imin(i):imax(i)]) ;mash 1 column
+  rspec[i] = total(im[i, imin(i):imax(i)]) ;mash 1 column  <-- extraction of the order  by 
 endfor
 izero = where(rspec eq 0, nzero) ;look for identically zero
 if nzero gt 0 then rspec(izero) = 1.0 ;set to value close to zero
 
+
+
+;------------------------
+; Find limits for bins
+;------------------------
 ;Calculate boundaries of distinct slitf regions.
 ibound = (ncol-1) * findgen(nbin+1) / nbin ;boundaries of bins
 ibeg = ceil(ibound(0:nbin-1))   ;beginning of each bin
 iend = floor(ibound(1:nbin))    ;end of each bin
 bincen = 0.5*(ibeg + iend)      ;center of each bin
+
+
+
 
 ;Initialize arrays.
 osamp = 20.                     ;slitf pixels / real pixel
@@ -101,8 +113,11 @@ slitf = fltarr(nslitf, nbin)    ;init final slit function
 sfunc = fltarr(nslitf, nbin)    ;init final slit function uncertainty
 fwhm = 0.
 
-
+;------------------------
 ;Calculate slit functions within each bin.
+;------------------------
+
+;>>  Loop over each fot the 5 sections 
 for i = 0, nbin-1 do begin      ;loop thru sf regions
   ib = ibeg(i)                  ;left column
   ie = iend(i)                  ;right column
@@ -113,19 +128,22 @@ for i = 0, nbin-1 do begin      ;loop thru sf regions
   sf = fltarr(nsf)-1e6          ;init storage for values
   noise = sf                    ;init storage for noise in values
   ysf = fltarr(nsf)-1e6         ;init storage for rows
-  for j = 0, nc-1, nskip do begin     ;loop thru columns in region
-    icen = round(ycen(ib+j))    ;row closest to peak
-    k0 = floor(icen + ysfmin) > 0 ;lowest row to consider
-    k1 = ceil(icen + ysfmax) < (nrow-1)	;highest row to consider
-    j0 = j/nskip*nysf                 ;begining of storage area
-    j1 = j0 + k1 - k0                         
-    sf(j0:j1) = im(ib+j, k0:k1)/rspec(ib+j) ;compute normalized slit func
-    ysf(j0:j1) = irow(k0:k1) - ycen(ib+j) ;save subpixel locations
-    noise(j0:j1) = sqrt((im(ib+j, k0:k1)+back(ib+j, k0:k1))/gain)/rspec(ib+j)
-                                ;compute uncertainty in normalized slit func
-    masked = where(mask(ib+j, k0:k1) eq 0, nmask)
-    if (nmask gt 0) then ysf(j0+masked) = -1e6 
-                                ;set masked columns to special value
+  
+  ;>>  For each section loop over  every nskip
+  for j = 0, nc-1, nskip do begin     ; loop thru columns in region: every nskip(every 4) 
+      
+      icen = round(ycen(ib+j))        ; row closest to peak
+      k0 = floor(icen + ysfmin) > 0   ; lowest row to consider
+      k1 = ceil(icen + ysfmax) < (nrow-1)	;highest row to consider
+      j0 = j/nskip*nysf                 ;begining of storage area
+      j1 = j0 + k1 - k0                         
+      sf(j0:j1) = im(ib+j, k0:k1)/rspec(ib+j) ;compute normalized slit func
+      ysf(j0:j1) = irow(k0:k1) - ycen(ib+j) ;save subpixel locations
+      noise(j0:j1) = sqrt((im(ib+j, k0:k1)+back(ib+j, k0:k1))/gain)/rspec(ib+j)
+                                  ;compute uncertainty in normalized slit func
+      masked = where(mask(ib+j, k0:k1) eq 0, nmask)
+      if (nmask gt 0) then ysf(j0+masked) = -1e6 
+                                  ;set masked columns to special value
   endfor
 
 ;Sort slit function data by subpixel offset and remove points not

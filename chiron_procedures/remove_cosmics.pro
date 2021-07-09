@@ -54,7 +54,7 @@ pro remove_cosmics, im, orc, xwd, sky, mask = mask, spec = spec, cosmics = repla
   dims = (size(im))(1:2)        ;dims=[ncol,nrow]
   ncol = dims[0]
   nrow = dims[1]
-  if (mode eq 'slicer') then  nord = n_elements(orc[ *, 0])   else  nord = n_elements(orc[0, *])  ;# of orders
+  if (mode eq 'slicer') then  nord = n_elements(orc[ *, 0])   else  nord = n_elements(orc[0, *])  ;# of orders. ADJUSTED TO BE COMAPTIBLE.
 
   spec = fltarr(ncol, nord)     ;initialize output spectrum
   ix = indgen(ncol)             ;x indices
@@ -62,91 +62,94 @@ pro remove_cosmics, im, orc, xwd, sky, mask = mask, spec = spec, cosmics = repla
   replace = im*0.               ;initialize output cosmic ray image
   
   print, format = '(a,$)', 'Now removing cosmics from order '
-  
+
+;------------------------------------- 
 ;ORDER BY ORDER REMOVAL OF COSMICS:
-  
+;-------------------------------------  
   for iord = 0, nord-1 do begin
     
-    print, format = '(a," ",$)', strtrim(string(iord), 2) ;keep the user up to date
-    if (mode eq 'slicer') then ycen = reform(orc[ iord,*]) else ycen = poly(indgen(ncol), orc[*, iord])   
-    ;ycen = poly(indgen(ncol), orc[*, iord])     ;find the orders
-
-    ymin = (ycen - xwd/2.-2) > 0.               ;top and bottom of orders +1 to be safe
-    ymax = (ycen + xwd/2.+2) < (nrow - 1)
+        print, format = '(a," ",$)', strtrim(string(iord), 2) ;keep the user up to date
+        if (mode eq 'slicer') then ycen = reform(orc[ iord,*]) else ycen = poly(indgen(ncol), orc[*, iord])   ;ADJUSTED TO BE COMAPTIBLE.
+        ;ycen = poly(indgen(ncol), orc[*, iord])     ;find the orders
+        ;ycen  : are all the y value pixel that trace the given order
     
-    if max(ymax) eq -0.5 then stop
-    mkslitf, im, sky, ymin, ycen, ymax, yslitf, slitf, sfunc, bincen, mask = mask, fwhm = my_fwhm, gain=gain
-;, plot=(iord eq 24)
-;   mkslitf determines the slit function for a given order and returns
-;   the fwhm of the function in fwhm.
-;   throw the plot flag for diagnostics
-
- 
-    fwhms[iord] = my_fwhm          ;save the fwhm from this order
-
-    nysf = n_elements(yslitf)      ;# of elements in the slitfunction 
-    nbin = n_elements(bincen)      ;# of slitfunctions determined for this order
-
-    bincol = -.5+findgen(ncol)/(ncol-1.)*nbin ;column numer at centers of 
-                                                          ;slitf bins
-    sf = interpolate(slitf, findgen(nysf), bincol, /grid) ;slit function in each col
-    sfu = interpolate(sfunc, findgen(nysf), bincol, /grid) ;uncertainty in sf
-    osamp = (nysf-1.)/(yslitf[nysf-1]-yslitf[0]) ;calculate oversampling (pix)
-
-    ysfmin = min(yslitf, max = ysfmax)  
-
-    data = fltarr(ceil(xwd+4)+1, ncol)   ;initialize data array for this order
-    skyv = fltarr(ceil(xwd+4)+1, ncol)   ;... & the background scattered light
-    modl = fltarr(ceil(xwd+4)+1, ncol)   ;... the modelled slit function
-    munc = fltarr(ceil(xwd+4)+1, ncol)   ;... its uncertainty
-    ibeg = fltarr(ncol)                  ;the bottom of the order at each column
-    iend = fltarr(ncol)                  ;... & the top
-
-    ibeg = ceil(ycen-xwd/2.-2) > 0           ;fill ibeg and iend
-    iend = floor(ycen+xwd/2.+2) < (nrow - 1)
-
-    for icol = 0, ncol-1 do begin
-      data[0:iend[icol]-ibeg[icol], icol] = im[icol, ibeg[icol]:iend[icol]] 
-                                ;fill up the data array column-by-column
-      skyv[0:iend[icol]-ibeg[icol], icol] = sky[icol, ibeg[icol]:iend[icol]]
-                                ;and the sky
-      idata = findgen(iend[icol] - ibeg[icol] + 1) + ibeg[icol] - ycen[icol]
-                                ;we'll need this for the next 2 lines
-      modl[0:iend[icol]-ibeg[icol], icol] = interpolate(sf[*, icol], (idata-ysfmin)*osamp) 
-                                ;interpolate between the slitfunction
-                                ;bins in case the slitfunction changes
-                                ;or drifts across the chip
-      munc[0:iend[icol]-ibeg[icol], icol] = interpolate(sfu[*, icol], (idata-ysfmin)*osamp)
-                                ;...and keep track of the uncertianty in
-                                ;the model
-    endfor
-
-
-   if not keyword_set(sig) then sig = 5.  ;make sure we have a threshold.
-
-
-   ;find cosmic rays.
-    optordv, data, modl, munc, tot, stot, sky = skyv, changes = ddata, sig = sig, gain=gain ; /stop
-
-
-                                ; This function performs the actual
-                                ; optimal extraction.  It fits the
-                                ; slit function to the actual data,
-                                ; determines which pixels are affected
-                                ; by cosmic rays, etc., and returns
-                                ; any changes it makes in ddata.  It
-                                ; needs to know the sky to calculate
-                                ; the noise.
-
-    ;store the extracted spectrum for this order
-    spec[*, iord] = tot
-
-    ;load cosmic rays into their original placements on the chip
-    for icol = 0, ncol-1 do begin
-      replace[icol, ibeg[icol]:iend[icol]] = ddata[0:iend[icol]-ibeg[icol], icol]
-    endfor
+        ymin = (ycen - xwd/2.-2) > 0.               ;top and bottom of orders +1 to be safe
+        ymax = (ycen + xwd/2.+2) < (nrow - 1)
+        
+        if max(ymax) eq -0.5 then stop
+        mkslitf, im, sky, ymin, ycen, ymax, yslitf, slitf, sfunc, bincen, mask = mask, fwhm = my_fwhm, gain=gain
+        ;, plot=(iord eq 24)
+        ;   mkslitf determines the slit function for a given order and returns
+        ;   the fwhm of the function in fwhm.
+        ;   throw the plot flag for diagnostics
     
-  endfor
+     
+        fwhms[iord] = my_fwhm          ;save the fwhm from this order
+    
+        nysf = n_elements(yslitf)      ;# of elements in the slitfunction 
+        nbin = n_elements(bincen)      ;# of slitfunctions determined for this order
+    
+        bincol = -.5+findgen(ncol)/(ncol-1.)*nbin ;column numer at centers of 
+                                                              ;slitf bins
+        sf = interpolate(slitf, findgen(nysf), bincol, /grid) ;slit function in each col
+        sfu = interpolate(sfunc, findgen(nysf), bincol, /grid) ;uncertainty in sf
+        osamp = (nysf-1.)/(yslitf[nysf-1]-yslitf[0]) ;calculate oversampling (pix)
+    
+        ysfmin = min(yslitf, max = ysfmax)  
+    
+        data = fltarr(ceil(xwd+4)+1, ncol)   ;initialize data array for this order
+        skyv = fltarr(ceil(xwd+4)+1, ncol)   ;... & the background scattered light
+        modl = fltarr(ceil(xwd+4)+1, ncol)   ;... the modelled slit function
+        munc = fltarr(ceil(xwd+4)+1, ncol)   ;... its uncertainty
+        ibeg = fltarr(ncol)                  ;the bottom of the order at each column
+        iend = fltarr(ncol)                  ;... & the top
+    
+        ibeg = ceil(ycen-xwd/2.-2) > 0           ;fill ibeg and iend
+        iend = floor(ycen+xwd/2.+2) < (nrow - 1)
+    
+        for icol = 0, ncol-1 do begin
+            data[0:iend[icol]-ibeg[icol], icol] = im[icol, ibeg[icol]:iend[icol]] 
+                                      ;fill up the data array column-by-column
+            skyv[0:iend[icol]-ibeg[icol], icol] = sky[icol, ibeg[icol]:iend[icol]]
+                                      ;and the sky
+            idata = findgen(iend[icol] - ibeg[icol] + 1) + ibeg[icol] - ycen[icol]
+                                      ;we'll need this for the next 2 lines
+            modl[0:iend[icol]-ibeg[icol], icol] = interpolate(sf[*, icol], (idata-ysfmin)*osamp) 
+                                      ;interpolate between the slitfunction
+                                      ;bins in case the slitfunction changes
+                                      ;or drifts across the chip
+            munc[0:iend[icol]-ibeg[icol], icol] = interpolate(sfu[*, icol], (idata-ysfmin)*osamp)
+                                      ;...and keep track of the uncertianty in
+                                      ;the model
+        endfor
+    
+    
+       if not keyword_set(sig) then sig = 5.  ;make sure we have a threshold.
+    
+       ;-------------------------------------
+       ;find cosmic rays.
+       ;-------------------------------------
+        optordv, data, modl, munc, tot, stot, sky = skyv, changes = ddata, sig = sig, gain=gain ; /stop
+    
+    
+                                    ; This function performs the actual
+                                    ; optimal extraction.  It fits the
+                                    ; slit function to the actual data,
+                                    ; determines which pixels are affected
+                                    ; by cosmic rays, etc., and returns
+                                    ; any changes it makes in ddata.  It
+                                    ; needs to know the sky to calculate
+                                    ; the noise.
+    
+        ;store the extracted spectrum for this order
+        spec[*, iord] = tot
+    
+        ;load cosmic rays into their original placements on the chip
+        for icol = 0, ncol-1 do begin
+          replace[icol, ibeg[icol]:iend[icol]] = ddata[0:iend[icol]-ibeg[icol], icol]
+        endfor
+    
+  endfor ; End iteration over all orders
 
 print             ;carriage return to stop order count on screen
 

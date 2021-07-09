@@ -152,20 +152,17 @@ while min(good) ne 1 do begin     ;as long as some columns aren't done yet...
   if n_elements(tmp) gt 1 then $
       int[*, ido] = (fltarr(sizes[1])+1.)#tmp $
   else $
-      int[*, ido] = replicate(tmp,sizes[1])
-  
+      int[*, ido] = replicate(tmp,sizes[1]) 
                                 ;fan out the vector tmp into the array int
 
   igd = where ((abs(int[0, ido]-prevint[0, ido])-iint*1.0e-4) lt 0., ngood)
 
                                 ;which columns have converged?
-
   if ngood gt 0 then begin      ;flag them
     good[ido[igd]] = 1
   endif
 
   prevint = int         ; set previous scale factor
-
   iloop = iloop+1      ; increment the loop counter
   
   if iloop gt 9 then begin
