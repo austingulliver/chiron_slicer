@@ -329,6 +329,7 @@ if keyword_set(reduce) then begin
         obnm1=obnm[xsl]     ; Fitlered for mode Observation number
         objnm1=objnm[xsl]   ; Filtered for mode Object name
         
+        
         ;###################################################################################
         ;################## CR Cleaning from : Biases + Flats + Stellar ####################
         ;###################################################################################
@@ -336,16 +337,14 @@ if keyword_set(reduce) then begin
         ; This section was added with the objective to clean CR (get rid of CR) before the actual reduction takes place
         ; This section makes use of the Python bridge. For more information read :https://www.l3harrisgeospatial.com/docs/python.html
 ;        
-        if redpar.remove_crs eq 1  and keyword_Set(combine_stellar) then begin 
+        if redpar.remove_crs eq 1  then begin 
           PRINT, ' '
-          print, 'SORTING-HAT:                    >>> Cleaning CR <<< '
+          print, 'SORTING-HAT:                    >>> Removing Cosmic Rays  <<< '
           print, ' '       
           
-          removeCRs_sigma_clip, redpar, log   
-                                                ; Returns STATUS in case there were not enough files and 
-                                                ; and LaCosmic has to run.    
-                                                ; If remove_cr = 1 then LaCosmic will remove the CR
-                                                ; If remove_cr = 1 then all files were cleaned or all files were already cleaned.      
+          removeCRs_sigma_clip, redpar, log     
+
+              
         endif 
 ;        
 ;        

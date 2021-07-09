@@ -207,7 +207,7 @@ if keyword_set (post_process) then begin
 
       
       
-    new_file_names = list()
+;    new_file_names = list()
         
     foreach structure, stellar_bary_correc do begin ; Iterate of each file to post process 
          
@@ -305,7 +305,7 @@ if keyword_set (post_process) then begin
         if ~file_test(processed_file_path) then spawn, 'mkdir '+ string(34B) + processed_file_path + string(34B)
         path_slides= strsplit(file_name, '\',  /EXTRACT)
         processed_file_path =processed_file_path + path_slides[-1]
-        new_file_names.add, processed_file_path
+;        new_file_names.add, processed_file_path
         writefits,  processed_file_path, new_cube, hd
     
     endforeach
@@ -316,10 +316,10 @@ if keyword_set (post_process) then begin
     ;#########################
     ; If combine_stellar is active then this will take place before creating master file. 
     
-    if ~keyword_set(combine_stellar) and redpar.remove_crs eq 1 then begin 
-      new_file_names = new_file_names.toarray()
-      remove_cr_by_sigma, new_file_names
-    endif
+;    if ~keyword_set(combine_stellar) and redpar.remove_crs eq 1 then begin 
+;      new_file_names = new_file_names.toarray()
+;      remove_cr_by_sigma, new_file_names
+;    endif
 
     
 endif

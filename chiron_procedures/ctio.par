@@ -68,14 +68,10 @@ debug: 0,                                              ; 1 in debug mode, with p
                                                        ;3. Stops in debugging locations. Plots to screen. Prints a lot. 
                                                        ;4. Everything. Run this when CHIRON has been modified to determine new order locations. 
                                                        ;Once finished, copy the new best fit order locations to the "pkcoefs" tag above.
-remove_crs:0,                                          ; Cosmic Rays only get remove from  flats and stellar exposures.
+remove_crs:1,                                          ; Cosmic Rays only get remove from  flats and stellar exposures.
                                                        ; 0 : Do not remove Cosmic Rays 
-                                                       ; 1 : Remove CR's by sigma Clipping. 
-                                                       ;     For individual observations reduction the procedure takes place in the post process section
-                                                       ;     otherwise, takes place prior creating the master file. 
-                                                       ;     If post_process tag is not included, this will not run for individual reduction. Notice the individual process is better behaved that the master.
-                                                       ;     For the individual reduction, It normalizes all spectra before removing crs and replaces valus back . 
-						       ;     In boht scenarios, it only applies when there is 3 o more exposures.  
+                                                       ; 1 : Remove CR's by sigma Clipping. It takes place before reduction and nromalized the images to common value before sigma clipping
+                                                       ;     It runs only when there is 3 o more exposures.  
                                                        ; 2 : Remove CR's using La Cosmic 
                                                        ; 3 : Remove CR's using Yale's legacy code
                                                        ;     Notice, removing CR's using LaCosmic applies to each individual frame. Thus, there is no constraint in the number of frames.

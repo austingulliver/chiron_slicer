@@ -4,8 +4,10 @@
 ; plot all disctibution for sigma clipping :
 
 
-nums=indgen(1170-1159+1) + 1159
-file_names='C:\Users\mrstu\idlworkspace_yalecalibration\chiron\tous\mir7\fitspec\210526\test_delete\no_crs_removed\wchi210526.'+strt(nums)+'.fits'
+;nums=indgen(1170-1159+1) + 1159
+;file_names='C:\Users\mrstu\idlworkspace_yalecalibration\chiron\tous\mir7\fitspec\210526\test_delete\no_crs_removed\wchi210526.'+strt(nums)+'.fits'
+nums=indgen(1160-1157+1) + 1157
+file_names='C:\Users\mrstu\idlworkspace_yalecalibration\chiron\tous\mir7\fitspec\210423\test_delete\no_crs_removed\wchi210423.'+strt(nums)+'.fits'
 
 
 labels = strt(nums)
@@ -31,7 +33,7 @@ endforeach
 
 
 
-file_names_removed='C:\Users\mrstu\idlworkspace_yalecalibration\chiron\tous\mir7\fitspec\210526\test_delete\crs_removed\wchi210526.'+strt(nums)+'.fits'
+file_names_removed='C:\Users\mrstu\idlworkspace_yalecalibration\chiron\tous\mir7\fitspec\210423\test_delete\crs_removed\wchi210423.'+strt(nums)+'.fits'
 
 
 ;p=plot([0],[0], title=' 12 CRS removed Observations for 210526 - 6th blue order')
