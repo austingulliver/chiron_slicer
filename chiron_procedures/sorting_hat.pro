@@ -331,11 +331,10 @@ if keyword_set(reduce) then begin
         
         
         ;###################################################################################
-        ;################## CR Cleaning from : Biases + Flats + Stellar ####################
+        ;################## CR Cleaning from : Flats + Stellar ####################
         ;###################################################################################
 
-        ; This section was added with the objective to clean CR (get rid of CR) before the actual reduction takes place
-        ; This section makes use of the Python bridge. For more information read :https://www.l3harrisgeospatial.com/docs/python.html
+      
 ;        
         if redpar.remove_crs eq 1  then begin 
           PRINT, ' '

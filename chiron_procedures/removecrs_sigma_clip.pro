@@ -10,7 +10,7 @@ function crs_by_clipping, paths, sigma
   compile_opt idl2
 
 
-  if ~keyword_set(sigma) then sigma = 3
+  if ~keyword_set(sigma) then sigma = 2.5
 
   if n_elements(paths) lt 3 then begin
     print, ' '
@@ -57,7 +57,7 @@ function crs_by_clipping, paths, sigma
 
   for index = 0L, n_elements(paths)-1 do begin
     img    = data_cube[*,*,index]
-    goldenFactor =  mean(img, /double) /avg
+    goldenFactor =   mean(img, /double) /avg
     goldenFactors.add,  goldenFactor
     img= img*goldenFactor
     data_cube[*,*,index]   = img

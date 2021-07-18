@@ -68,12 +68,15 @@ debug: 0,                                              ; 1 in debug mode, with p
                                                        ;3. Stops in debugging locations. Plots to screen. Prints a lot. 
                                                        ;4. Everything. Run this when CHIRON has been modified to determine new order locations. 
                                                        ;Once finished, copy the new best fit order locations to the "pkcoefs" tag above.
-remove_crs:1,                                          ; Cosmic Rays only get remove from  flats and stellar exposures.
-                                                       ; 0 : Do not remove Cosmic Rays 
-                                                       ; 1 : Remove CR's by sigma Clipping. It takes place before reduction and nromalized the images to common value before sigma clipping
-                                                       ;     It runs only when there is 3 o more exposures.  
-                                                       ; 2 : Remove CR's using La Cosmic 
-                                                       ; 3 : Remove CR's using Yale's legacy code
+remove_crs:0.5,                                          ; Cosmic Rays only get remove from  flats and stellar exposures.
+                                                       ; 0   : Do not remove Cosmic Rays 
+                                                       ; 0.5 :  Remove CR's by sigma Clipping. It takes place AFTER reduction and normalizes the images to a common value before sigma clipping
+                                                       ;       It runs only when there is 3 o more exposures.This is the preffered method  
+                                                       ; 1   : Remove CR's by sigma Clipping. It takes place before reduction and normalizes the images to a common value before sigma clipping
+                                                       ;       It runs only when there is 3 o more exposures.  
+                                                       ; 2   : Remove CR's using La Cosmic 
+                                                       ; 3   : Remove CR's using Yale's legacy code
+
                                                        ;     Notice, removing CR's using LaCosmic applies to each individual frame. Thus, there is no constraint in the number of frames.
 pixel_not_extracted: -2,                               ; Number of pixels no extracted from the default xwids for each mode. This must be an integer, even number 
                                                        ; E.g. Slice has 12 pixels. If pixel_no_extracted:4 then pixels extracted are 8 (4 up-4 down)
@@ -88,10 +91,12 @@ flat_from_scratch:0,                                   ; If 1 create the master 
 bias_from_scratch: 0,                                  ; If 1 Creates master bias from scratch regardless if such file exists already
     ; x                                           x 
     ;         |   Post Processs  Section   | 
-    ; x                                           x 
-                                                       ; 0 :  Spectra does not get divided by the flat 
-                                                       ; 1 :  Spectra gets divided by Flat . The division takes place AFTER EXTRACTION. To divide BEFORE extraction  look into "flatnorm" and set div_spec_by to 0
-                                                       ; 2 :  Spectra gets divided by SMOOTH Flat . The division takes place AFTER EXTRACTION. To divide BEFORE extraction  look into "flatnorm" and set div_spec_by to 0
-div_spec_by: 0}                                        ; Look at options above.
+    ; x                                           x    ; The following variables will only take place if the post_process tag is added in the reduce_slicer procedure.
+merge_orders: 1,                                       ; If 1: then it merges the individual orders and creates an array as [2,~73x3200]. If 0: no alteration is applied. Expect array as [2,3200,73]
+                                                       ; 0 :  Spectra does get flattened
+                                                       ; 1 :  Spectra gets  flattened. It is divided by the Flat . The division takes place AFTER EXTRACTION. To divide BEFORE extraction  look into "flatnorm" and set div_spec_by to 0
+                                                       ; 2 :  Spectra gets  flattened. It is divided by the SMOOTH Flat . The division takes place AFTER EXTRACTION. To divide BEFORE extraction  set the corresponding option in "flatnorm" and set the variable flat_spec to 0
+                                                       ; 3 :  Spectra gets flattened using the convex hull technique
+flat_spec: 3}                                        ; Look at options above.
 
 

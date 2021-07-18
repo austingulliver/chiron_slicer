@@ -142,72 +142,93 @@ if keyword_set (post_process) then begin
             readcol,logsheet, skip=9, obnm, objnm, bin, slit, ra, dec,  mdpt,  exptm , ccdTem, airMass,juDate,baryCorrec, intensity,f='(a10,     a15,       a8,    a10 ,   a14,   a14,     a28,      a12,     a12,      a10,     a17,    a14 , a17  )'
             
             
-               ;>>  master files 
-               
-               ; Get all bary correction in 1 array
-               ; stellar_bary_correc(Output): is a list wich elements are structures with the format {file_name:obs_file[i] , correction:czi }
-               if keyword_set(combine_stellar) then begin
-
-                   ; Search for master file just created
-                   str_file_type=  redpar.rootdir+ redpar.fitsdir+ redpar.imdir +redpar.prefix_tag+'m'+redpar.prefix+'*.fits'
-                   post_process_files = file_search(str_file_type, count = count_master) ; look for the data files. Name of the file itself
-  
-                   ;Extract File information from those found master file  :
-                   if count_master le 0  then stop, 'reduce_slicer:  STOP : No master files found for post process. Check the files exist within the directory '
-                   stellar_bary_correc=list()
-                   for index = 0L, count_master-1 do begin
-                        file_name =post_process_files[index]
-                        file_name =file_name.extract("[0-9]{4}_[0-9]+")
-                        split = strsplit(file_name, '_', /extract)
-                        obnm_matches = indgen( LONG(split[1]) )+LONG(split[0])
-                        
-                        indices=list()
-                        foreach obnm_candidate, obnm_matches do begin                          
-                          match_idx= where(obnm eq obnm_candidate, nn)                          
-                          if nn gt 0  then indices.Add, match_idx             
-                        endforeach
-                        indices=indices.ToArray() ; All the indices for the current master file  
-                        
-                        bary_corrections= float(baryCorrec[indices])
-                        bary_mean =mean(bary_corrections)
-                        
-                        stellar_bary_correc.add, {file_name:post_process_files[index] , correction:bary_mean}
-
-
-                   endfor
-                   
-            
-
-             
-             endif else begin
-                  ; >> For all individual files  
-                  bary_indices = where(float(baryCorrec) ne 0.0, c_bary )
-                  if c_bary le 0 then stop, 'reduce_slicer:  STOP : No barycentric correction were identifies from the .log file. '
-                  obnm = obnm[ bary_indices]
-                  baryCorrec = baryCorrec[bary_indices]
-                  stellar_bary_correc=list()
-    
-                  for index = 0L, n_elements(obnm)-1 do begin
-                    stellar_bary_correc.Add, {file_name:redpar.prefix+strt(obnm[index])+'.fits' , correction:baryCorrec[index] } ; Meant to be output
-                  endfor
+           ;>>  master files 
            
-              
-             endelse
+           ; Get all bary correction in 1 array
+           ; stellar_bary_correc(Output): is a list wich elements are structures with the format {file_name:obs_file[i] , correction:czi }
+           if keyword_set(combine_stellar) then begin
+
+               ; Search for master file just created
+               str_file_type=  redpar.rootdir+ redpar.fitsdir+ redpar.imdir +redpar.prefix_tag+'m'+redpar.prefix+'*.fits'
+               post_process_files = file_search(str_file_type, count = count_master) ; look for the data files. Name of the file itself
+
+               ;Extract File information from those found master file  :
+               if count_master le 0  then stop, 'reduce_slicer:  STOP : No master files found for post process. Check the files exist within the directory '
+               stellar_bary_correc=list()
+               for index = 0L, count_master-1 do begin
+                    file_name =post_process_files[index]
+                    file_name =file_name.extract("[0-9]{4}_[0-9]+")
+                    split = strsplit(file_name, '_', /extract)
+                    obnm_matches = indgen( LONG(split[1]) )+LONG(split[0])
+                    
+                    indices=list()
+                    foreach obnm_candidate, obnm_matches do begin                          
+                      match_idx= where(obnm eq obnm_candidate, nn)                          
+                      if nn gt 0  then indices.Add, match_idx             
+                    endforeach
+                    indices=indices.ToArray() ; All the indices for the current master file  
+                    
+                    bary_corrections= float(baryCorrec[indices])
+                    bary_mean =mean(bary_corrections)
+                    
+                    stellar_bary_correc.add, {file_name:post_process_files[index] , correction:bary_mean}
+
+
+               endfor
+               
+        
+
+         
+         endif else begin
+              ; >> For all individual files  
+              bary_indices = where(float(baryCorrec) ne 0.0, c_bary )
+              if c_bary le 0 then stop, 'reduce_slicer:  STOP : No barycentric correction were identifies from the .log file. '
+              obnm = obnm[ bary_indices]
+              baryCorrec = baryCorrec[bary_indices]
+              stellar_bary_correc=list()
+
+              for index = 0L, n_elements(obnm)-1 do begin
+                stellar_bary_correc.Add, {file_name:redpar.prefix+strt(obnm[index])+'.fits' , correction:baryCorrec[index] } ; Meant to be output
+              endfor
+       
+          
+         endelse
              
     
       
-;         endif
    
    
+   
+   
+    ;#########################
+    ;# Remove CRs ONLY if individual spectra is been reduced
+    ;#########################
+    ; If combine_stellar is active then this will take place before creating master file.
+    ; Cosmic Rays are removed  prior to any other post processing step 
     
-     
+    if ~keyword_set(combine_stellar) and redpar.remove_crs eq 0.5 then begin
+      
+         all_file_names = list()
+        ;1.  Gather all file names 
+        foreach structure, stellar_bary_correc do begin
+            file_name= redpar.rootdir+ redpar.fitsdir+ redpar.imdir +redpar.prefix_tag +strtrim(structure.file_name,2)     
+            all_file_names.add, file_name
+        endforeach
+        all_file_names = all_file_names.toarray()
+  
+        ;2.  Remove CRs      
+        !null = remove_cr_by_sigma(all_file_names) ; The files themselves get updated. So files in the folder fitspec get updated 
+    endif
+    
+    
+
 
     
 
 
       
       
-;    new_file_names = list()
+    
         
     foreach structure, stellar_bary_correc do begin ; Iterate of each file to post process 
          
@@ -220,8 +241,19 @@ if keyword_set (post_process) then begin
          ;Read data: this data is the output of sorting_hat
          new_cube = readfits(file_name, hd) ; recall data come in the form [2,4112,74] where [0,*,*] -> wavelength          
          
+         n_orders =(size(new_cube))[3]
          
          
+         ;#########################
+         ;# Flattend the spectrum usign the convex hull technique.
+         ;#########################
+         ; For the algortihim to work properly it's neccesary to 
+         if redpar.flat_spec eq 3 then begin
+             for order = 0L, n_orders-1 do begin
+               new_cube[1,*,order] = flat_spectrum(new_cube[1,*,order]) ; reliable as far as there are no CRs
+           endfor
+         endif
+
          
 
       
@@ -248,11 +280,11 @@ if keyword_set (post_process) then begin
         
         
         ;#####################################################
-        ;# 3) Flattened spectrum after extraction 
+        ;# 3) Flattened spectrum after extraction : using divition by  flats
         ;#####################################################
         
         ; to finish 
-        if redpar.div_spec_by gt 0 then begin 
+        if redpar.flat_spec eq 1 or  redpar.flat_spec eq 2 then begin 
           produce_cube_flats, night
           
           flat_names= ['_flat.fits', '_smooth_flat.fits']
@@ -295,31 +327,65 @@ if keyword_set (post_process) then begin
 
         
        
-       
-        
         ;#####################################################
-        ;# 4) Store in directory  post_procesed
+        ;# 4) Merge them
         ;#####################################################
+      
+        if  redpar.merge_orders eq 1 then begin
+          ; join all orders in one big 2 dimensional array
+          ; or order = 0L, n_orders-1 do begin
+            all_wavelengths =[]
+            all_intensities =[]
+            for order = 0L, n_orders-1 do begin
+                intensities = REFORM( new_cube[1,*,order] )
+                wavelengths = reform( new_cube[0,*,order] )
+                ; -----
+                ; Check for intersection for MERGING
+                ; -----
+                if order gt 0 then begin
+                  if prev_wavalengths[-1] gt wavelengths[0]  then begin
+                    ;These orders intersect. We keep the prev_intensities. Thus, cut the intentisities at index target
+                    diffs =  wavelengths-prev_wavalengths[-1]
+                    diff_idxs = where(diffs ge 0 , ns)
+                    intensities = reform( intensities [ diff_idxs[0]: * ] )
+                    wavelengths = reform( wavelengths [ diff_idxs[0]: * ] )
+                  endif
+                endif
+      
+                prev_wavalengths = wavelengths
+                all_wavelengths  = reform( [ all_wavelengths , wavelengths ] )
+                all_intensities  = reform( [ all_intensities, intensities ] )
+            endfor
+            
+            new_cube = make_array(2, n_elements(all_intensities), /double   ) ; not a cube anymore but we maintain the same notation.
+            new_cube[0,*] = all_wavelengths
+            new_cube[1,*] = all_intensities
+            
+        endif
+            
+            ;p=plot(wavelengths,intensities, /overplot  ) ;, title=t)
+    
+          
+      
+          ;#####################################################
+          ;# 4) Store in directory  post_procesed
+          ;#####################################################
+          ; Store them individual_in new_folder
+          
+          processed_file_path =  redpar.rootdir + redpar.fitsdir + redpar.imdir  +'post_processed\'
+          if ~file_test(processed_file_path) then spawn, 'mkdir '+ string(34B) + processed_file_path + string(34B)
+          path_slides= strsplit(file_name, '\',  /EXTRACT)
+          processed_file_path =processed_file_path + path_slides[-1]
 
-        processed_file_path =  redpar.rootdir + redpar.fitsdir + redpar.imdir  +'post_processed\'        
-        if ~file_test(processed_file_path) then spawn, 'mkdir '+ string(34B) + processed_file_path + string(34B)
-        path_slides= strsplit(file_name, '\',  /EXTRACT)
-        processed_file_path =processed_file_path + path_slides[-1]
-;        new_file_names.add, processed_file_path
-        writefits,  processed_file_path, new_cube, hd
+          writefits,  processed_file_path, new_cube, hd
+        
+
+     
     
     endforeach
     
     
-    ;#########################
-    ;# 4) Remove CRs ONLY if individual spectra is been reduced
-    ;#########################
-    ; If combine_stellar is active then this will take place before creating master file. 
-    
-;    if ~keyword_set(combine_stellar) and redpar.remove_crs eq 1 then begin 
-;      new_file_names = new_file_names.toarray()
-;      remove_cr_by_sigma, new_file_names
-;    endif
+  
 
     
 endif
