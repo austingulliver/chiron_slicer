@@ -70,15 +70,15 @@ function flat_spectrum, intensities
 
   hull = hull.ToArray()  ; May have to delete the first and las element from here
 
-  ;  p=plot(intensities, title='Convex Hull Algorithm : Hull Creation  ')
-  ;  p=scatterplot(hull , intensities[hull], SYMBOL='square',  /overplot)
+    p=plot(intensities, title='Convex Hull Algorithm : Hull Creation  ')
+    p=scatterplot(hull , intensities[hull], SYMBOL='square',  /overplot)
 
 
   ; Interpolate all hull pixels
   hull = hull[sort(hull)]
   res_hull= interpol(intensities[hull],  hull, all_indices)
 
-  ;  p=plot(idx , res_hull, color= 'rd',  /overplot) ; Plotting all interpolated values
+    p=plot(all_indices , res_hull, color= 'rd',  /overplot) ; Plotting all interpolated values
 
 
   ;-----------------------------
@@ -120,12 +120,12 @@ function flat_spectrum, intensities
 
   ;  ;p=plot(idx, order/res) ; result
   ;  tt= 'Interpolated Hull : 1 pixel every '+ strt(window_size)
-  ;  p=plot(order, title=tt )
-  ;  p=plot(idx,final_hull,  color ='blue' ,/overplot)
-  ;
-  ;  p=plot(mfIndices, order[mfIndices] , SYMBOL='square' , /overplot)
-  ;
-  ;  p=plot(order/final_hull, title ='Flattened Order ')
+    p=plot(intensities, title=tt )
+    p=plot(all_indices,final_hull,  color ='blue' ,/overplot)
+  
+    p=plot(mfIndices, intensities[mfIndices] , SYMBOL='square' , /overplot)
+  
+   p=plot(intensities/final_hull, title ='Flattened Order ')
 
   return, intensities/final_hull
 
@@ -160,22 +160,22 @@ for order = 0L, n_orders-1 do begin
 
   intensities = flat_spectrum(yprime[1,*,order])
   wavelengths = yprime[0,*,order]
-  ; -----
-  ; Check for intersection for MERGING 
-  ; -----
-  if order gt 0  then begin
-    if prev_wavalengths[-1] gt wavelengths[0]  then begin
-      ;These orders intersect. We keep the prev_intensities. Thus, cut the intentisities at index target
-      diffs =  wavelengths-prev_wavalengths[-1]
-      diff_idxs =where(diffs ge 0 , ns)
-      intensities = intensities[diff_idxs[0]: * ]
-      wavelengths = wavelengths[diff_idxs[0]: * ]
-
-    endif
-  endif
-
-  prev_wavalengths=wavelengths
-  p=plot(wavelengths,intensities, /overplot  ) ;, title=t)
+;  ; -----
+;  ; Check for intersection for MERGING 
+;  ; -----
+;  if order gt 0  then begin
+;    if prev_wavalengths[-1] gt wavelengths[0]  then begin
+;      ;These orders intersect. We keep the prev_intensities. Thus, cut the intentisities at index target
+;      diffs =  wavelengths-prev_wavalengths[-1]
+;      diff_idxs =where(diffs ge 0 , ns)
+;      intensities = intensities[diff_idxs[0]: * ]
+;      wavelengths = wavelengths[diff_idxs[0]: * ]
+;
+;    endif
+;  endif
+;
+;  prev_wavalengths=wavelengths
+ ; p=plot(wavelengths,intensities, /overplot  ) ;, title=t)
 
 endfor
 
