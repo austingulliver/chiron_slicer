@@ -68,6 +68,14 @@ function convex_hull, intensities, x_values
   endwhile
 
   hull = hull.ToArray()  ; May have to delete the first and las element from here
+  
+  
+  ; Add the first and last pixels in case they were not included.
+  dummy=where(hull eq 0, nEnd)
+  if nEnd eq 0 then hull= [hull,[0]]
+  dummy=where(hull eq n_elements(intensities), nEnd)
+  if nEnd eq 0 then hull= [hull,[n_elements(intensities)]]
+
 
 
   return, hull
@@ -137,9 +145,9 @@ end
 ; :Description:
 ; Given an array (intenstities) this procesdure does the following
 ; 1. Applys a convex hull
-; 2. Interpolates to all points based on the convex hull choosen points.
-; 3. Create bins every 100 pixels, for every bin select pixel closest to the convex hull values
-; 4. Used values found in 3 to interpolate for all values.
+; 2. Interpolates (Hermite Polynomials) to all points based on the convex hull choosen points.
+; 3. Create bins every 100 pixels, for every bin, it selects the pixel closest to the convex hull values
+; 4. Using 3, it intorpolates for all values.
 ;
 ;
 ;-
@@ -154,104 +162,145 @@ function flat_spectrum, intensities
   ;  Convex Hull algorithim
   ;-----------------------------
   hull = convex_hull( intensities, all_indices)
+  hull = hull[sort(hull)]
   
-  
-
-  p=plot(intensities, title='Convex Hull Algorithm : Hull Creation  ')
-  p=scatterplot(hull , intensities[hull], SYMBOL='square',  /overplot)
+;  p=plot(intensities, title='Convex Hull Algorithm : Hull Creation  ')
+;  p=scatterplot(hull , intensities[hull], SYMBOL='square',  /overplot)
 
 
-  ; Interpolate all hull pixels
-   hull = hull[sort(hull)]
-   res_hull= interpol(intensities[hull],  hull, all_indices)
+; >>  Interpolate all hull pixels   
+; res_hull= interpol(intensities[hull],  hull, all_indices) ;testing for hermite spline rather than linera interpolation
+  res_hull =  Hermite( hull, intensities[hull], all_indices)
 
-    p=plot(all_indices , res_hull, color= 'rd',  /overplot) ; Plotting all interpolated values
+;  p=plot(all_indices , res_hull, color= 'rd',  /overplot) ; Plotting all interpolated values
 
 
   ;-----------------------------
   ;  Further Processing
   ;-----------------------------
   ; every window_size pixels, pick a pixel which its difference is the lowest between the hull and spectrum
-
-
-
+  ; IFF there is no point already recorderd by the hull 
+  ;iterate over the windows if there are points in the hull that match with the window range then take them all 
+  ; otherwise pick them from proximity to res_hull
+  
+  
   mfIndices =list()
   window_size=100
   n_windows  = round( n_elements(intensities)/window_size )
-  mfIndices.add, 0
-  counter=0
+  n_window=0
 
-  while (n_windows gt  counter) do begin
-
-    ref = window_size *counter
-    spectralWindow = intensities[ref:ref+window_size-1]
-    hullWindow = res_hull[ref:ref+window_size-1]
-    diff = hullWindow - spectralWindow  ; best case scenario equals 0
-    dummy=min(diff, min_idx)
-
-    mfIndices.add, ref+min_idx
-    counter=counter+1
-
+  while (n_windows gt  n_window) do begin
+    
+    ref            = window_size *n_window    
+    window_lower = ref
+    window_upper = ref+window_size-1    
+    
+    idxs_in_range = where( hull ge window_lower and hull le window_upper, n_in_window )
+    
+    if n_in_window gt 0 then begin
+      ;Simply add the indices that already exist in the hull    
+      for index = 0L, n_in_window-1 do begin ;Adding all to the list 
+        mfIndices.add, hull[idxs_in_range[index]]
+      endfor      
+    endif else begin
+      ;Pick the indices by proximity
+      spectralWindow = intensities[window_lower:window_upper]
+      hullWindow     = res_hull[window_lower:window_upper]
+      diff = hullWindow-spectralWindow
+      dummy=min(diff, min_idx) ; finding the closest
+      mfIndices.add, ref+min_idx
+    endelse
+    n_window=n_window+1
   endwhile
-
-
+  
+  
+  ; Adding the last one in case was lost it
   mfIndices= mfIndices.toArray()
-  final_hull= interpol(intensities[mfIndices], mfIndices,  all_indices) ; Final points to be used
+  mfIndices = mfIndices[sort(mfIndices)]
+  dummy=where(mfIndices eq n_elements(intensities), nEnd)
+  if nEnd eq 0 then mfIndices= [mfIndices,[n_elements(intensities)]]
+  
+   
+  ;  ----- End of Further Processing ------
 
+
+
+
+
+  ; >>Interpolate again but now with more points : Needed to get the concave part of the Spectrum
+  ;final_hull= interpol(intensities[mfIndices], mfIndices,  all_indices) ; Final points to be used
+   final_hull =  Hermite( mfIndices, intensities[mfIndices], all_indices)
 
   
+  ;-----------------------------
+  ;  Last Fix
+  ;-----------------------------
+  ;  In case there are any values for which the interpolation is lower
   diff= final_hull -intensities
   replace_idxs = where(diff < 0.0 )
   
   extra_indices= select_neighbors( intensities, replace_idxs )
   mfIndices = [mfIndices, extra_indices]
-  
-  
   mfIndices = mfIndices[sort(mfIndices)]
-  final_hull= interpol(intensities[mfIndices], mfIndices,  all_indices)
   
-  ;Only for comparison purposes, when using spline 
+  ; and delete any values for which its intenstities form a valley 
+  
+  tempo_mfIndices =list()
+  for idx_tempo = 0L, n_elements(mfIndices)-2 do begin
+    
+    if idx_tempo eq 0 or idx_tempo eq  n_elements(mfIndices)-2 then begin
+      tempo_mfIndices.add, mfIndices[idx_tempo]
+    endif else begin
+      if  ~(intensities[ mfIndices[idx_tempo] ] lt intensities[ mfIndices[idx_tempo -1] ] and intensities[ mfIndices[idx_tempo+1] ] gt intensities[ mfIndices[idx_tempo ] ] ) then tempo_mfIndices.add, mfIndices[idx_tempo]
+    endelse
+    
+
+  endfor
+  
+  tempo_mfIndices= tempo_mfIndices.toarray()
+  mfIndices = tempo_mfIndices
+  dummy=where(mfIndices eq n_elements(intensities), nEnd)
+  if nEnd eq 0 then mfIndices= [mfIndices,[n_elements(intensities)]]
+  
+
+  
+  
+  
+  
+  
+
+  
+  
+  ; >> Last interpolation
+  final_hull = Hermite( mfIndices, intensities[mfIndices], all_indices) 
+;  When using spline  : hermitina 1 and 2nd derivites match. Shows to be better than spline and interpol
   final_hull_spline = SPLINE( mfIndices, intensities[mfIndices], all_indices)
-  ;-----------------------------
-  ;  Extra:  asure all values over spectra
-  ;-----------------------------
-;  diff= final_hull -intensities 
-;  replace_idxs = where(diff < 0.0 )
-;  mfIndices=[mfIndices,replace_idxs]
-;  
-;  mfIndices=mfIndices[SORT(mfIndices)]
-;  
-;;  ; key part : Make all the other points
-;;  mean_in_x =mean(mfIndices)
-;;  mena_in_y =mean(intensities[mfIndices] )
-;;  ;Make eveything tobe in the middle except for mfIndices
-;  
-;  smooth_intensities= interpol(intensities[mfIndices],  mfIndices, all_indices)
-;  
-;  mfIndices = convex_hull( smooth_intensities,   all_indices) ; applying convex hull with rectified indices
-  
-  
-;  final_hull= interpol(intensities[mfIndices], mfIndices,  all_indices)
-  
+  ;final_hull_linear= interpol(intensities[mfIndices], mfIndices,  all_indices)
+
+   
+   
+
 
   ;-----------------------------
   ;  Plotting : Troubshooting
   ;-----------------------------
 
 
-  ;  ;p=plot(idx, order/res) ; result
-    tt= 'Interpolated Hull : 1 pixel every '+ strt(window_size) + ' using Linear interpolation '
-    p=plot(intensities, title=tt )
-    p=plot(all_indices,final_hull,  color ='blue' ,/overplot)  
-    p=plot(mfIndices, intensities[mfIndices] , SYMBOL='square' , /overplot)
-    p=plot(intensities/final_hull, title ='Flattened Order : Linear interpolation')
+    ;p=plot(idx, order/res) ; result
+;    tt= 'Interpolated Hull : 1 pixel every '+ strt(window_size) + ' using Hemitian Spline interpolation '
+;    p=plot(intensities, title=tt )
+;    p=plot(all_indices,final_hull, thick=2, color ='blue' ,/overplot)  
+;    p=plot(all_indices, final_hull_spline , LINESTYLE=3, color='red', /overplot)
+;    p=plot(mfIndices, intensities[mfIndices] , SYMBOL='square' ,  LINESTYLE=2,  /overplot)
+;    
+;    p=plot(intensities/final_hull, title ='Flattened Order : Linear interpolation')
+;   
    
-   
-   ; Spline comparable PLOTs
-   p=plot(intensities, title='usign Spline' )
-   p=plot(all_indices,final_hull_spline,  color ='blue' ,/overplot)  
-   p=plot(mfIndices, intensities[mfIndices] , SYMBOL='square' , /overplot)
-   p=plot(intensities/final_hull_spline, title ='Flattened Order : Spline interpolation')
+  ;  Spline comparable PLOTs
+;   p=plot(intensities, title='usign Spline' )
+;   p=plot(all_indices,final_hull_spline,  color ='blue' ,/overplot)  
+;   p=plot(mfIndices, intensities[mfIndices] , SYMBOL='square' , /overplot)
+;   p=plot(intensities/final_hull_spline, title ='Flattened Order : Linear  interpolation')
 
   return, intensities/final_hull
 
@@ -279,9 +328,9 @@ sz =size(y)
 n_orders= sz[2]
 n_pixels=sz[1]
 
-
+ ;Uncomment for plotting 1 order
 ; One order : 
-order=  4;  Hydrogen line problem - > 6;21
+order= 3;  Hydrogen line problem - > 6;21
 
 intensities = flat_spectrum(yprime[1,*,order])
 wavelengths = yprime[0,*,order]
@@ -289,7 +338,7 @@ wavelengths = yprime[0,*,order]
 p=plot(intensities, /overplot  )
 
 
-;Uncomment for All Orders
+;;Uncomment for All Orders
 ;
 ;for order = 0L, n_orders-1 do begin
 ;
@@ -310,10 +359,10 @@ p=plot(intensities, /overplot  )
 ;;  endif
 ;;
 ;;  prev_wavalengths=wavelengths
-; ; p=plot(wavelengths,intensities, /overplot  ) ;, title=t)
-;
+;   p=plot(wavelengths,intensities, /overplot  ) ;, title=t)
+
 ;endfor
-;
+
 
 
 
