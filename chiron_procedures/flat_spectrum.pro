@@ -164,15 +164,15 @@ function flat_spectrum, intensities
   hull = convex_hull( intensities, all_indices)
   hull = hull[sort(hull)]
   
-;  p=plot(intensities, title='Convex Hull Algorithm : Hull Creation  ')
-;  p=scatterplot(hull , intensities[hull], SYMBOL='square',  /overplot)
+  p=plot(intensities, title='Convex Hull Algorithm : Hull Creation  ')
+  p=scatterplot(hull , intensities[hull], SYMBOL='square',  /overplot)
 
 
 ; >>  Interpolate all hull pixels   
 ; res_hull= interpol(intensities[hull],  hull, all_indices) ;testing for hermite spline rather than linera interpolation
   res_hull =  Hermite( hull, intensities[hull], all_indices)
 
-;  p=plot(all_indices , res_hull, color= 'rd',  /overplot) ; Plotting all interpolated values
+  p=plot(all_indices , res_hull, color= 'rd',  /overplot) ; Plotting all interpolated values
 
 
   ;-----------------------------
@@ -286,15 +286,15 @@ function flat_spectrum, intensities
   ;-----------------------------
 
 
-    ;p=plot(idx, order/res) ; result
-;    tt= 'Interpolated Hull : 1 pixel every '+ strt(window_size) + ' using Hemitian Spline interpolation '
-;    p=plot(intensities, title=tt )
-;    p=plot(all_indices,final_hull, thick=2, color ='blue' ,/overplot)  
-;    p=plot(all_indices, final_hull_spline , LINESTYLE=3, color='red', /overplot)
-;    p=plot(mfIndices, intensities[mfIndices] , SYMBOL='square' ,  LINESTYLE=2,  /overplot)
-;    
-;    p=plot(intensities/final_hull, title ='Flattened Order : Linear interpolation')
-;   
+ ;   p=plot(idx, order/res) ; result
+    tt= 'Interpolated Hull : 1 pixel every '+ strt(window_size) + ' using Hemitian Spline interpolation '
+    p=plot(intensities, title=tt )
+    p=plot(all_indices,final_hull, thick=2, color ='blue' ,/overplot)  
+    p=plot(all_indices, final_hull_spline , LINESTYLE=3, color='red', /overplot)
+    p=plot(mfIndices, intensities[mfIndices] , SYMBOL='square' ,  LINESTYLE=2,  /overplot)
+    
+    p=plot(intensities/final_hull, title ='Flattened Order : Linear interpolation')
+   
    
   ;  Spline comparable PLOTs
 ;   p=plot(intensities, title='usign Spline' )
@@ -330,7 +330,7 @@ n_pixels=sz[1]
 
  ;Uncomment for plotting 1 order
 ; One order : 
-order= 3;  Hydrogen line problem - > 6;21
+order= 6;  Hydrogen line problem - > 6;21
 
 intensities = flat_spectrum(yprime[1,*,order])
 wavelengths = yprime[0,*,order]
