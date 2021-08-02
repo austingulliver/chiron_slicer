@@ -288,7 +288,7 @@ if keyword_set (post_process) then begin
           produce_cube_flats, night
           
           flat_names= ['_flat.fits', '_smooth_flat.fits']
-          name = strt(night)+flat_names[redpar.div_spec_by -1]
+          name = strt(night)+flat_names[redpar.flat_spec -1]
           name = redpar.rootdir+ redpar.flatdir+ 'cube_flats\'  +name
           
           flat=readfits(name)  ; reads 2 x 3200 x 73
