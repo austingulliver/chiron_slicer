@@ -21,14 +21,15 @@ pro getarc_slicer,  im, orc, orderNum, redpar, arc, ybi, yti
   arc=ix*0.0                      ;dimension arc vector   (Vector 4112 filled with 0s)
 
 
-  yti = orc[orderNum, * ] +  round((order_width/2.0) - 1 ) ; The y index values of the TOP edge of the order
+  yti = reform( orc[orderNum, * ] +  round((order_width/2.0) - 1 ) ) ; The y index values of the TOP edge of the order
   ; If full slicer then  round((order_width/2.0) - 1 ) = 5
 
-  ybi = orc[orderNum, * ]   - round(order_width/2.0)    ; The y index values of the BOTTOM edge of the order
+  ybi = reform( orc[orderNum, * ]   - round(order_width/2.0)  )  ; The y index values of the BOTTOM edge of the order
   ; If full slicer then round(order_width/2.0) = 6
 
 
   ; The min and max value of min(ybi),max(yti) implicently define the swath to be considered
+
 
   for row=min(ybi),max(yti) do begin    ;loop through valid rows
     srow=im[*,row]        ;get CCD row : vector  along the dispersion direction. Contains some pixels than actually are within the order ( the others are background)

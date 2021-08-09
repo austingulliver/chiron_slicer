@@ -68,7 +68,7 @@ debug: 0,                                              ; 1 in debug mode, with p
                                                        ; 3. Stops in debugging locations. Plots to screen. Prints a lot. 
                                                        ; 4. Everything. Run this when CHIRON has been modified to determine new order locations. 
                                                        ; Once finished, copy the new best fit order locations to the "pkcoefs" tag above.
-remove_crs:0.5,                                        ; Cosmic Rays only get removed from  flats and stellar exposures.
+remove_crs:0,                                        ; Cosmic Rays only get removed from  flats and stellar exposures.
                                                        ; 0   : Do not remove Cosmic Rays 
                                                        ; 0.5 : Remove CR's by sigma Clipping. It takes place AFTER reduction and normalizes the images to a common value before sigma clipping
                                                        ;       It runs only when there is three or more exposures. This is the preffered method. This runs ONLY if the post_process tag is passed to reduce_slicer
@@ -81,7 +81,7 @@ remove_crs:0.5,                                        ; Cosmic Rays only get re
 pixel_not_extracted: -2,                               ; Number of pixels not extracted from the default xwids for each mode. This must be an even integer 
                                                        ; e.g. slicer normally has 12 pixels. If pixel_no_extracted is 4 then pixels extracted are 8 (4 up-4 down)
                                                        ; If int is negative then it will extract more pixel e.g. if -2 then for slicer it will extract 7 up and 7 down 
-use_prev_tracing: 0,                                   ; If 1 then it used the previous order tracing stored. Only use if such file exist. Default value is 0
+use_prev_tracing: 1,                                   ; If 1 then it used the previous order tracing stored. Only use if such file exist. Default value is 0
                                                        ; the following options apply for the master_bias, master_flat, master_stellar. The possible options are : 'median' , 'mean' ,'sum' , 'bayesian'
                                                        ; 'abs_error' , 'squared_error' and 'bayesian' . For more information about each one read the procedure weighted_master_frame.pro
 master_bias:'median',                                  ; can only take two string values 'median' or 'mean'. Used to calculate the mean/median of all bias frames and create master bias.
@@ -100,6 +100,7 @@ merge_orders:0,                                        ; if 1, then it merges th
                                                        ; if 2, spectra are flattened. It is divided by the SMOOTH Flat . The division takes place AFTER EXTRACTION. To divide BEFORE extraction set the corresponding
                                                        ;       option in "flatnorm" and set the variable flat_spec to 0
                                                        ; if 3, spectra ate flattened using the convex hull technique
-flat_spec: 0}                                          ; look at options above.
+flat_spec: 2
+}                                          ; look at options above.
 
 

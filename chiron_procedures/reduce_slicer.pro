@@ -182,7 +182,7 @@ if keyword_set (post_process) then begin
          endif else begin
               ; >> For all individual files  
               bary_indices = where(float(baryCorrec) ne 0.0, c_bary )
-              if c_bary le 0 then stop, 'reduce_slicer:  STOP : No barycentric correction were identifies from the .log file. '
+              if c_bary le 0 then stop, 'reduce_slicer:  STOP : No barycentric corrections were identified from the .log file. '
               obnm = obnm[ bary_indices]
               baryCorrec = baryCorrec[bary_indices]
               stellar_bary_correc=list()

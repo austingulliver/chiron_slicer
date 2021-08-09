@@ -95,6 +95,7 @@ if (mode eq 'slicer') then begin
   ; For the slicer mode only the extraction takes place in here rather than invoking getarc.pro 
   for orderNum=0,redpar.nords -1  do begin
         
+        
          ; Already giving back vector (double) which corresponds to the boxcar extraction 
          ; of that order.
        getarc_slicer,  im, orc, orderNum, redpar, arc, ybi, yti       

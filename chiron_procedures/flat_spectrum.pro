@@ -132,10 +132,6 @@ function select_neighbors, all_intensities, x_values
 
   
 
-  
-  
-
-
   return, selected_indices.toarray()
 end
 
