@@ -423,15 +423,39 @@ if keyword_set(combine_stellar) then begin
          n_col = sz[1]          ;# columns in image
          n_row = sz[2]          ;# rows in image
          data_cube =  dblarr(   n_col,n_row, nrec)
+         
+         
+         avgs =list() ; average of each image
 
          FOR i=0,nrec-1 do begin ; Iterate over every Stellar image
            data = double(readfits( spfnames[i], hd))
            data_cube[*,*,i] = data
+           avgs.add,  mean( data_cube[*,*,i], /double)
          ENDFOR
 
          nsize = size(data_cube)
          combined_files= nsize[3]
          combined_files = strtrim(string(combined_files), 1)
+         
+         ; ##########################################
+         ; Extra step to scale iamges before operation
+         ; ##########################################
+         ; At this point I have ther master flat as a cube
+         avgs = avgs.toarray()
+         common_avg  = mean(avgs, /double) ; used as a master average. This is the common level for all iamges to scale to
+
+
+
+         ;>>Scaling image per image
+         for index = 0L,  nrec -1 do begin
+           img           = data_cube[*,*,index]
+           goldenFactor  =   mean(img, /double) /common_avg
+           img= img*goldenFactor
+           data_cube[*,*,index]   = img
+         endfor
+
+
+
 
 
 

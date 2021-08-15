@@ -68,7 +68,7 @@ debug: 0,                                              ; 1 in debug mode, with p
                                                        ; 3. Stops in debugging locations. Plots to screen. Prints a lot. 
                                                        ; 4. Everything. Run this when CHIRON has been modified to determine new order locations. 
                                                        ; Once finished, copy the new best fit order locations to the "pkcoefs" tag above.
-remove_crs:0,                                        ; Cosmic Rays only get removed from  flats and stellar exposures.
+remove_crs:0.5,                                        ; Cosmic Rays only get removed from  flats and stellar exposures.
                                                        ; 0   : Do not remove Cosmic Rays 
                                                        ; 0.5 : Remove CR's by sigma Clipping. It takes place AFTER reduction and normalizes the images to a common value before sigma clipping
                                                        ;       It runs only when there is three or more exposures. This is the preffered method. This runs ONLY if the post_process tag is passed to reduce_slicer
@@ -100,7 +100,7 @@ merge_orders:0,                                        ; if 1, then it merges th
                                                        ; if 2, spectra are flattened. It is divided by the SMOOTH Flat . The division takes place AFTER EXTRACTION. To divide BEFORE extraction set the corresponding
                                                        ;       option in "flatnorm" and set the variable flat_spec to 0
                                                        ; if 3, spectra ate flattened using the convex hull technique
-flat_spec: 2
+flat_spec: 0
 }                                          ; look at options above.
 
 

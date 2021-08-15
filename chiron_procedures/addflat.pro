@@ -34,6 +34,7 @@ normvalarr = 0d
 ctwf=0   
 fspot = 0 ;index the im array data cube
 
+avgs =list() ; average of each image
 
 print, 'ADDFLAT: Reading all flats. Please wait ........'
 for j = 0, numwf-1 do begin ; For each flat file
@@ -54,6 +55,9 @@ for j = 0, numwf-1 do begin ; For each flat file
   	endif 
   	
     im_arr1[*,*,fspot] = im/normval   ;Storing in normalized cube format . In case of no-normalized then div by 1 makes no difference  
+    
+    avgs.add,  mean( im_arr1[*,*,fspot], /double)
+    
     if (normval ge redpar.minflatval) or (redpar.flatnorm le 2 ) then begin      
         fspot++                      ; this will overwrite a file if such normval was less than MINFLATVAL 
     endif
@@ -81,6 +85,28 @@ if  (redpar.flatnorm eq 3)  or (redpar.flatnorm eq 4 ) then begin
     im_arr =  im_arr *mean_normal
   
 endif else im_arr = im_arr1      ;When no normalization is applied
+
+
+
+
+
+
+; ##########################################
+; Extra step to scale iamges before operation
+; ##########################################
+; At this point I have ther master flat as a cube 
+avgs = avgs.toarray()
+common_avg  = mean(avgs, /double) ; used as a master average. This is the common level for all iamges to scale to
+
+
+
+;>>Scaling image per image
+for index = 0L, numwf-1 do begin  
+    img           = im_arr[*,*,index]
+    goldenFactor  =   mean(img, /double) /common_avg
+    img= img*goldenFactor
+    im_arr[*,*,index]   = img
+endfor
 
 
 
