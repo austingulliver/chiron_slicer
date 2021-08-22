@@ -235,13 +235,18 @@ if keyword_set (post_process) then begin
          
          if ~keyword_set(combine_stellar) then begin 
           ; Modifying path of individual files since they have the path of prev rar directory
-              file_name= redpar.rootdir+ redpar.fitsdir+ redpar.imdir +redpar.prefix_tag +strtrim(structure.file_name,2)         
+              file_name= redpar.rootdir+ redpar.fitsdir+ redpar.imdir +redpar.prefix_tag +strtrim(structure.file_name,2)     
+                  
          endif else file_name = structure.file_name ; for master stellar we already modfied the name of the file 
          
          ;Read data: this data is the output of sorting_hat
          new_cube = readfits(file_name, hd) ; recall data come in the form [2,4112,74] where [0,*,*] -> wavelength          
          
          n_orders =(size(new_cube))[3]
+         
+         
+         
+         
          
          
          ;#########################
@@ -251,12 +256,53 @@ if keyword_set (post_process) then begin
          if redpar.flat_spec eq 3 then begin
              for order = 0L, n_orders-1 do begin
                new_cube[1,*,order] = flat_spectrum(new_cube[1,*,order]) ; reliable as far as there are no CRs
-           endfor
+             endfor
          endif
+         
+         
+         ;##################
+         ;# Remove Artifact
+         ;##################
+
+         if (cut_spectra eq 1) then begin
+           print, ''
+           print, ' Removing artificat for night '+strt(night)+'......'
+           print, ''
+
+           new_cube= splice_spectrum( new_cube, /maskArtifact)
+
+         endif 
+
+
 
          
 
-      
+         ;#########################
+         ; Remove CRs | fft approach, order by order
+         ;#########################
+
+         if ~keyword_set(combine_stellar) and redpar.remove_crs eq 4 then begin
+
+           print, ''
+           print, ' Cleaning all CRs from ' +structure.file_name
+           print, ''
+
+           total_crs=0
+           for order = 0L, n_orders-1 do begin
+             order_crs = 0
+
+             new_cube[1,*,order] = cr_remove_fft( new_cube[1,*,order] , redpar.sigma_multiplier, redpar.skirt_level, redpar.frac, order_crs) ; reliable as far as there are no CRs
+             ; order_crs gets changed within and we can use its values now
+             total_crs = total_crs +  order_crs
+
+           endfor
+
+
+           history_str = 'CR-CLEANED :  ' + strt(total_crs) + 'crs found using FFT.'
+           sxaddpar, hd, 'HISTORY', history_str
+         endif
+    
+    
     
         ;##################
         ;# Cut spectra
@@ -270,7 +316,7 @@ if keyword_set (post_process) then begin
           
           ; pass array along with type of cut 
           splice_type= 'pixel_cut_of_3200px'
-          new_cube= splice_spectrum( new_cube, splice_type, /maskArtifact)
+          new_cube= splice_spectrum( new_cube, splice_type=splice_type)
           
           history_str = ' The orders were spliced using '+ splice_type
           sxaddpar, hd, 'HISTORY', history_str

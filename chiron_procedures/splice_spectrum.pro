@@ -10,7 +10,7 @@
 ;  pixel_to_cut : Number of pixels to cut if splice_type=pixel_cut
 ;-
 
-function splice_spectrum, data_cube, splice_type, redpar=redpar, pixel_to_cut = pixel_to_cut, maskArtifact=maskArtifact
+function splice_spectrum, data_cube, splice_type=splice_type, redpar=redpar, pixel_to_cut = pixel_to_cut, maskArtifact=maskArtifact
   compile_opt idl2
 
 size_cube= size(data_cube)
@@ -43,13 +43,17 @@ if keyword_set(maskArtifact) then begin
     
 
    endfor
+   
+   
+   if ~keyword_set(splice_type) then new_cube = data_cube
 
    
 endif
 
 
 ; >> Separte according to splice_type by cases 
-    
+
+if keyword_set(splice_type)    then begin 
     print, '>> Spectrum gets spliced by  ' +string(splice_type)
     switch (splice_type) of
 
@@ -82,7 +86,7 @@ endif
           
     endswitch
 
-
+endif
    return, new_cube
 
 

@@ -68,7 +68,7 @@ debug: 0,                                              ; 1 in debug mode, with p
                                                        ; 3. Stops in debugging locations. Plots to screen. Prints a lot. 
                                                        ; 4. Everything. Run this when CHIRON has been modified to determine new order locations. 
                                                        ; Once finished, copy the new best fit order locations to the "pkcoefs" tag above.
-remove_crs:0.5,                                        ; Cosmic Rays only get removed from  flats and stellar exposures.
+remove_crs:4,                                        ; Cosmic Rays only get removed from  flats and stellar exposures.
                                                        ; 0   : Do not remove Cosmic Rays 
                                                        ; 0.5 : Remove CR's by sigma Clipping. It takes place AFTER reduction and normalizes the images to a common value before sigma clipping
                                                        ;       It runs only when there is three or more exposures. This is the preffered method. This runs ONLY if the post_process tag is passed to reduce_slicer
@@ -76,7 +76,10 @@ remove_crs:0.5,                                        ; Cosmic Rays only get re
                                                        ;       It runs only when there are three or more exposures.  
                                                        ; 2   : Remove CR's using LaCosmic 
                                                        ; 3   : Remove CR's using Yale's legacy code for Keck
-
+						       ; 4   : Remove CR's using the FFT approach based on Dr. Gulliver's Fortran code. Recommended approach when ruducing spectra individually. 
+sigma_multiplier: 3.0,                                 ; Argument for remove_crs:4 .  Used to define CRs 
+skirt_level: 1.5,      			               ; Argument for remove_crs:4 .  Used to define CRs' skirt 
+frac: 28.0,    				               ; Argument for remove_crs:4 .  Used to define extension of hanning filter. This is a percentage 
                                                        ; Note: removing CR's using LaCosmic applies to each individual frame. Thus, there is no constraint on the number of frames.
 pixel_not_extracted: -2,                               ; Number of pixels not extracted from the default xwids for each mode. This must be an even integer 
                                                        ; e.g. slicer normally has 12 pixels. If pixel_no_extracted is 4 then pixels extracted are 8 (4 up-4 down)
