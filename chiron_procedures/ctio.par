@@ -71,7 +71,7 @@ debug: 0,                                              ; 1 in debug mode, with p
 remove_crs:4,                                        ; Cosmic Rays only get removed from  flats and stellar exposures.
                                                        ; 0   : Do not remove Cosmic Rays 
                                                        ; 0.5 : Remove CR's by sigma Clipping. It takes place AFTER reduction and normalizes the images to a common value before sigma clipping
-                                                       ;       It runs only when there is three or more exposures. This is the preffered method. This runs ONLY if the post_process tag is passed to reduce_slicer
+                                                       ;       It runs only when there is three or more exposures. This is the prefered method when there is more than 3 exposures. This runs ONLY if the post_process tag is passed to reduce_slicer
                                                        ; 1   : Remove CR's by sigma Clipping. It takes place before reduction and normalizes the images to a common value before sigma clipping
                                                        ;       It runs only when there are three or more exposures.  
                                                        ; 2   : Remove CR's using LaCosmic 
@@ -84,12 +84,12 @@ frac: 28.0,    				               ; Argument for remove_crs:4 .  Used to define 
 pixel_not_extracted: -2,                               ; Number of pixels not extracted from the default xwids for each mode. This must be an even integer 
                                                        ; e.g. slicer normally has 12 pixels. If pixel_no_extracted is 4 then pixels extracted are 8 (4 up-4 down)
                                                        ; If int is negative then it will extract more pixel e.g. if -2 then for slicer it will extract 7 up and 7 down 
-use_prev_tracing: 1,                                   ; If 1 then it used the previous order tracing stored. Only use if such file exist. Default value is 0
+use_prev_tracing: 0,                                   ; If 1 then it uses the previous order tracing stored. Only use if such file exist. Default value is 0
                                                        ; the following options apply for the master_bias, master_flat, master_stellar. The possible options are : 'median' , 'mean' ,'sum' , 'bayesian'
                                                        ; 'abs_error' , 'squared_error' and 'bayesian' . For more information about each one read the procedure weighted_master_frame.pro
 master_bias:'median',                                  ; can only take two string values 'median' or 'mean'. Used to calculate the mean/median of all bias frames and create master bias.
 master_flat:'mean',                                    ; can only take two string values 'median' or 'mean'. Used to calculate the mean/median of all flat frames and create master flat.
-master_stellar: 'bayesian',                            ; can only take two string values 'median' or 'mean'. Used to calculate the mean/median of all stellar frames and create master master.
+master_stellar: 'mean',                            ; can only take two string values 'median' or 'mean'. Used to calculate the mean/median of all stellar frames and create master master.
 flat_from_scratch:1,                                   ; if 1 creates the master flat from scratch every time program runs; if 0 then program restores existing file in memory for given night
 bias_from_scratch: 1,                                  ; if 1 creates the master bias from scratch regardless if such a file already exists 
     ; x                                           x 

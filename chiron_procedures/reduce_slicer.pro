@@ -281,7 +281,7 @@ if keyword_set (post_process) then begin
          ; Remove CRs | fft approach, order by order
          ;#########################
 
-         if ~keyword_set(combine_stellar) and redpar.remove_crs eq 4 then begin
+         if  redpar.remove_crs eq 4 then begin ; Previously it was limited for individual only. Meaning I added  ~keyword_set(combine_stellar) 
 
            print, ''
            print, ' Cleaning all CRs from ' +structure.file_name
@@ -299,6 +299,7 @@ if keyword_set (post_process) then begin
 
 
            history_str = 'CR-CLEANED :  ' + strt(total_crs) + 'crs found using FFT.'
+           print, history_str
            sxaddpar, hd, 'HISTORY', history_str
          endif
     
