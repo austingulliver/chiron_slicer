@@ -79,7 +79,7 @@ remove_crs:4,                                        ; Cosmic Rays only get remo
 						       ; 4   : Remove CR's using the FFT approach based on Dr. Gulliver's Fortran code. Recommended approach when ruducing spectra individually. 
 sigma_multiplier: 3.0,                                 ; Argument for remove_crs:4 .  Used to define CRs 
 skirt_level: 1.5,      			               ; Argument for remove_crs:4 .  Used to define CRs' skirt 
-frac: 28.0,    				               ; Argument for remove_crs:4 .  Used to define extension of hanning filter. This is a percentage 
+frac: 28.0,    				               ; Argument for remove_crs:4 .  Used to define extension of the hanning filter. This is value is a percentage. 
                                                        ; Note: removing CR's using LaCosmic applies to each individual frame. Thus, there is no constraint on the number of frames.
 pixel_not_extracted: -2,                               ; Number of pixels not extracted from the default xwids for each mode. This must be an even integer 
                                                        ; e.g. slicer normally has 12 pixels. If pixel_no_extracted is 4 then pixels extracted are 8 (4 up-4 down)

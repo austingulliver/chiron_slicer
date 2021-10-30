@@ -457,8 +457,6 @@ if keyword_set(combine_stellar) then begin
 
 
 
-
-
          ;Calculating MASTER (mean/median) stellar :
          ;---------------------------
          master_stellar= weighted_master_frame(data_cube, redpar.master_stellar )

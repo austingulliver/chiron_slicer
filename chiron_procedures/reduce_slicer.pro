@@ -122,7 +122,7 @@ if keyword_set (post_process) then begin
   
         ; Collecting missing info if any of the other 2 tags were not set.
         if keyword_set(no_reduction) then begin
-          
+          ; When not doing reduction ONLY postprocessing 
           redpar = readpar(ctparfn) 
           redpar.imdir = strt(night)+'\' ; setting some extra variables that will get used.
           redpar.prefix ='chi'+strt(night) +'.'    
@@ -152,10 +152,10 @@ if keyword_set (post_process) then begin
                str_file_type=  redpar.rootdir+ redpar.fitsdir+ redpar.imdir +redpar.prefix_tag+'m'+redpar.prefix+'*.fits'
                post_process_files = file_search(str_file_type, count = count_master) ; look for the data files. Name of the file itself
 
-               ;Extract File information from those found master file  :
+               ;Extract Files information from those found master file  :
                if count_master le 0  then stop, 'reduce_slicer:  STOP : No master files found for post process. Check the files exist within the directory '
                stellar_bary_correc=list()
-               for index = 0L, count_master-1 do begin
+               for index = 0L, count_master-1 do begin ; For the number of master files present.
                     file_name =post_process_files[index]
                     file_name =file_name.extract("[0-9]{4}_[0-9]+")
                     split = strsplit(file_name, '_', /extract)
@@ -166,7 +166,7 @@ if keyword_set (post_process) then begin
                       match_idx= where(obnm eq obnm_candidate, nn)                          
                       if nn gt 0  then indices.Add, match_idx             
                     endforeach
-                    indices=indices.ToArray() ; All the indices for the current master file  
+                    indices=indices.ToArray() ; All the indices(accoring to our bigger array) for the current master file  
                     
                     bary_corrections= float(baryCorrec[indices])
                     bary_mean =mean(bary_corrections)
@@ -205,7 +205,7 @@ if keyword_set (post_process) then begin
     ;#########################
     ; If combine_stellar is active then this will take place before creating master file.
     ; Cosmic Rays are removed  prior to any other post processing step 
-    
+    ; STACK approach
     if ~keyword_set(combine_stellar) and redpar.remove_crs eq 0.5 then begin
       
          all_file_names = list()
@@ -216,7 +216,7 @@ if keyword_set (post_process) then begin
         endforeach
         all_file_names = all_file_names.toarray()
   
-        ;2.  Remove CRs      
+        ;2.  Remove CRs  : this is the stack approach    
         !null = remove_cr_by_sigma(all_file_names) ; The files themselves get updated. So files in the folder fitspec get updated 
     endif
     
@@ -280,7 +280,7 @@ if keyword_set (post_process) then begin
          ;#########################
          ; Remove CRs | fft approach, order by order
          ;#########################
-
+         ; SIDE EFFECT: If combine stellar set and fft approach set, this will apply fft to a master file (WARNNING master file could have already been removed CRs)
          if  redpar.remove_crs eq 4 then begin ; Previously it was limited for individual only. Meaning I added  ~keyword_set(combine_stellar) 
 
            print, ''
@@ -298,7 +298,7 @@ if keyword_set (post_process) then begin
            endfor
 
 
-           history_str = 'CR-CLEANED :  ' + strt(total_crs) + 'crs found using FFT.'
+           history_str = 'CR-CLEANED :  ' + strt(total_crs) + ' crs found using FFT.'
            print, history_str
            sxaddpar, hd, 'HISTORY', history_str
          endif

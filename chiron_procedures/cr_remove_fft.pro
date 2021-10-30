@@ -420,9 +420,11 @@ function cr_remove_fft, order, sigma_multiplier, skirt_level, frac, total_crs
     print, ' '
     print, 'EndOf the Cr rountine ---------------------------'
     print, ''
-    return, order
+    
     
   endif
+  
+  return, order
 
 end
 
