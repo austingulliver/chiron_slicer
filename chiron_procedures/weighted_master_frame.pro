@@ -132,7 +132,7 @@ function weighted_master_frame, data_cube, typeStr
     ;**************************************************
     ; *   Symmetric Absolute Percentage Error
     ;**************************************************
-    'symmetric_ape': begin ; SEEM TO BE NOT WORKING 
+    'symmetric_ape': begin ; FURTHER TESTING NEEDED 
       
       master_frame= dblarr(n_cols, n_rows)
 
@@ -168,6 +168,7 @@ function weighted_master_frame, data_cube, typeStr
       if not (n_frames ge 3 ) then begin
         print,  '************************************** WARNING **************************************'
         print,  '    Master file  created with the  BAYESIAN technique, using less than 3 exposures'
+        stop, " Do you want to continute ? ( If so type '.cont' )"
       endif
       
       master_frame= dblarr(n_cols, n_rows)   

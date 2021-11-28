@@ -59,6 +59,8 @@ angstrom = '!6!sA!r!u!9 %!6!n'
 
 
 
+
+
 spawn, 'cd', pwddir  ;Updated to a Windows command
 case pwddir of
    '/home/matt/projects/CHIRON/QC': ctparfn = '/home/matt/projects/CHIRON/REDUCTION/ctio.par'
@@ -140,6 +142,19 @@ custom_thid_path = redpar.rootdir+redpar.customthidsol
 pretag = redpar.prefix_tag
 
 
+
+;-------------------
+;-----WORK AROUND --
+;-------------------
+;If combine_stellar AND remove_cr : then reduce each night individually and
+;back in reduce_slicer we create the actual master file
+;We do this just so we don'thave to alter the finding/ writting master stellar logic
+
+if keyword_set (combine_stellar) and redpar.remove_crs eq 0.5 then begin
+    combine_stellar = 0 ; we "unset" so it runs them individually
+    combine_stellar_changed = 1
+endif else combine_stellar_changed = 0
+;-------------------
 
 
 
@@ -335,7 +350,7 @@ if keyword_set(reduce) then begin
         ;###################################################################################
 
       
-;        
+        ;Remove CR's by sigma Clipping. It takes place BEFORE reduction and normalizes the images to a common value before sigma clipping       
         if redpar.remove_crs eq 1  then begin 
           PRINT, ' '
           print, 'SORTING-HAT:                    >>> Removing Cosmic Rays  <<< '
@@ -942,6 +957,23 @@ if keyword_set(end_check) then  begin
     			endelse 
 		  endfor       
 endif ; end_check
+
+
+
+
+
+;-------------------
+;-PART of WORK AROUND --
+;-------------------
+;If combine_stellar AND remove_cr : then reduce each night individually and
+;back in reduce_slicer we create the actual master file
+;We do this just so we don'thave to alter the finding/ writting master stellar logic
+; Here I am just setting back to combine_stellar =1 so it returns as such to reduce_slicer
+if keyword_set (combine_stellar_changed)  then combine_stellar = 1
+
+
+
+
 
 return 
 end ;sorting_hat.pro

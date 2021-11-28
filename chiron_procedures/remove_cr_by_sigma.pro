@@ -25,7 +25,7 @@ end
 
 ;+
 ; :Description:
-;      >>  DEPRICATED  <<   A VERSION THAT ACTS ON THE IMAGES THEMSELVES HAS BEEN IMPLEMENTED IN SORTING_HAT.PRO
+;    
 ;    THIS REMOVES COSMIC RAYS AFTER EXTRACTING AND NORMALIZES THE SPECTRUM BEFORE getting rid of crs
 ;    Gets rid of the cosmic rays present in the spectra stored in the files passed as PATHS.
 ;    It ONLY runs if the number of observations is 3 or greater.
@@ -37,10 +37,10 @@ end
 ;
 ;
 ;-
-function remove_cr_by_sigma, paths, sigma
+pro  remove_cr_by_sigma, paths, combine_stellar, redpar=redpar, master_name=master_name
   compile_opt idl2
 
-  if ~keyword_set(sigma) then sigma = 3
+  sigma = 3
 
   if n_elements(paths) lt 3 then begin
     print, ' '
@@ -50,7 +50,7 @@ function remove_cr_by_sigma, paths, sigma
     print, ' Please, type :  cont.      to continue the reduction wihtout removnig cosmic rays.  '
     print, ' '
     stop, ' '
-    return, -1 ; No success
+   
   endif
 
   ; 1) Read first to find out the dimensions
@@ -63,6 +63,10 @@ function remove_cr_by_sigma, paths, sigma
   ;--------------------------------
   avgs =list()
   spectra= make_array(n_pixels, n_orders, n_elements(paths),/double )
+  
+  ; momentaraly carries all the "cr-cleaned" spectra if master file combine_stellar) is expected 
+  if keyword_set(combine_stellar) then clean_stellars= make_array(n_pixels, n_orders, n_elements(paths),/double )
+ 
  ; p=plot([0],[0], title=' Original ')
 
   for idx = 0L, n_elements(paths)-1 do begin
@@ -96,7 +100,7 @@ function remove_cr_by_sigma, paths, sigma
   goldenFactors = goldenFactors.toarray()  ; [4,73]
   master_median = median(spectra, /double, dimension=3) ; Yes, [4112, 73 ],  Used to do replacement of crs .
 
-
+  
   ;4) Calculate absolute deviations
   ;----------------------------------
   mad = spectra ; median absolute deviation  as cube
@@ -104,7 +108,7 @@ function remove_cr_by_sigma, paths, sigma
     mad[*,*,idx]  = abs( spectra [*,*,idx] - master_median)
   endfor
   mad =median(mad, /double, dimension=3) ; 4112 x 73, Yes !
-  zeroIndices = where(mad eq 0) ; Correcting in case any is zero
+  zeroIndices = where(mad eq 0) ; Correcting in case of any is zero
   mad[zeroIndices] =1
 
 
@@ -130,20 +134,53 @@ function remove_cr_by_sigma, paths, sigma
     ;p= plot( y*avgs[idx] ,/overplot)
     
     originalY[1,*,*] = y
+    
+    
+    ; If running individually, then WRITE to disk back oneby one
+    if ~keyword_set(combine_stellar) then begin
+        pos=stregex(path, 'chi([0-9]+)\.([0-9]+)\.fits$', length=len)
+      print,"CR_ROMOVE:  Found  "  + strt(n_crs)+" CRs  in file : "+strmid(path, pos, len)
+      history_str = 'CR-CLEANED : '+todayDate+' : ' + strt(n_crs)+ ' from : '  +strt(n_elements(paths))  +' files'
+      ; The statement "CR-CLEANED" serves as reference to identify if the file has been cleaned previouly. Do not remove.
+      sxaddpar, hd, 'HISTORY', history_str
+      writefits,  path, originalY, hd  
+    endif else begin
+      ;else collect them all (either mean or median) to write to DISK only the master
+      clean_stellars[*,*,idx] = originalY[1,*,*]
+      
+      
+    endelse 
 
-
-    pos=stregex(path, 'chi([0-9]+)\.([0-9]+)\.fits$', length=len)
-    print,"CR_ROMOVE:  Found  "  + strt(n_crs)+" CRs  in file : "+strmid(path, pos, len)
-    history_str = 'CR-CLEANED : '+todayDate+' : ' + strt(n_crs)+ ' from : '  +strt(n_elements(paths))  +' files'
-    ; The statement "CR-CLEANED" serves as reference to identify if the file has been cleaned previouly. Do not remove.
-    sxaddpar, hd, 'HISTORY', history_str
-    writefits,  path, originalY, hd
 
 
   endfor
+  
+  if keyword_set(combine_stellar) then begin
+      ;Do the extra steps to write master file into disk.
+      if redpar.master_stellar eq 'mean' then begin
+        master_stellar = mean(clean_stellars, /double, dimension=3)
+      endif else begin
+        ; else -> redpar.master_stellar eq 'median'
+        master_stellar = median(clean_stellars, /double, dimension=3)
+      endelse
+      
+      ;** I copy the header and wavelength of the last run above
+      originalY[1,*,*] = master_stellar
+      
+     
+      indir=redpar.rootdir+redpar.fitsdir+redpar.imdir+master_name
+      
+      ;First time I create the file so it 
+      history_str = 'CR-CLEANED : '+todayDate+' : using remove_crs:0.5 AFTER reduction in '  +strt(n_elements(paths))  +' files'
+      ; The statement "CR-CLEANED" serves as reference to identify if the file has been cleaned previouly. Do not remove.
+      sxaddpar, hd, 'HISTORY', history_str
+      writefits,  indir, originalY, hd
+      
+      
+  endif
 
 
-  return, 1 ; Sucess
+  
 end
 
 
