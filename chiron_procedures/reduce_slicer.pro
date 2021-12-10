@@ -154,10 +154,10 @@ PRO reduce_slicer,  $
       
       
       ;--------------------------
-      ; Clean CRs when combine_stellar and remove_crs:0.5 is set.
+      ; Clean CRs when combine_stellar and remove_crs:0.5 are set.
       ;--------------------------
       ; I create the master file before looking for it but to do so I have to find individual files all over again
-      ; It might seem light repeated logic but it's needed
+      ; It might seem like repeated logic but it's needed
 
       if  redpar.remove_crs eq 0.5 then begin  ; before it had ~keyword_set(combine_stellar) and
         
@@ -220,7 +220,7 @@ PRO reduce_slicer,  $
         endforeach
         indices=indices.ToArray() ; All the indices(accoring to our bigger array) for the current master file
 
-        bary_corrections= float(baryCorrec[indices])
+        bary_corrections= float(baryCorrec[bary_indices[indices]])
         bary_mean =mean(bary_corrections)
 
         stellar_bary_correc.add, {file_name:post_process_files[index] , correction:bary_mean}
