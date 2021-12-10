@@ -158,12 +158,13 @@ PRO reduce_slicer,  $
       ;--------------------------
       ; I create the master file before looking for it but to do so I have to find individual files all over again
       ; It might seem like repeated logic but it's needed
+      bary_indices = where(float(baryCorrec) ne 0.0, c_bary )
+      obnm = obnm[ bary_indices]
 
       if  redpar.remove_crs eq 0.5 then begin  ; before it had ~keyword_set(combine_stellar) and
         
           ;Find individual files all over again 
-          bary_indices = where(float(baryCorrec) ne 0.0, c_bary )
-          obnm = obnm[ bary_indices]      
+              
           all_file_names = list()
           
           ;1.  Gather all file names
