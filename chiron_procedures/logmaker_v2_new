@@ -323,7 +323,7 @@ pro logmaker_v2, rawdir, $
   allFitsFiles=File_Search(rawpath+rawdir+'/chi*.fits',count=nFiles)
   print, 'LOGMAKER: Number of files found is: ', nFiles
   if nFiles eq 0 then begin     
-    stop,'LOGMAKER: ERROR : Make sure the raw files follow this format: ',rawpath+rawdir+'\*.fits'
+    stop,'LOGMAKER: >>Error << Make sure the raw files follow this format: ',rawpath+rawdir+'\*.fits'
   endif
 
 
@@ -862,7 +862,7 @@ pro logmaker_v2, rawdir, $
                 ; Define JD  
                 ; ------------
                 
-                if mid_time_match gt 0 and em_date_time[i] ne '0000-00-00T00:00:00.000' then begin 
+                if mid_time_match gt 0 then begin
       
                   ;date
                   em_date=strmid(em_date_time[i], 0, 10)
@@ -875,33 +875,11 @@ pro logmaker_v2, rawdir, $
                   em_time=strmid(em_date_time[i], 11, strlen(em_time))
                   em_time =strsplit(em_time, ':', /extract)
                   hour    =em_time[0]
-                  minutes =em_time[1] + (em_time[2]/60.0) ; *Including decimales
+                  minutes =em_time[1] + (em_time[1]/60.0) ; *Including decimales
       
       
                 endif else begin
-                  ; TODO: if  EXPTIME or UTSHUT not present or invalid then raise error.
-                   
-                  Exptime = sxpar(hd,'EXPTIME')   ; float E.g. EXPTIME =  714. / Exposure time in secs  
-                  half_exp = 0.5 * (Exptime / 3600.) ; converting from seconds to hours
-                
-                  date_and_time = sxpar(hd,'UTSHUT')      ; string E.g. UTSHUT  = '2021-03-25T04:45:20.845' / UT of shutter open
-                  
-                  ; Retrieve year, month and day
-                  startdate= strmid(date_and_time, 0, 10) ; E.g. '2021-03-25'   
-                  em_date = strsplit(startdate, '-',/extract)
-                  year    =em_date[0]
-                  month   =em_date[1]
-                  dd      =em_date[2]
-                  
-                  
-                  ; Retrieve hour and minute 
-                  starttime = strmid(date_and_time, 11, strlen(date_and_time) - 11) ; E.g. '04:45:20.845'
-                  hti = ten(float(strsplit(starttime,':',/ext))) + half_exp
-                  mt = sixty(hti)
-                  
-                  hour = mt[0]               
-                  minutes = mt[1] + (mt[2]/60.0) ; *Including decimals from seconds
-          
+                  ; Create option for when  keyword EMMNWOB does not exist
                 endelse
       
                 jdUTC = jdate([year,month,dd,hour,minutes])

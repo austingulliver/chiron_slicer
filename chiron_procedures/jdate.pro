@@ -12,7 +12,7 @@ if n_params() lt 1 then begin
   print,'   e.g. jd = jdate([1993,   12, 25,   16,   24.2])'
   retall
 endif
-
+;print, 'dvec in jdate is ',dvec
 ;Algorithm relies on integer truncation. (Yuck.)
   iyear = fix(dvec(0))
   imonth = fix(dvec(1))

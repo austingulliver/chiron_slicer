@@ -49,6 +49,7 @@ pro timeconv, UTC, TDT, UT1=UT1, TDB=TDB,silent=silent
  N = n_elements(monthleap)  				;Size of table.	
  JDleap = dblarr(N)					;Dates of Leaps secs.
  for i = 0, N-1 do JDleap(i)= jdate([yearleap(i),monthleap(i),1,0.,0.])
+ ;print, 'UTC in timeconv is ',UTC
  jdUTC = UTC					; Imprecise JD
  if vartype(jdUTC) ne 'DOUBLE' then message,$
    'Input JD (UTC) is not DOUBLE:'+string(jdUTC),/info
