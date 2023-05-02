@@ -1,6 +1,6 @@
 
 Chiron Software :
-This a pipeline desing for CHIRON optamized specifically for the SLICER mode.
+This a pipeline designed for CHIRON optamized specifically for the SLICER mode.
 - It runs on Windows 
 - At the beginning of the procedure "sorting_hat" there is a collection of paths. Add your path within this collection.
   E.g. 'C:\Users\mrstu': ctparfn = 'C:\Users\mrstu\idlworkspace_yalecalibration\all_yale_files/ctio.par'
