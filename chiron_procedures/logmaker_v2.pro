@@ -321,6 +321,7 @@ pro logmaker_v2, rawdir, $
 
   ;>> Retrieve all  raw files
   allFitsFiles=File_Search(rawpath+rawdir+'/chi*.fits',count=nFiles)
+
   print, 'LOGMAKER: Number of files found is: ', nFiles
   if nFiles eq 0 then begin     
     stop,'LOGMAKER: ERROR : Make sure the raw files follow this format: ',rawpath+rawdir+'\*.fits'

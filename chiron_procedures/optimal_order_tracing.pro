@@ -570,14 +570,14 @@ function define_templates, flat, redpar
 ;        low= round(y_peaks[middle_peak_idx] - (  (redpar.xwids[redpar.mode]/2.0 )  +  extra_width )  )
 ;        up= round( y_peaks[middle_peak_idx]  + (  (redpar.xwids[redpar.mode]/2.0 )  +  extra_width ) )
         
-        if debug  gt 0 then begin 
+         if debug  gt 0 then begin 
             print, " *************** "
             print, " *************** "
             print, 'Order : '+strt(index)
 ;            print, 'Template to work with : [' +strt(low) +' , '+strt(up) +' ]'
 ;            print, 'y-peak found : '+strt(round(y_peaks[index]) )
 
-        endif 
+         endif 
  
 
          low_bound = y_peaks[middle_peak_idx-1] 
@@ -599,9 +599,14 @@ function define_templates, flat, redpar
                 print, 'After finding the 3 peaks. The difference between the 2 furthest peaks is : '+strt( pixel_diff) 
                 print, 'where the bounds are : [' +strt(low_bound) + ' , '+strt(up_bound) + ' ]'
             endif
-            
-            if pixel_diff gt redpar.xwids[redpar.mode] then stop, ' >> Error <<  The pixel diff cannot be greater than 12 pixel (For the slicer mode ). The peaks we supposed to be within the 12 pixels '
-             
+;           Check on maximum sepoaration of peaks especially for last order 73
+            if pixel_diff gt redpar.xwids[redpar.mode] then begin 
+                print, " ****************************************** "
+                print, 'Beware: for order ',+strt(index), ' pixel diff is ', pixel_diff
+                print, " ****************************************** "
+;               print, +strt(index), pixel_diff
+;               if pixel_diff gt redpar.xwids[redpar.mode] then stop, ' >> Error <<  The pixel diff cannot be greater than 12 pixel (For the slicer mode ). The peaks are supposed to be within the 12 pixels '
+             endif
             missing_px_num = redpar.xwids[redpar.mode]  -  pixel_diff   ; plus+ to account for substraction 
             
             if missing_px_num mod 2 eq 0 then begin ; if even 

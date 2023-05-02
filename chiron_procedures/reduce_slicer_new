@@ -325,7 +325,7 @@ PRO reduce_slicer,  $
 
       if (cut_spectra eq 1) then begin
         print, ''
-        print, ' Removing artificat for night '+strt(night)+'......'
+        print, ' Removing artifact for night '+strt(night)+'......'
         print, ''
 
         new_cube= splice_spectrum( new_cube, /maskArtifact)
