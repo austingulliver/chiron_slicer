@@ -3,7 +3,7 @@
 ;+
 ; :Description:
 ;
-;  3 main tasks :
+;  5 main tasks :
 ;  1) Creation of .log files using the procedure logmaker.pro
 ;  2) Processing of the spectra using sorting_hat.pro : by default it will create  a master stellar
 ;  3) Barycentric Correction
@@ -47,16 +47,16 @@ PRO reduce_slicer,  $
 
   ; Constants/Variables + paths
 
-  cms = 2.99792458d8 ; Constant. Workaroung sometimes constanst does not give back expected value
+  cms = 2.99792458d8 ; Constant. Workaround sometimes constants does not give back expected value-> Why?
   spawn, 'cd', pwddir  ;Updated to a Windows command
   case pwddir of
     'C:\Users\mrstu': ctparfn = 'C:\Users\mrstu\idlworkspace_yalecalibration\chiron_procedures\ctio.par'
     'C:\Users\gulliver': ctparfn = 'C:\F disk\ctio.par'
+    'C:\Users\aleja':  ctparfn ='C:/Users/aleja/Desktop/Desktop/Job/Gulliver/Reduction-Pipeline-Software/ctio.par'
     ELSE : ctparfn=!NULL
     ; E.g. 'your_current_directory': ctparfn = 'absolute_path_to_ctio.par'
     ; Note: Let the program run. It will stop with the message bellow. Copy/Paste the printes direcotory in 'your_current_directory'
   endcase
-
 
 
 
@@ -81,9 +81,6 @@ PRO reduce_slicer,  $
     endelse
 
   endif
-
-
-
 
 
 
@@ -235,10 +232,6 @@ PRO reduce_slicer,  $
 
       endfor
       
-  
-
-
-
     endif else begin
       ; >> For all individual files
       bary_indices = where(float(baryCorrec) ne 0.0, c_bary )
@@ -271,22 +264,6 @@ PRO reduce_slicer,  $
 
 
     endelse
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
     foreach structure, stellar_bary_correc do begin ; Iterate of each file to post process

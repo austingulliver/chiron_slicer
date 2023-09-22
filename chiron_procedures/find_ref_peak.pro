@@ -145,7 +145,7 @@ if not keyword_set(order_num) then order_num =  1
   ;Filter returned peaks
   ;--------------------------------------------
 
-  ; Fo consistency sake we only take the 3 greatest peaks wich we experimentally found and 
+  ; For consistency sake we only take the 3 greatest peaks wich we experimentally found and 
   ; should always be withint a pixeles range of : 
   ;                                              r1=[ 600, 800 ]  
   ;                                              r2=[1975,2050]
@@ -204,7 +204,7 @@ if not keyword_set(order_num) then order_num =  1
   ;We fit a gaussian to obtain a better approximation of the peak shift
   
   
-  y_intensities = spec[peak_1-20: peak_1+20]  ; With of the windowd is defined emperically 
+  y_intensities = spec[peak_1-20: peak_1+20]  ; Width of the window is defined emperically 
   relative_pixels= indgen(n_elements(y_intensities)) -20
   y_fit_1= gaussfit(relative_pixels, y_intensities, out_coefficients_1, NTERMS=4 ) ;, ESTIMATES=guess )
   

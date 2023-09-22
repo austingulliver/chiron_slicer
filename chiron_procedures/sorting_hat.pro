@@ -70,6 +70,7 @@ case pwddir of
    '/nfs/morgan/chiron/idl/CHIRON/REDUCTION': ctparfn = '/nfs/morgan/chiron/idl/CHIRON/REDUCTION/ctio.par'
    'C:\Users\mrstu': ctparfn = 'C:\Users\mrstu\idlworkspace_yalecalibration\chiron_procedures\ctio.par'
    'C:\Users\gulliver': ctparfn = 'C:\F disk\ctio.par'
+   'C:\Users\aleja':  ctparfn ='C:/Users/aleja/Desktop/Desktop/Job/Gulliver/Reduction-Pipeline-Software/ctio.par'
     ELSE : ctparfn=!NULL 
     ; E.g. 'your_current_directory': ctparfn = 'absolute_path_to_ctio.par'
     ; Note: Let the program run. It will stop with the message bellow. Copy/Paste the printes direcotory in 'your_current_directory'
@@ -150,12 +151,11 @@ pretag = redpar.prefix_tag
 ;back in reduce_slicer we create the actual master file
 ;We do this just so we don'thave to alter the finding/ writting master stellar logic
 
-if keyword_set (combine_stellar) and redpar.remove_crs eq 0.5 then begin
+if keyword_set (combine_stellar) and (redpar.remove_crs eq 0.5) then begin
     combine_stellar = 0 ; we "unset" so it runs them individually
     combine_stellar_changed = 1
 endif else combine_stellar_changed = 0
 ;-------------------
-
 
 
 ;#####################################################
@@ -560,7 +560,7 @@ print, ' '
     	   dir_2017= redpar.rootdir + redpar.customthidsol+  'achi171218.1003'  ; RECALL THIS FILE HAS 74 ORDERS !
     	   
     	   
-    	   order_num= 1 ; This will always remain constant since is wrt to 'achi171218.1003' an this is meant to remina constant as well 
+    	   order_num= 1 ; This will always remain constant since is wrt to 'achi171218.1003' an this is meant to remain constant as well 
     	   ref_pixel_2017 = find_ref_peak(dir_2017, redpar=redpar, order_num=order_num) ; returns an array with three elements
                                             	   ; peak 1 : found withint the range  r1=[ 600, 800 ]
                                             	   ; peak 2 : found withint the range  r2=[1975,2050]
@@ -849,7 +849,8 @@ if keyword_set(iod2fits) then begin
               				  endfor
               					 hd = [hd, tnms[ii]+'= '+"'"+string(val+"'", format='(A-'+strt(remlen)+')')]
             				endfor
-            				hd = [hd, string('THARFNAM', format='(A-8)')+'= '+"'"+string(thidfile_name+"'", format='(A-'+strt(remlen)+')')]
+            				print, FILE_BASENAME(thidfile_name, '.fits')
+            				hd = [hd, string('THARFNAM', format='(A-8)')+'= '+"'"+string(FILE_BASENAME(thidfile_name, '.fits')+"'", format='(A-'+strt(remlen)+')')]
             				hd = [hd,endhd]
             				
 

@@ -1,5 +1,12 @@
 
 
+file = 'C:\Users\aleja\Desktop\Desktop\Job\Gulliver\Reduction-Pipeline-Software\chiron_reduc_pipeline\chiron\tous\mir7\fitspec\210723\post_processed\wchi210723.1151.fits'
+
+y=readfits(file)
+
+
+p=plot( y[0,*,0:5],y[1,*,0:5], title=' Comparison pre CR removal - Sigma:2.5 - Night: 210423 -  Order: 6th blue ')
+
 
 ; plot all disctibution for sigma clipping :
 

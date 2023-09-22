@@ -279,6 +279,10 @@ pro logmaker_v2, rawdir, $
       rawpath = 'C:\F disk\chiron_reduc_pipeline\chiron\raw\mir7\'
       logpath = 'C:\F disk\chiron_reduc_pipeline\chiron\tous\mir7\logsheets\'+yyyy+'\'
       barypath = 'C:\F disk\chiron_reduc_pipeline\chiron\tous\mir7\bary\'
+     endif else if host eq 'DESKTOP-41NKOUC' then begin 
+       rawpath = 'C:\Users\aleja\Desktop\Desktop\Job\Gulliver\Reduction-Pipeline-Software\chiron_reduc_pipeline\chiron\raw\mir7\'
+       logpath = 'C:\Users\aleja\Desktop\Desktop\Job\Gulliver\Reduction-Pipeline-Software\chiron_reduc_pipeline\chiron\tous\mir7\logsheets\'+yyyy+'\'
+       barypath = 'C:\Users\aleja\Desktop\Desktop\Job\Gulliver\Reduction-Pipeline-Software\chiron_reduc_pipeline\chiron\tous\mir7\bary\'
     endif else begin
       rawpath = '/nfs/morgan/chiron/raw/mir7/'
       logpath = '/nfs/morgan/chiron/tous/mir7/logsheets/'+yyyy+'/'
@@ -373,6 +377,7 @@ pro logmaker_v2, rawdir, $
   obs_file = allFitsFiles[obFiles] ; Only observation files that match our format. 
   nobs = n_elements(obs_file)
   print, 'Number of Observations files found, nobs, is: ', nobs
+  print, obs_file
 
   ; FIND THE STARTING NUMBER FOR TONIGHT'S OBSERVATIONS
   ;  Not being used  so the following two lines were commented.
