@@ -814,7 +814,7 @@ pro logmaker_v2, rawdir, $                  ; It is simply the name of the direc
                 expotime = sxpar(hd,'EXPTIME', count=c_exp_time)          ; float E.g. EXPTIME =  714. / Exposure time in secs 
                 date_and_time = sxpar(hd,'UTSHUT', count=c_sop_time)      ; string E.g. UTSHUT  = '2021-03-25T04:45:20.845' / UT of shutter open
                 if c_exp_time eq 0 or c_sop_time eq 0 then begin 
-                    message, "EMMNWOB is 0000-00-00T00:00:00.000, and defualt EXPTIME or UTSHUT are not defined in header for " + strtrim(obs_file[i], 2) + "."
+                    message, "EMMNWOB is 0000-00-00T00:00:00.000, and defualt EXPTIME or UTSHUT are not defined in header for " + strtrim(obs_file[i], 2) + "." ; If EXPTIME or UTSHUT not defined raise error.
                  endif
                 half_exp = 0.5 * (expotime / 3600.) ; converting from seconds to hours
                 jdUTC = gettime([date_and_time[i]])
