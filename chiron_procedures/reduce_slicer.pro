@@ -30,16 +30,17 @@
 
 PRO reduce_slicer,  $
   night, $
-  no_log=no_log, $                       ; If set it wont create a new .log file
-  no_reduction =no_reduction, $          ; If set it wont reduce the spectra of the given night
-  combine_stellar = combine_stellar, $   ; If reduction step is run this determines if reduction should consider  individual frames or
-  ; collect them to produce a master stellar
-  post_process = post_process, $        ; Post processing includes shift found from  barycentric correction +  splice the spectra
-  ;star_name=star_name                   ; Name of the Star. IT MUST BE INSERTED AS ONE WORD E.G 'HR2943'  (as opposed to 'HR 2943'  )
-  ; depricated. Software now finds the name of the star directly from the headers.
+  no_log=no_log, $                        ; If set it wont create a new .log file
+  no_reduction =no_reduction, $           ; If set it wont reduce the spectra of the given night
+  combine_stellar = combine_stellar, $    ; If reduction step is run this determines if reduction should consider  individual frames or
+                                          ; collect them to produce a master stellar
+  post_process = post_process, $          ; Post processing includes shift found from  barycentric correction +  splice the spectra
+  ;star_name=star_name                    ; Name of the Star. IT MUST BE INSERTED AS ONE WORD E.G 'HR2943'.  (as opposed to 'HR 2943' )
+                                          ; depricated. Software now finds the name of the star directly from the headers.
 
 
-  constants ; running the procedure
+; Definning constants in a common block can be referenced by any program unit that declares that common block.
+  constants                              
   COMMON all_constants,autom,automJPL,autokm,cms,ckm,radtosec,pctoAU,$
     yeartosec,yrtos,ltyr,lightyear,pctom,secperday,daytosec,$
     century,precise,ddtor,msun,msung,mearth,mmoon,$

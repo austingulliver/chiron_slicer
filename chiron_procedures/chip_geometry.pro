@@ -13,8 +13,8 @@ function chip_geometry, fileName, hdr=hdr, redpar=redpar
 	;	bias region (trimmed by a few column pixels in beginning and end)
 	;	image region (full according to the controller)
 	;	image region (trimmed by 10 pixels...in the header already)
-	; 20110330 - Modified to output the readout_speed to correct for
-	;		non-linearity ~MJG
+	; 20110330 -   Modified to output the readout_speed to correct for
+	;		            non-linearity ~MJG
 	; 20120218 - Added torrent
 	; 20130828 - added ccd_full ~MJG
 	;
