@@ -1,7 +1,7 @@
 ; Convert UT midpoint time to float hours
 ; input; string array in 'y-m-dTh:m:s' format
 ; output: ut, >24h after midnight
-function gettime, mdpt
+function getJulianDate, mdpt
   n = n_elements(mdpt)
   ut = dblarr(n)
   for i=0,n-1 do begin
