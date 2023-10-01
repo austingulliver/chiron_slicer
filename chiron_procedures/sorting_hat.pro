@@ -215,7 +215,7 @@ for qi=0, n_elements(qcombs)-1 do begin ;Converts ranges found in log sheet to t
 	qcombs[qi:*] += (ncombs - 1)
 endfor
    ;print, 'obnm after is: ', obnm
-ut = gettime(mdpt) ; floating-point hours, >24h in the morning
+ut = getJulianDate(mdpt) ; floating-point hours, >24h in the morning
 
 ;-> Up to here: variables obnm,objnm, i2,mdpt ....  are vectors that contain data of log sheet 
 

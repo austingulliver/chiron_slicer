@@ -145,7 +145,6 @@ pro logmaker_v2, rawdir, $                  ; It is simply the name of the direc
   obs_file = allFitsFiles[obFiles] ; Only observation files that match our format. 
   nobs = n_elements(obs_file)
   print, 'Number of Observations files found, nobs, is: ', nobs
-  print, obs_file
 
   ; FIND THE STARTING NUMBER FOR TONIGHT'S OBSERVATIONS
   ;  Not being used  so the following two lines were commented.
