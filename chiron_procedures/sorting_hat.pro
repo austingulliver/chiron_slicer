@@ -60,36 +60,6 @@ ctparfn = getenv('CHIRON_CTIO_PATH')
 
 if ctparfn eq '' then message, 'Before running the sorting_hat you need to set the environment variable CHIRON_CTIO_PATH to be equal to the full path for your ctio.par file.'
 
-;spawn, 'cd', pwddir  ;Updated to a Windows command
-;case pwddir of
- ;  '/home/matt/projects/CHIRON/QC': ctparfn = '/home/matt/projects/CHIRON/REDUCTION/ctio.par'
-  ; '/home/matt/projects/CHIRON/REDUCTION': ctparfn = '/home/matt/projects/CHIRON/REDUCTION/ctio.par'
-  ; '/tous/CHIRON/REDUCTION': ctparfn = '/tous/CHIRON/REDUCTION/ctio.par'
-   ;'/tous/CHIRON/QC': ctparfn = '/tous/CHIRON/REDUCTION/ctio.par'
-   ;'/nfs/morgan/chiron/idl/CHIRON/REDUCTION': ctparfn = '/nfs/morgan/chiron/idl/CHIRON/REDUCTION/ctio.par'
-   ;'C:\Users\mrstu': ctparfn = 'C:\Users\mrstu\idlworkspace_yalecalibration\chiron_procedures\ctio.par'
-  ; 'C:\Users\gulliver': ctparfn = 'C:\F disk\ctio.par'
-  ; 'C:\Users\aleja':  ctparfn ='C:/Users/aleja/Desktop/Desktop/Job/Gulliver/Reduction-Pipeline-Software/ctio.par'
-   ; ELSE : ctparfn=!NULL 
-    ; E.g. 'your_current_directory': ctparfn = 'absolute_path_to_ctio.par'
-    ; Note: Let the program run. It will stop with the message bellow. Copy/Paste the printes direcotory in 'your_current_directory'
-;endcase
-
-
-
-;if ctparfn eq !NULL then begin
-;  print, '******************************************************'
- ; print, 'You must be running things from a different directory.'
- ; print, 'Your current working directory is: '
- ; print, pwddir
- ; print, 'ctparfn has not set. '
- ; print, 'Either changed your working directory, or modify the case'
- ; print, 'statement above this line.'
- ; print, '******************************************************'
- ; stop
-;endif
-
-
 ;#####################################################
 ;### Read ctio.par + set  initial variables 
 ;#####################################################

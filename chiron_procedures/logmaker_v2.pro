@@ -52,34 +52,6 @@ pro logmaker_v2, rawdir, $                  ; It is simply the name of the direc
   if ~file_test(logpath) then logpath = rootdir + logpath
   if ~file_test(barypath) then barypath = rootdir + barypath
   
-  
-  ;if strlen(chi_path)  ge 1 then begin
-   ; rawpath = chi_path.trim() + '\raw\mir7\'
-   ; logpath = chi_path.trim() + '\tous\mir7\logsheets\'+yyyy+'\'
-  ;endif else begin
-
-   ; if host eq 'ctimac1.ctio.noao.edu' then begin
-    ;  rawpath = '/mir7/raw/'
-     ; logpath = '/mir7/logsheets/'+yyyy+'/'
-    ;endif else if  host eq 'Drius22' then begin
-     ; rawpath = 'C:\Users\mrstu\idlworkspace_yalecalibration\chiron\raw\mir7\'
-      ;logpath = 'C:\Users\mrstu\idlworkspace_yalecalibration\chiron\tous\mir7\logsheets\'+yyyy+'\'
-      ;barypath = 'C:\Users\mrstu\idlworkspace_yalecalibration\chiron\tous\mir7\bary\'
-   ; endif else if pwddir eq 'C:\Users\gulliver' then begin
-    ;  rawpath = 'C:\F disk\chiron_reduc_pipeline\chiron\raw\mir7\'
-     ; logpath = 'C:\F disk\chiron_reduc_pipeline\chiron\tous\mir7\logsheets\'+yyyy+'\'
-     ; barypath = 'C:\F disk\chiron_reduc_pipeline\chiron\tous\mir7\bary\'
-     ;endif else if host eq 'DESKTOP-41NKOUC' then begin 
-      ; rawpath = 'C:\Users\aleja\Desktop\Desktop\Job\Gulliver\Reduction-Pipeline-Software\chiron_reduc_pipeline\chiron\raw\mir7\'
-      ; logpath = 'C:\Users\aleja\Desktop\Desktop\Job\Gulliver\Reduction-Pipeline-Software\chiron_reduc_pipeline\chiron\tous\mir7\logsheets\'+yyyy+'\'
-      ; barypath = 'C:\Users\aleja\Desktop\Desktop\Job\Gulliver\Reduction-Pipeline-Software\chiron_reduc_pipeline\chiron\tous\mir7\bary\'
-    ;endif else begin
-     ; rawpath = '/nfs/morgan/chiron/raw/mir7/'
-     ; logpath = '/nfs/morgan/chiron/tous/mir7/logsheets/'+yyyy+'/'
-   ; endelse
-
- ; endelse
-
   ;*****************************************
   ;Constants + validation
   ;*****************************************
