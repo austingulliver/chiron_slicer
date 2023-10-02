@@ -88,17 +88,18 @@ pro logmaker_v2, rawdir, $                  ; It is simply the name of the direc
   ; Otherwise just create the year directory manually. E.g. ..\chiron\tous\mir7\logsheets\2021\
 
   ;*****************************************
-  ;Check existing log sheet
+  ;Check existing log sheet. If exists then copy old content of previous log sheet into new log file.
   ;*****************************************
   lfile=File_Search(logname,count=nlogs)
-  if nlogs gt 0 and ~keyword_set(override) then begin
-    answer=''
-    print,'Hey! this log file exists already - are you sure you want'
-    read,' to overwrite? (y/n)', answer
-    if answer eq 'n' then return 
+  
+  if (~keyword_set(noarchive) and nlogs gt 0) then begin 
+    log_archive = logpath + 'archive\' ; archive path 
+    if ~file_test(log_archive) then spawn, 'mkdir '+ string(34B) + log_archive + string(34B) ; If archive directory does not exist create one.
+    arc_logfile = nextname(log_archive + rawdir +'.log' +  '_old', '')
+    command = 'copy ' + logname + ' ' + arc_logfile
+    spawn, command ; copy existing log file to archive
+    print, "File " + rawdir + '.log' + ' already exists. To preserve the information its content will be copied to ' + arc_logfile
   endif
-  if (~keyword_set(noarchive) and nlogs) then $
-    spawn, 'cp '+logname+' '+nextname(logpath+'archive/'+rawdir+'.log'+'_old', '')
 
   ;>> Retrieve all  raw files
   allFitsFiles=File_Search(rawpath+rawdir+'/chi*.fits',count=nFiles)
@@ -260,12 +261,6 @@ pro logmaker_v2, rawdir, $                  ; It is simply the name of the direc
     focpos = ''
     focfwhm = ''
   endelse
-
-
-
-
-
-
 
   ;*****************************************
   ; .LOG's header
@@ -541,7 +536,7 @@ pro logmaker_v2, rawdir, $                  ; It is simply the name of the direc
         if strlen(objName) gt 12 then objName = strmid(objName.trim(),0,12) ; 
 
         ; Calcualte Julian Date and relativistic redshift ,RA (coords_ra)AND  DECLINATION (coords_dec)
-        res_dcit = logMakerCalc(hd, OBJName=objName) 
+        res_dcit = logMakerCalc(hd) 
         em_date_time[i] = res_dcit['date']
         JD = res_dcit['JD']
         bary_correc = res_dcit['bary_correc']
