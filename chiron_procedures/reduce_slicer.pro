@@ -47,21 +47,11 @@ PRO reduce_slicer,  $
     mmoong,rearth,rearthkm,rsun,rsunkm,Gcgs,G,angstrom
 
   ; Constants/Variables + paths
-
   cms = 2.99792458d8 ; Constant. Workaround sometimes constants does not give back expected value-> Why?
-  spawn, 'cd', pwddir  ;Updated to a Windows command
-  case pwddir of
-    'C:\Users\mrstu': ctparfn = 'C:\Users\mrstu\idlworkspace_yalecalibration\chiron_procedures\ctio.par'
-    'C:\Users\gulliver': ctparfn = 'C:\F disk\ctio.par'
-    'C:\Users\aleja':  ctparfn ='C:/Users/aleja/Desktop/Desktop/Job/Gulliver/Reduction-Pipeline-Software/ctio.par'
-    ELSE : ctparfn=!NULL
-    ; E.g. 'your_current_directory': ctparfn = 'absolute_path_to_ctio.par'
-    ; Note: Let the program run. It will stop with the message bellow. Copy/Paste the printes direcotory in 'your_current_directory'
-  endcase
-
-
-
-
+  
+  ctparfn = getenv('CHIRON_CTIO_PATH')
+  if ctparfn eq '' then message, 'Before running the pipeline you need to set the environment variable CHIRON_CTIO_PATH to be equal to the full path for your ctio.par file.'
+  
   ;#####################################################
   ;# 1) Create .log file
   ;#####################################################
@@ -82,9 +72,6 @@ PRO reduce_slicer,  $
     endelse
 
   endif
-
-
-
 
   ;#####################################################
   ;# 2) Spectra Reduction

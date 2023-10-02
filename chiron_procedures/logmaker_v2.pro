@@ -37,43 +37,48 @@ pro logmaker_v2, rawdir, $                  ; It is simply the name of the direc
     yyyy = '20'+strmid(strt(rawdir),0,2)
   endelse
 
+  ; Getting necessary paths from ctio.par
+  ctparfn = getenv('CHIRON_CTIO_PATH')
+  if ctparfn eq '' then message, 'Before running the logmaker you need to set the environment variable CHIRON_CTIO_PATH to be equal to the full path for your ctio.par file.'
 
-  chi_path=getenv('CHIRON_PATH')  ;This must the absolute path where the directory chiron was placed
-  ; E.g.  SETENV, 'CHIRON_PATH=.......\chiron'
+  redpar = readpar(ctparfn)
+  rootdir = redpar.rootdir
+  rawpath = redpar.rawdir
+  logpath = redpar.logdir +yyyy+'\'
+  barypath = redpar.barydir
+  
+  ; Check if patha are full paths otherwise add rootdir to them.
+  if ~file_test(rawpath) then rawpath = rootdir + rawpath
+  if ~file_test(logpath) then logpath = rootdir + logpath
+  if ~file_test(barypath) then barypath = rootdir + barypath
+  
+  
+  ;if strlen(chi_path)  ge 1 then begin
+   ; rawpath = chi_path.trim() + '\raw\mir7\'
+   ; logpath = chi_path.trim() + '\tous\mir7\logsheets\'+yyyy+'\'
+  ;endif else begin
 
+   ; if host eq 'ctimac1.ctio.noao.edu' then begin
+    ;  rawpath = '/mir7/raw/'
+     ; logpath = '/mir7/logsheets/'+yyyy+'/'
+    ;endif else if  host eq 'Drius22' then begin
+     ; rawpath = 'C:\Users\mrstu\idlworkspace_yalecalibration\chiron\raw\mir7\'
+      ;logpath = 'C:\Users\mrstu\idlworkspace_yalecalibration\chiron\tous\mir7\logsheets\'+yyyy+'\'
+      ;barypath = 'C:\Users\mrstu\idlworkspace_yalecalibration\chiron\tous\mir7\bary\'
+   ; endif else if pwddir eq 'C:\Users\gulliver' then begin
+    ;  rawpath = 'C:\F disk\chiron_reduc_pipeline\chiron\raw\mir7\'
+     ; logpath = 'C:\F disk\chiron_reduc_pipeline\chiron\tous\mir7\logsheets\'+yyyy+'\'
+     ; barypath = 'C:\F disk\chiron_reduc_pipeline\chiron\tous\mir7\bary\'
+     ;endif else if host eq 'DESKTOP-41NKOUC' then begin 
+      ; rawpath = 'C:\Users\aleja\Desktop\Desktop\Job\Gulliver\Reduction-Pipeline-Software\chiron_reduc_pipeline\chiron\raw\mir7\'
+      ; logpath = 'C:\Users\aleja\Desktop\Desktop\Job\Gulliver\Reduction-Pipeline-Software\chiron_reduc_pipeline\chiron\tous\mir7\logsheets\'+yyyy+'\'
+      ; barypath = 'C:\Users\aleja\Desktop\Desktop\Job\Gulliver\Reduction-Pipeline-Software\chiron_reduc_pipeline\chiron\tous\mir7\bary\'
+    ;endif else begin
+     ; rawpath = '/nfs/morgan/chiron/raw/mir7/'
+     ; logpath = '/nfs/morgan/chiron/tous/mir7/logsheets/'+yyyy+'/'
+   ; endelse
 
-  spawn, 'hostname', host
-  spawn, 'cd', pwddir   ;Updated to a Windows command
-
-  ;print, "This is the actual directory : " +string(host)
-
-
-  if strlen(chi_path)  ge 1 then begin
-    rawpath = chi_path.trim() + '\raw\mir7\'
-    logpath = chi_path.trim() + '\tous\mir7\logsheets\'+yyyy+'\'
-  endif else begin
-
-    if host eq 'ctimac1.ctio.noao.edu' then begin
-      rawpath = '/mir7/raw/'
-      logpath = '/mir7/logsheets/'+yyyy+'/'
-    endif else if  host eq 'Drius22' then begin
-      rawpath = 'C:\Users\mrstu\idlworkspace_yalecalibration\chiron\raw\mir7\'
-      logpath = 'C:\Users\mrstu\idlworkspace_yalecalibration\chiron\tous\mir7\logsheets\'+yyyy+'\'
-      barypath = 'C:\Users\mrstu\idlworkspace_yalecalibration\chiron\tous\mir7\bary\'
-    endif else if pwddir eq 'C:\Users\gulliver' then begin
-      rawpath = 'C:\F disk\chiron_reduc_pipeline\chiron\raw\mir7\'
-      logpath = 'C:\F disk\chiron_reduc_pipeline\chiron\tous\mir7\logsheets\'+yyyy+'\'
-      barypath = 'C:\F disk\chiron_reduc_pipeline\chiron\tous\mir7\bary\'
-     endif else if host eq 'DESKTOP-41NKOUC' then begin 
-       rawpath = 'C:\Users\aleja\Desktop\Desktop\Job\Gulliver\Reduction-Pipeline-Software\chiron_reduc_pipeline\chiron\raw\mir7\'
-       logpath = 'C:\Users\aleja\Desktop\Desktop\Job\Gulliver\Reduction-Pipeline-Software\chiron_reduc_pipeline\chiron\tous\mir7\logsheets\'+yyyy+'\'
-       barypath = 'C:\Users\aleja\Desktop\Desktop\Job\Gulliver\Reduction-Pipeline-Software\chiron_reduc_pipeline\chiron\tous\mir7\bary\'
-    endif else begin
-      rawpath = '/nfs/morgan/chiron/raw/mir7/'
-      logpath = '/nfs/morgan/chiron/tous/mir7/logsheets/'+yyyy+'/'
-    endelse
-
-  endelse
+ ; endelse
 
   ;*****************************************
   ;Constants + validation
