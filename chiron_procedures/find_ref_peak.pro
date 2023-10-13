@@ -129,7 +129,7 @@ if not keyword_set(order_num) then order_num =  1
   
   spec = REFORM(sp[*, order_num] )  ; If software crashes at this point. It is most likely because the order changed due to 
    
-  ;p0 = plot(spec, LINESTYLE='-:', title ='ThAr -Indexed Order  (Blue order) ' ); ,/overplot)  
+  p0 = plot(spec, LINESTYLE='-:', /OVERPLOT, title ='ThAr -Indexed Order  (Blue order) ' ); ,/overplot)  
 
 
 
@@ -147,9 +147,11 @@ if not keyword_set(order_num) then order_num =  1
 
   ; For consistency sake we only take the 3 greatest peaks wich we experimentally found and 
   ; should always be withint a pixeles range of : 
-  ;                                              r1=[ 600, 800 ]  
-  ;                                              r2=[1975,2050]
-  ;                                              r3=[3820,3920]
+  ;                                               r1=[2125,2174]  
+  ;                                               r2=[2240,2270]
+  ;                                               r3=[2560,2590]
+  ;                                               r4=[3160,3195]
+  ;                                               r5=[3340,3380]
   
   r1=[2125,2174]         ; rough approximations
   r2=[2240,2270]
@@ -253,11 +255,11 @@ if not keyword_set(order_num) then order_num =  1
  abs_pixel_d = peak_4 + out_coefficients_4[1]
  abs_pixel_e = peak_5 + out_coefficients_5[1]
  
-; pa = scatter( abs_pixel_a, spec[abs_pixel_a] , /current, /over,   symbol = 'o', sym_color = 'r', sym_thick = 1)
-; pb = scatter( abs_pixel_b, spec[abs_pixel_b] , /current, /over,   symbol = 'o', sym_color = 'r', sym_thick = 1) 
-; pc = scatter( abs_pixel_c, spec[abs_pixel_c]  , /current, /over,   symbol = 'o', sym_color = 'r', sym_thick = 1)
-; 
-; 
+ pa = SCATTERPLOT( abs_pixel_a, spec[abs_pixel_a] , /OVERPLOT,   symbol = 'o', sym_color = 'r', sym_thick = 1)
+ pb = SCATTERPLOT( abs_pixel_b, spec[abs_pixel_b] , /OVERPLOT,   symbol = 'o', sym_color = 'r', sym_thick = 1) 
+ pc = SCATTERPLOT( abs_pixel_c, spec[abs_pixel_c] , /OVERPLOT,   symbol = 'o', sym_color = 'r', sym_thick = 1)
+ pd = SCATTERPLOT( abs_pixel_d, spec[abs_pixel_c] , /OVERPLOT,   symbol = 'o', sym_color = 'r', sym_thick = 1)
+ pe = SCATTERPLOT( abs_pixel_e, spec[abs_pixel_c] , /OVERPLOT,   symbol = 'o', sym_color = 'r', sym_thick = 1)
 
 
 
