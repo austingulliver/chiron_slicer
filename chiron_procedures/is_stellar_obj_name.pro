@@ -2,6 +2,7 @@
 ; input: the object name 
 ; output: True => Object name corresponds to stellar exposure, Flase => Oject name corresponds to other type file (ThAr, flat ...)
 function is_stellar_obj_name, objName 
+  objName = STRLOWCASE(objName)
   if objName eq 'iodine' or objName eq 'thar' $ 
   or objName eq 'focus' or objName eq 'junk' or objName eq 'dark' $
   or objName eq 'bias' or objName eq 'quartz' or objName eq 'master_stellar' then begin

@@ -77,7 +77,6 @@ PRO reduce_slicer,  $
   ;# 2) Spectra Reduction
   ;#####################################################
 
-
   if ~keyword_set(no_reduction) then begin
 
     print, '**************************************************'
@@ -255,8 +254,7 @@ PRO reduce_slicer,  $
 
 
     foreach structure, stellar_bary_correc do begin ; Iterate of each file to post process
-
-
+      
       if ~keyword_set(combine_stellar) then begin
         ; Modifying path of individual files since they have the path of prev rar directory
         file_name= redpar.rootdir+ redpar.fitsdir+ redpar.imdir +redpar.prefix_tag +strtrim(structure.file_name,2)
