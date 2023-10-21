@@ -2,8 +2,8 @@
 ; Input: header fits file 
 ; Output: JD, bary_correc, coords_ra, coords_dec
 
-function logMakerCalc, hd, OBJName=objname
-
+function logmaker_calc, hd, OBJName=objname
+    COMPILE_OPT IDL2
     if ~keyword_set(OBJName) then begin
       object = sxpar(hd, 'OBJECT')     ; Get object name
       OBJName = strcompress(object,/remove_all)
@@ -44,7 +44,7 @@ function logMakerCalc, hd, OBJName=objname
      
     if em_date_time eq '0000-00-00T00:00:00.000' then message, "This is a stellar exposure date cannot be 0000-00-00T00:00:00.000." ;For stellar em_date_time cannot be 0000-00-00T00:00:00.000
     
-    jdUTC = getJulianDate([em_date_time])
+    jdUTC = get_julian_date([em_date_time])
     ; Define coords ra and dec
     get_stellar_coord, hd, starname=objName, ra=coords_ra, dec=coords_dec, coords=coords ; output are :  coords_ra and coords_dec
   
@@ -60,7 +60,7 @@ function logMakerCalc, hd, OBJName=objname
     return_vals["is_stellar"] = boolean(1)
      
     endif else begin
-       jdUTC = getJulianDate([em_date_time])
+       jdUTC = get_julian_date([em_date_time])
     endelse
     
     return_vals["date"] = em_date_time ; Set the date in return vals dictionary

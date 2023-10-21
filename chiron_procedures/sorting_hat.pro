@@ -184,7 +184,7 @@ for qi=0, n_elements(qcombs)-1 do begin ;Converts ranges found in log sheet to t
 	qcombs[qi:*] += (ncombs - 1)
 endfor
    ;print, 'obnm after is: ', obnm
-ut = getJulianDate(mdpt) ; floating-point hours, >24h in the morning
+ut = get_julian_date(mdpt) ; floating-point hours, >24h in the morning
 
 ;-> Up to here: variables obnm,objnm, i2,mdpt ....  are vectors that contain data of log sheet 
 
@@ -465,7 +465,7 @@ print, ' '
  if keyword_set(getthid) then begin
 		xsl=where(bin eq redpar.binnings[modeidx] and slit eq redpar.modes[modeidx],n_modes)
 
-   if n_modes gt 0 then begin ; 
+   if n_modes gt 0 then begin 
     	   obnm1=obnm[xsl]  &   objnm1=objnm[xsl]  
     	   tharindx=where(objnm1 eq 'thar',num_thar)
     	   

@@ -513,7 +513,7 @@ pro logmaker_v2, rawdir, $                  ; It is simply the name of the direc
         if strlen(objName) gt 12 then objName = strmid(objName.trim(),0,12) ; 
 
         ; Calcualte Julian Date and relativistic redshift ,RA (coords_ra)AND  DECLINATION (coords_dec)
-        res_dcit = logMakerCalc(hd) 
+        res_dcit = logmaker_calc(hd) 
         em_date_time[i] = res_dcit['date']
         JD = res_dcit['JD']
         bary_correc = res_dcit['bary_correc']
