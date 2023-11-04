@@ -336,8 +336,9 @@ PRO reduce_slicer,  $
 
 
         ; pass array along with type of cut
-        splice_type= 'pixel_cut_of_3200px'
-        new_cube= splice_spectrum( new_cube, splice_type=splice_type)
+        splice_type= 'custom'
+        p_to_cut = redpar.pixel_to_cut
+        new_cube= splice_spectrum( new_cube, splice_type=splice_type, pixel_to_cut=p_to_cut)
 
         history_str = ' The orders were spliced using '+ splice_type
         sxaddpar, hd, 'HISTORY', history_str

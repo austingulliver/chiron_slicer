@@ -23,5 +23,3 @@ function get_julian_date, mdpt
   endfor
   return, ut
 end
-
-

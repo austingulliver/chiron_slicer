@@ -57,7 +57,7 @@ if keyword_set(splice_type)    then begin
     print, '>> Spectrum gets spliced by  ' +string(splice_type)
     switch (splice_type) of
 
-          'pixel_cut_of_3200px': begin 
+          'custom': begin 
             ;We maintain the cube shape but with lest points 
             IF ~KEYWORD_SET(pixel_to_cut) then pixel_to_cut=3200
             
