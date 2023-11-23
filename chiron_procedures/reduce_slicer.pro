@@ -120,14 +120,11 @@ PRO reduce_slicer,  $
     ;##################
     ;# Collect bary correction individually or in groups
     ;##################
-    ;        if keyword_set(no_log) then begin ; Else we keep the stellar_bary_correc create by logmaker_v2
-    ; Need to obtain the 'stellar_bary_correct' by reading the existing sheet
-    ; This can be improved if  taken the variable already created in sorting_hat
     logsheet = redpar.rootdir+redpar.logdir+strt(night)+'.log'
     readcol,logsheet, skip=9, obnm, objnm, bin, slit, ra, dec,  mdpt,  exptm , ccdTem, airMass,juDate,baryCorrec, intensity,f='(a10,     a15,       a8,    a10 ,   a14,   a14,     a28,      a12,     a12,      a10,     a17,    a14 , a17  )'
 
     ;-----------------
-    ;>>  master files
+    ;>>  Master files
     ;-----------------
     
     ; Get all bary correction in 1 array
@@ -143,7 +140,7 @@ PRO reduce_slicer,  $
       bary_indices = where(float(baryCorrec) ne 0.0, c_bary )
       obnm = obnm[ bary_indices]
 
-      if  redpar.remove_crs eq 0.5 then begin  ; before it had ~keyword_set(combine_stellar) and
+      if  redpar.remove_crs eq 5.0 then begin
         
           ;Find individual files all over again 
               
@@ -222,29 +219,41 @@ PRO reduce_slicer,  $
       bary_indices = where(float(baryCorrec) ne 0.0, c_bary )
       if c_bary le 0 then stop, 'reduce_slicer:  STOP : No barycentric corrections were identified from the .log file. '
       obnm = obnm[ bary_indices]
+      objnm = objnm[ bary_indices]
       baryCorrec = baryCorrec[bary_indices]
       stellar_bary_correc=list()
 
       for index = 0L, n_elements(obnm)-1 do begin
-        stellar_bary_correc.Add, {file_name:redpar.prefix+strt(obnm[index])+'.fits' , correction:baryCorrec[index] } ; Meant to be output
+        stellar_bary_correc.Add, {file_name:redpar.prefix+strt(obnm[index])+'.fits' , correction:baryCorrec[index], star_name:objnm[index] } ; Meant to be output
       endfor
       
       
       ;--------------------------
       ; Clean CRs when runnning individually and remove_crs:0.5 is set.
       ;--------------------------
-      if  redpar.remove_crs eq 0.5 then begin  ; before it had ~keyword_set(combine_stellar) and
+      if  redpar.remove_crs eq 5.0 then begin  ; before it had ~keyword_set(combine_stellar) and
 
-          all_file_names = list()
+          stellar_exposures = dictionary()
           ;1.  Gather all file names
           foreach structure, stellar_bary_correc do begin
             file_name= redpar.rootdir+ redpar.fitsdir+ redpar.imdir +redpar.prefix_tag +strtrim(structure.file_name,2)
-            all_file_names.add, file_name
+            refined_key = structure.star_name
+            refined_key = refined_key.replace( ' ', '') ; Get Rid of any dash
+            refined_key = refined_key.replace( '-', '') ; get rid of empty space
+            if stellar_exposures.HasKey( refined_key ) then begin
+              stellar_exposures[ refined_key ].Add,  file_name ; Add the obersevation number
+            endif else begin
+              stellar_exposures[ refined_key ]= list(file_name )
+            endelse
           endforeach
-          all_file_names = all_file_names.toarray()
-  
+          
           ;2.  Remove CRs  : this is the stack approach
-          remove_cr_by_sigma, all_file_names, combine_stellar ; The files themselves get updated. So files in the folder fitspec get updated
+          foreach star_name_key,  stellar_exposures.Keys() do begin
+            all_file_names = stellar_exposures[star_name_key].ToArray()
+            print, all_file_names
+            remove_cr_by_sigma, all_file_names, combine_stellar ; The files themselves get updated. So files in the folder fitspec get updated
+          endforeach 
+          
       endif
 
 

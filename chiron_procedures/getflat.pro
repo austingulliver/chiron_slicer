@@ -58,17 +58,18 @@ endif;debug plots
 if redpar.flatnorm le 1 then begin   ;runs for flatnorm equal 0 and 1
     for j = 0, nord-1 do begin       ;row by row polynomial
           s = sp[*, j]               ;Spectrum for given orders : intensity values    
-              
+          
+          status = ''  
           strong = where(s ge threshold*max(s), nstrong) ; strong signal
           
           if nstrong lt order+1 then stop, 'GETFLAT: No signal, stopping'
           
-          cf = poly_fit(ix[strong],s[strong],order, yfit=yfit) 
+          cf = poly_fit(ix[strong],s[strong],order, yfit=yfit, /double, status=status)
           ss1 = poly(ix,cf)
           
           ;now mask out extremely bad regions that affect the fit (e.g. the debris at the center of the chip):
           stronger = where(s ge 0.8*ss1)
-          cf2 = poly_fit(ix[stronger],s[stronger],order, yfit=yfit) 
+          cf2 = poly_fit(ix[stronger],s[stronger],order, yfit=yfit, /double, status=status) 
           ss = poly(ix,cf2)
           
           ;	  ss = median(s, medwidth)       ;median smooth the orders

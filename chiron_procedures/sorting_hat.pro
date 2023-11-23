@@ -120,7 +120,7 @@ pretag = redpar.prefix_tag
 ;back in reduce_slicer we create the actual master file
 ;We do this just so we don'thave to alter the finding/ writting master stellar logic
 
-if keyword_set (combine_stellar) and (redpar.remove_crs eq 0.5) then begin
+if keyword_set (combine_stellar) and (redpar.remove_crs eq 5) then begin
     combine_stellar = 0 ; we "unset" so it runs them individually
     combine_stellar_changed = 1
 endif else combine_stellar_changed = 0
