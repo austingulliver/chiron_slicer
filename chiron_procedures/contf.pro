@@ -108,10 +108,11 @@ if not keyword_set(pl) then pl = 0
 	x = mbw & y = mbin
 	if nord le 6 then begin
 		if nord ge sbin then npl = sbin-1
+		status=''
 		nx = n_elements(x)
 		mn = total(x)/nx   &   x=x - mn   &   wf=float(w-mn)
 ;		mn = mean(x)   &   x=x - mn   &   wf=float(w-mn)
-		cf = poly_fit(x,y,npl,/double)	;call poly_fit(intrinsic)
+		cf = poly_fit(x,y,npl,/double, status=status)	;call poly_fit(intrinsic)
 		c = poly(double(wf),cf)		;call poly(user written)
 		;print,cf
 	endif else begin

@@ -290,10 +290,11 @@ nord = specsz[2]
     thid_pixel = m_p / 1d3
 
 ;Use Marquardt to fit marked lines.
+    status=''
     dummy = fltarr(ngd)
     sig = replicate(1.0, ngd)
     par = dblarr(maxordx + 1 + maxordy + maxcross)
-    par(0:1) = poly_fit(m_p/1d3, m_ml, 1, /double)
+    par(0:1) = poly_fit(m_p/1d3, m_ml, 1, /double, status=status)
     dpar = [ 1d1, replicate(1, maxordx) $
                 , replicate(1, maxordy) $
                 , replicate(1, maxcross) ]

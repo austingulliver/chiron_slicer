@@ -47,7 +47,7 @@
 ;  20110808 - structured version (AT). Remaining hard-coded marked with >>
 ;-
 ;
-pro sorting_hat, night, run=run, iod2fits=iod2fits, reduce=reduce, doppler=doppler, doptag=doptag, $
+pro sorting_hat_v1, night, run=run, iod2fits=iod2fits, reduce=reduce, doppler=doppler, doptag=doptag, $
 		end_check=end_check, skip=skip, thar_soln=thar_soln, mode = mode
 ; narrow=narrow, slicer=slicer, normslit=normslit, fiber=fiber, 
 
