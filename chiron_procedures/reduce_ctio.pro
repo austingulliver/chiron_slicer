@@ -423,7 +423,7 @@ pro reduce_ctio,  redpar, mode, flatset=flatset, thar=thar, $
       sz = size(im_ref)
       n_col = sz[1]          ;# columns in image
       n_row = sz[2]          ;# rows in image
-      data_cube =  dblarr(   n_col,n_row, nrec)
+      data_cube =  dblarr(n_col,n_row, nrec)
 
 
       avgs =list() ; average of each image

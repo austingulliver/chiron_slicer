@@ -14,6 +14,11 @@
 function weighted_master_frame, data_cube, typeStr
   
   sz = size(data_cube)
+  
+  if sz[0] eq 2 then begin 
+    master_frame = data_cube
+    return, master_frame
+  endif
   n_cols= sz[1]   ;# columns in image
   n_rows=  sz[2]  ;# rows in image
   
