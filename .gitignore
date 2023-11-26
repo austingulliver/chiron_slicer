@@ -29,3 +29,4 @@ research/*
 *.zip
 *.tar
 *.gzip
+/chiron/tous/mir7/logsheets/*
