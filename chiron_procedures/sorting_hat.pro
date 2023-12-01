@@ -55,17 +55,10 @@ bin11 = bin11, flatsonly=flatsonly, tharonly=tharonly, combine_stellar=combine_s
 
 angstrom = '!6!sA!r!u!9 %!6!n'
 
-; Read ctio.par path
-ctparfn = getenv('CHIRON_CTIO_PATH')
-
-if ctparfn eq '' then message, 'Before running the sorting_hat you need to set the environment variable CHIRON_CTIO_PATH to be equal to the full path for your ctio.par file.'
-
 ;#####################################################
-;### Read ctio.par + set  initial variables 
+;### Set ctio.par  initial variables 
 ;#####################################################
 
-
-redpar = readpar(ctparfn) ; Contains all parsed default values
 redpar.imdir = night+'\'  ; pass night into redpar
 redpar.date = night
 redpar.versiond=systime()
@@ -95,12 +88,8 @@ if keyword_set(bin11) then modeidx += 4
 redpar.mode = modeidx                        ; pass current mode to other programs
 if modeidx lt 0 then  stop, 'SORTING_HAT: >> ERROR << unrecognized mode. Returning from sorting_hat'
     
-
-
-;logpath = redpar.rootdir+redpar.logdir+'20'+strmid(night, 0, 2)+'/'
-logpath = redpar.logdir+'20'+strmid(night, 0, 2)+'\'                ; 20+18(first 2 digits of my night)
-redpar.logdir=logpath
-logsheet = redpar.rootdir+logpath+night+'.log'
+logsheet = redpar.rootdir+redpar.logdir+night+'.log'
+tempionjnj = redpar.logdir
 iodspec_path = redpar.rootdir+redpar.iodspecdir+redpar.imdir
 fits_path = redpar.rootdir+redpar.fitsdir+redpar.imdir
 if ~file_test(fits_path) then spawn, 'mkdir '+ string(34B) + fits_path + string(34B)

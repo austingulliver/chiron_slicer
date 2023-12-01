@@ -49,6 +49,15 @@ PRO reduce_slicer,  $
   ctparfn = getenv('CHIRON_CTIO_PATH')
   if ctparfn eq '' then message, 'Before running the pipeline you need to set the environment variable CHIRON_CTIO_PATH to be equal to the full path for your ctio.par file.'
   
+  ;Reading input file 
+  redpar = readpar(ctparfn)
+  
+  ;Check if pipeline should run in automation mode 
+  if redpar.automation then begin
+    combine_an=1
+    post_process=1
+  endif
+  
   if keyword_set(combine_an) then combine_stellar=1
   
   foreach night, nights do begin
@@ -68,13 +77,14 @@ PRO reduce_slicer,  $
       endif else begin
         ; Run bary Correction as well
         ; It is very important to get the name of the start Correct to run the barycorrection successfully
-        logmaker_v2, strt(night), /nofoc, prefix='chi', stellar_bary_correc=stellar_bary_correc
+        logmaker_v2, strt(night), /nofoc, prefix='chi', redpar =redpar, stellar_bary_correc=stellar_bary_correc
         ;   stellar_bary_correc(Output): is a list wich elements are strucutres with the form {file_name:obs_file[i] , correction:czi }
       endelse
   
     endif
     
     if keyword_set(combine_stellar) then n_iterations=1
+    
     for i = 0L, n_iterations do begin
         if i eq 0 then combine_stellar=0 else combine_stellar=1
   
@@ -108,12 +118,11 @@ PRO reduce_slicer,  $
           ; Collecting missing info if any of the other 2 tags were not set.
           if keyword_set(no_reduction) then begin
             ; When not doing reduction ONLY postprocessing
-            redpar = readpar(ctparfn)
             redpar.imdir = strt(night)+'\' ; setting some extra variables that will get used.
             redpar.prefix ='chi'+strt(night) +'.'
       
             redpar.logdir =  redpar.logdir  + '20'+strmid(strt(night), 0, 2)+'\'
-          endif else redpar=redpar ;else use the same as in sorting_hat
+          endif
       
           ;##################
           ;# Collect bary correction individually or in groups
@@ -128,7 +137,7 @@ PRO reduce_slicer,  $
           if keyword_set(combine_stellar) then begin
             
             ;--------------------------
-            ; Clean CRs when combine_stellar and remove_crs:0.5 are set.
+            ; Clean CRs when combine_stellar and remove_crs:5.0 are set.
             ;--------------------------
             ; I create the master file before looking for it but to do so I have to find individual files all over again
             ; It might seem like repeated logic but it's needed
@@ -210,7 +219,7 @@ PRO reduce_slicer,  $
             endfor
             
             ;--------------------------
-            ; Clean CRs when runnning individually and remove_crs:0.5 is set.
+            ; Clean CRs when runnning individually and remove_crs:5.0 is set.
             ;--------------------------
             if  redpar.remove_crs eq 5.0 then begin  ; before it had ~keyword_set(combine_stellar) and
       
@@ -232,7 +241,7 @@ PRO reduce_slicer,  $
                 foreach star_name_key,  stellar_exposures.Keys() do begin
                   all_file_names = stellar_exposures[star_name_key].ToArray()
                   print, all_file_names
-                  remove_cr_by_sigma, all_file_names, combine_stellar ; The files themselves get updated. So files in the folder fitspec get updated
+                  remove_cr_by_sigma, all_file_names, combine_stellar, redpar=redpar ; The files themselves get updated. So files in the folder fitspec get updated
                 endforeach 
                 
             endif
@@ -278,24 +287,26 @@ PRO reduce_slicer,  $
             ; Remove CRs | fft approach, order by order
             ;#########################
             ; SIDE EFFECT: If combine stellar set and fft approach set, this will apply fft to a master file (WARNNING master file could have already been removed CRs)
-            if  redpar.remove_crs eq 4 then begin ; Previously it was limited for individual only. Meaning I added  ~keyword_set(combine_stellar)
-      
-              print, ''
-              print, ' Cleaning all CRs from ' +structure.file_name
-              print, ''
-      
-              total_crs=0
-              for order = 0L, n_orders-1 do begin
-                order_crs = 0
-      
-                new_cube[1,*,order] = cr_remove_fft( new_cube[1,*,order] , redpar.sigma_multiplier, redpar.skirt_level, redpar.frac, order_crs) ; reliable as far as there are no CRs
-                ; order_crs gets changed within and we can use its values now
-                total_crs = total_crs +  order_crs
-              endfor
-       
-              history_str = 'CR-CLEANED :  ' + strt(total_crs) + ' crs found using FFT.'
-              print, history_str
-              sxaddpar, hd, 'HISTORY', history_str
+            if  (redpar.remove_crs eq 4 or redpar.automation) then begin ; Previously it was limited for individual only. Meaning I added  ~keyword_set(combine_stellar)
+              tempVar= sxpar(hd, "CR_MT")
+              cr_already_clean = isa( sxpar(hd, "CR_MT"), /number )
+              if cr_already_clean then begin
+                  print, ''
+                  print, ' Cleaning all CRs from ' + structure.file_name
+                  print, ''
+          
+                  total_crs=0
+                  for order = 0L, n_orders-1 do begin
+                    order_crs = 0
+                    new_cube[1,*,order] = cr_remove_fft( new_cube[1,*,order] , redpar.sigma_multiplier, redpar.skirt_level, redpar.frac, order_crs) ; reliable as far as there are no CRs
+                    ; order_crs gets changed within and we can use its values now
+                    total_crs = total_crs +  order_crs
+                  endfor
+           
+                  history_str = 'CR-CLEANED :  ' + strt(total_crs) + ' crs found using FFT.'
+                  print, history_str
+                  sxaddpar, hd, 'HISTORY', history_str
+              endif else print, "NOT running FFT, CRs already removed for " +  structure.file_name
             endif
       
             ;##################

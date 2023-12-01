@@ -169,7 +169,7 @@ pro reduce_ctio,  redpar, mode, flatset=flatset, thar=thar, $
                 curr_time = systime(/SECONDS)
                 time_diffe = abs(modify_date-curr_time)
                 if time_diffe le 86400 then begin
-                  order_file_save = base_dir + name_or_file
+                  order_file_save = traces_dir + name_or_file
                 endif
               endif              
             endif else begin

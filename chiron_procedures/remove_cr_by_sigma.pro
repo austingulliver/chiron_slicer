@@ -43,14 +43,14 @@ pro  remove_cr_by_sigma, paths, combine_stellar, redpar=redpar, master_name=mast
   sigma = 3
 
   if n_elements(paths) lt 3 then begin
-    print, ' '
-    print, '                 WARNING      '
-    print, ' Cosmic Rays have not been removed. Please change the variable remove_crs from the ctio.par file to use either La Cosmic or the Legacy code.  '
-    print, ' '
-    print, ' Please, type :  cont.      to continue the reduction wihtout removnig cosmic rays.  '
-    print, ' '
-    stop, ' '
-   
+    if redpar.automation then begin
+      return
+    endif else begin
+      print, ' '
+      print, '                 WARNING      '
+      print, ' Cosmic Rays have not been removed. Please change the variable remove_crs from the ctio.par file to use either La Cosmic or the Legacy code for  ' + paths
+      return
+    endelse 
   endif
 
   ; 1) Read first to find out the dimensions
@@ -140,9 +140,11 @@ pro  remove_cr_by_sigma, paths, combine_stellar, redpar=redpar, master_name=mast
     if ~keyword_set(combine_stellar) then begin
         pos=stregex(path, 'chi([0-9]+)\.([0-9]+)\.fits$', length=len)
       print,"CR_ROMOVE:  Found  "  + strt(n_crs)+" CRs  in file : "+strmid(path, pos, len)
-      history_str = 'CR-CLEANED : '+todayDate+' : ' + strt(n_crs)+ ' from : '  +strt(n_elements(paths))  +' files'
+      comment_cr_mt = "sigma clipping AFTER reduction."
+      comment_num_cr = strt(n_crs)
       ; The statement "CR-CLEANED" serves as reference to identify if the file has been cleaned previouly. Do not remove.
-      sxaddpar, hd, 'HISTORY', history_str
+      sxaddpar, hd, 'CR_MT', comment_cr_mt
+      sxaddpar, hd, 'NUM_CRs', comment_num_cr
       writefits,  path, originalY, hd  
     endif else begin
       ;else collect them all (either mean or median) to write to DISK only the master
@@ -171,9 +173,11 @@ pro  remove_cr_by_sigma, paths, combine_stellar, redpar=redpar, master_name=mast
       indir=redpar.rootdir+redpar.fitsdir+redpar.imdir+master_name
       
       ;First time I create the file so it 
-      history_str = 'CR-CLEANED : '+todayDate+' : using remove_crs:0.5 AFTER reduction in '  +strt(n_elements(paths))  +' files'
+      comment_cr_mt = "sigma clipping AFTER reduction."
+      comment_num_cr = strt(n_crs)
       ; The statement "CR-CLEANED" serves as reference to identify if the file has been cleaned previouly. Do not remove.
-      sxaddpar, hd, 'HISTORY', history_str
+      sxaddpar, hd, 'CR_MT', comment_cr_mt
+      sxaddpar, hd, 'NUM_CRs', comment_num_cr
       writefits,  indir, originalY, hd
       
       
