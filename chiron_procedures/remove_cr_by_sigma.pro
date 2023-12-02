@@ -183,7 +183,7 @@ pro  remove_cr_by_sigma, paths, combine_stellar, redpar=redpar, master_name=mast
       
   endif
 
-
+print, "Done running remove CR by 5.0 sigma clipping AFTER reduction."
   
 end
 

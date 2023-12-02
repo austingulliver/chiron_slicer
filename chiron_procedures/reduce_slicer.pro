@@ -52,6 +52,8 @@ PRO reduce_slicer,  $
   ;Reading input file 
   redpar = readpar(ctparfn)
   
+  ;if ~isa(nights, /number) then nights = get_nights_dir(nights)
+  
   ;Check if pipeline should run in automation mode 
   if redpar.automation then begin
     combine_an=1
@@ -84,10 +86,10 @@ PRO reduce_slicer,  $
   
     endif
     
-    if keyword_set(combine_stellar) then n_iterations=1
+    if keyword_set(combine_stellar) then n_iterations=1 else n_iterations=0
     
     for i = 0L, n_iterations do begin
-        if i eq 0 then combine_stellar=0 else combine_stellar=1
+        if i eq 1 then combine_stellar=0
   
         ;#####################################################
         ;# 2) Spectra Reduction
@@ -321,7 +323,7 @@ PRO reduce_slicer,  $
               cr_already_clean = isa( sxpar(hd, "CR_MT"), /number )
               if cr_already_clean then begin
                   print, ''
-                  print, ' Cleaning all CRs by FFT from ' + structure.file_name
+                  print, ' Cleaning all CRs by FFT for ' + structure.file_name
                   print, ''
           
                   total_crs=0
@@ -332,7 +334,7 @@ PRO reduce_slicer,  $
                     total_crs = total_crs +  order_crs
                   endfor
            
-                   comment_cr_mt = "sigma clipping AFTER reduction."
+                   comment_cr_mt = "CR done by FFT After reduction"
                    comment_num_cr = strt(total_crs)
                    ; The statement "CR-CLEANED" serves as reference to identify if the file has been cleaned previouly. Do not remove.
                    sxaddpar, hd, 'CR_MT', comment_cr_mt
@@ -492,12 +494,12 @@ PRO reduce_slicer,  $
           for idx = 0L, nele-1 do begin
              spectrum = readfits(star_list[idx])
              spectrum_int = reform(spectrum[1,*,*])
-             spectrum_wav = reform(spectrum[0,*,*])
+             ;spectrum_wav = reform(spectrum[0,*,*])
              spectra [*,*,idx]= spectrum_int
-             wavelengths[*,*,idx] = spectrum_wav
+             ;wavelengths[*,*,idx] = spectrum_wav
           endfor
          spectra_res = mean(spectra, /double, dimension=3)
-         spectra_wav = mean(wavelengths, /double, dimension=3)
+         ;spectra_wav = mean(wavelengths, /double, dimension=3)
          result = make_array(2, n_int, n_orders, /double)
          result[0,*,*]= ref_fits[0,*,*]
          result[1,*,*]= spectra_res
