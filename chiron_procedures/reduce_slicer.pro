@@ -143,32 +143,60 @@ PRO reduce_slicer,  $
             ; It might seem like repeated logic but it's needed
             bary_indices = where(float(baryCorrec) ne 0.0, c_bary )
             obnm = obnm[ bary_indices]
+            objnm = objnm[ bary_indices]
       
             if  redpar.remove_crs eq 5.0 then begin
-                ;Find individual files all over again 
-                all_file_names = list()
-                ;1.  Gather all file names
+              
+                stellar_exp_by_star = dictionary()
                 for index = 0L, n_elements(obnm)-1 do begin
+                  refined_key = objnm[index]
+                  refined_key = refined_key.replace( ' ', '') ; Get Rid of any dash
+                  refined_key = refined_key.replace( '-', '') ; get rid of empty space
                   file_name= redpar.rootdir+ redpar.fitsdir+ redpar.imdir +redpar.prefix_tag +strtrim(redpar.prefix+strt(obnm[index])+'.fits')
-                  all_file_names.add, file_name
+                  if stellar_exp_by_star.HasKey( refined_key ) then begin
+                    stellar_exp_by_star[ refined_key ].add,  file_name ; Add the obersevation number
+                  endif else begin
+                    stellar_exp_by_star[ refined_key ]= list(file_name )
+                  endelse
                 endfor
                
-                all_file_names = all_file_names.toarray()
-                
-                ; 3. Finding the file numbers to create the stellar file name properly
-                ; TODO: I am assuming there will be only 1 stellar file,  have to make algorithim to find discontinuities and get back them 
-                ; in grous. I remmeber doing something similar in reduce_ctio.pro
-                positions= stregex(all_file_names, '([0-9]+)\.fits$', length=len)
-                stellar_indices = all_file_names
-                for index = 0L, n_elements(stellar_indices)-1 do begin
+                foreach star_exp, stellar_exp_by_star.keys() do begin
+                  all_file_names = stellar_exp_by_star[star_exp].ToArray()
+                  positions= stregex(all_file_names, '([0-9]+)\.fits$', length=len)
+                  stellar_indices = all_file_names
+                  for index = 0L, n_elements(stellar_indices)-1 do begin
                     stellar_indices[index]=strmid(stellar_indices[index], positions[index] ,4) ; 4 since we cutting the array to get E.g. .[1568].fits
-                endfor
-               
-               ;3. Creating file name 
-                master_name= redpar.prefix_tag+'m'+redpar.prefix +strt(stellar_indices[0])+'_'+strt(n_elements(stellar_indices))+'.fits' ;recnums[0]+'_'+strtrim(string(n_elements(recnums)),2)
-                
-                ;4.  Remove CRs  : this is the stack approach
-                remove_cr_by_sigma, all_file_names, combine_stellar, redpar=redpar, master_name=master_name  ; The files themselves get updated. So files in the folder fitspec get updated
+                  endfor
+
+                  ;3. Creating file name
+                  master_name= redpar.prefix_tag+'m'+redpar.prefix +strt(stellar_indices[0])+'_'+strt(n_elements(stellar_indices))+'.fits'
+                  indir=redpar.rootdir+redpar.fitsdir+redpar.imdir+master_name
+                  if (n_elements(stellar_indices) eq 1) then begin
+                      spectrum = readfits(all_file_names[0], hd)
+                      writefits,  indir, spectrum, hd
+                  endif else if (n_elements(all_file_names) eq 2) then begin
+                      master_sp = readfits(all_file_names[0], /silent)
+                      n_pixels = (size(master_sp))[2]
+                      n_orders = (size(master_sp))[3]
+                      stellar_stack=make_array(n_pixels, n_orders, n_elements(all_file_names),/double )
+                      for index = 0L, n_elements(all_file_names)-1 do begin
+                        spectrum = readfits(all_file_names[idx], hd) ; Will read [2,4112,74]
+                        spectrum = reform(spectrum[1,*,*])
+                        stellar_stack [*,*,idx]= spectrum
+                      endfor
+                      if redpar.master_stellar eq 'mean' then begin
+                        master_stellar = mean(stellar_stack, /double, dimension=3)
+                      endif else begin
+                        ; else -> redpar.master_stellar eq 'median'
+                        master_stellar = median(stellar_stack, /double, dimension=3)
+                      endelse
+                      master_sp[1,*,*] = master_stellar 
+                      writefits,  indir, master_sp, hd
+                  endif else begin
+                    ;4.  Remove CRs  : this is the stack approach
+                    remove_cr_by_sigma, all_file_names, combine_stellar, redpar=redpar, master_name=master_name  ; The files themselves get updated. So files in the folder fitspec get updated
+                  endelse
+                endforeach
             endif
             
             ;---------------------------
@@ -292,7 +320,7 @@ PRO reduce_slicer,  $
               cr_already_clean = isa( sxpar(hd, "CR_MT"), /number )
               if cr_already_clean then begin
                   print, ''
-                  print, ' Cleaning all CRs from ' + structure.file_name
+                  print, ' Cleaning all CRs by FFT from ' + structure.file_name
                   print, ''
           
                   total_crs=0
@@ -303,9 +331,12 @@ PRO reduce_slicer,  $
                     total_crs = total_crs +  order_crs
                   endfor
            
-                  history_str = 'CR-CLEANED :  ' + strt(total_crs) + ' crs found using FFT.'
-                  print, history_str
-                  sxaddpar, hd, 'HISTORY', history_str
+                   comment_cr_mt = "sigma clipping AFTER reduction."
+                   comment_num_cr = strt(total_crs)
+                   ; The statement "CR-CLEANED" serves as reference to identify if the file has been cleaned previouly. Do not remove.
+                   sxaddpar, hd, 'CR_MT', comment_cr_mt
+                   sxaddpar, hd, 'NUM_CRs', comment_num_cr
+                   print, "Done running FFT to remove CRs. Number of Crs found = " + comment_num_cr
               endif else print, "NOT running FFT, CRs already removed for " +  structure.file_name
             endif
       

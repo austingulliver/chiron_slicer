@@ -89,7 +89,6 @@ redpar.mode = modeidx                        ; pass current mode to other progra
 if modeidx lt 0 then  stop, 'SORTING_HAT: >> ERROR << unrecognized mode. Returning from sorting_hat'
     
 logsheet = redpar.rootdir+redpar.logdir+night+'.log'
-tempionjnj = redpar.logdir
 iodspec_path = redpar.rootdir+redpar.iodspecdir+redpar.imdir
 fits_path = redpar.rootdir+redpar.fitsdir+redpar.imdir
 if ~file_test(fits_path) then spawn, 'mkdir '+ string(34B) + fits_path + string(34B)
