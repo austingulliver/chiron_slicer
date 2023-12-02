@@ -17,14 +17,15 @@
 
 
 ; JL:  E.g. -- IDL> logmaker_v2, '210118', /nofoc, prefix='chi', star_name='HR5049'
-pro logmaker_v2, rawdir, $                  ; It is simply the name of the directory with the raw data. Needs to be a year.
+pro logmaker_v2, rawdir, $                        ; It is simply the name of the directory with the raw data. Needs to be a year.
   override = override, $
   prefix = prefix, $
-  noarchive=noarchive, $
-  nofoc =nofoc, $
-  date=date, $                              ; Needs be a year. Example: 2023
-  stellar_bary_correc=stellar_bary_correc   ; Used as output to return all the bary correction of given star
-; star_name =star_name,$                    ; Name of the stellar object. This name HAS TO BE compatible with SIMBAD. Deprecated
+  noarchive = noarchive, $
+  nofoc = nofoc, $
+  date = date, $                                  ; Needs be a year. Example: 2023
+  redpar = redpar, $                              
+  stellar_bary_correc = stellar_bary_correc       ; Used as output to return all the bary correction of given star
+; star_name =star_name,$                          ; Name of the stellar object. This name HAS TO BE compatible with SIMBAD. Deprecated
 
   ;*****************************************
   ;Check for paths 
@@ -37,11 +38,6 @@ pro logmaker_v2, rawdir, $                  ; It is simply the name of the direc
     yyyy = '20'+strmid(strt(rawdir),0,2)
   endelse
 
-  ; Getting necessary paths from ctio.par
-  ctparfn = getenv('CHIRON_CTIO_PATH')
-  if ctparfn eq '' then message, 'Before running the logmaker you need to set the environment variable CHIRON_CTIO_PATH to be equal to the full path for your ctio.par file.'
-
-  redpar = readpar(ctparfn)
   rootdir = redpar.rootdir
   rawpath = redpar.rawdir
   logpath = redpar.logdir +yyyy+'\'
@@ -624,6 +620,7 @@ pro logmaker_v2, rawdir, $                  ; It is simply the name of the direc
 
   close,1 ; Close file
 
-  file_count,dir=rawpath+rawdir+'/', prefix, missing
+  file_count,dir=rawpath+rawdir+'/', prefix, missing               
+  redpar.logdir = redpar.logdir +yyyy+'\'
   print,'LOGMAKER: Your logsheet can be found at : '+logname
 end

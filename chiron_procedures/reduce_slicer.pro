@@ -49,6 +49,18 @@ PRO reduce_slicer,  $
   ctparfn = getenv('CHIRON_CTIO_PATH')
   if ctparfn eq '' then message, 'Before running the pipeline you need to set the environment variable CHIRON_CTIO_PATH to be equal to the full path for your ctio.par file.'
   
+  ;Reading input file 
+  redpar = readpar(ctparfn)
+  
+  ;if ~isa(nights, /number) then nights = get_nights_dir(nights)
+  
+  ;Check if pipeline should run in automation mode 
+  if redpar.automation then begin
+    combine_an=1
+    post_process=1
+    redpar.remove_crs = 5.0
+  endif
+  
   if keyword_set(combine_an) then combine_stellar=1
   
   foreach night, nights do begin
@@ -68,15 +80,16 @@ PRO reduce_slicer,  $
       endif else begin
         ; Run bary Correction as well
         ; It is very important to get the name of the start Correct to run the barycorrection successfully
-        logmaker_v2, strt(night), /nofoc, prefix='chi', stellar_bary_correc=stellar_bary_correc
+        logmaker_v2, strt(night), /nofoc, prefix='chi', redpar =redpar, stellar_bary_correc=stellar_bary_correc
         ;   stellar_bary_correc(Output): is a list wich elements are strucutres with the form {file_name:obs_file[i] , correction:czi }
       endelse
   
     endif
     
-    if keyword_set(combine_stellar) then n_iterations=1
+    if keyword_set(combine_stellar) then n_iterations=1 else n_iterations=0
+    
     for i = 0L, n_iterations do begin
-        if i eq 0 then combine_stellar=0 else combine_stellar=1
+        if i eq 1 then combine_stellar=0
   
         ;#####################################################
         ;# 2) Spectra Reduction
@@ -108,12 +121,11 @@ PRO reduce_slicer,  $
           ; Collecting missing info if any of the other 2 tags were not set.
           if keyword_set(no_reduction) then begin
             ; When not doing reduction ONLY postprocessing
-            redpar = readpar(ctparfn)
             redpar.imdir = strt(night)+'\' ; setting some extra variables that will get used.
             redpar.prefix ='chi'+strt(night) +'.'
       
             redpar.logdir =  redpar.logdir  + '20'+strmid(strt(night), 0, 2)+'\'
-          endif else redpar=redpar ;else use the same as in sorting_hat
+          endif
       
           ;##################
           ;# Collect bary correction individually or in groups
@@ -128,38 +140,66 @@ PRO reduce_slicer,  $
           if keyword_set(combine_stellar) then begin
             
             ;--------------------------
-            ; Clean CRs when combine_stellar and remove_crs:0.5 are set.
+            ; Clean CRs when combine_stellar and remove_crs:5.0 are set.
             ;--------------------------
             ; I create the master file before looking for it but to do so I have to find individual files all over again
             ; It might seem like repeated logic but it's needed
             bary_indices = where(float(baryCorrec) ne 0.0, c_bary )
             obnm = obnm[ bary_indices]
+            objnm = objnm[ bary_indices]
       
             if  redpar.remove_crs eq 5.0 then begin
-                ;Find individual files all over again 
-                all_file_names = list()
-                ;1.  Gather all file names
+              
+                stellar_exp_by_star = dictionary()
                 for index = 0L, n_elements(obnm)-1 do begin
+                  refined_key = objnm[index]
+                  refined_key = refined_key.replace( ' ', '') ; Get Rid of any dash
+                  refined_key = refined_key.replace( '-', '') ; get rid of empty space
                   file_name= redpar.rootdir+ redpar.fitsdir+ redpar.imdir +redpar.prefix_tag +strtrim(redpar.prefix+strt(obnm[index])+'.fits')
-                  all_file_names.add, file_name
+                  if stellar_exp_by_star.HasKey( refined_key ) then begin
+                    stellar_exp_by_star[ refined_key ].add,  file_name ; Add the obersevation number
+                  endif else begin
+                    stellar_exp_by_star[ refined_key ]= list(file_name )
+                  endelse
                 endfor
                
-                all_file_names = all_file_names.toarray()
-                
-                ; 3. Finding the file numbers to create the stellar file name properly
-                ; TODO: I am assuming there will be only 1 stellar file,  have to make algorithim to find discontinuities and get back them 
-                ; in grous. I remmeber doing something similar in reduce_ctio.pro
-                positions= stregex(all_file_names, '([0-9]+)\.fits$', length=len)
-                stellar_indices = all_file_names
-                for index = 0L, n_elements(stellar_indices)-1 do begin
+                foreach star_exp, stellar_exp_by_star.keys() do begin
+                  all_file_names = stellar_exp_by_star[star_exp].ToArray()
+                  positions= stregex(all_file_names, '([0-9]+)\.fits$', length=len)
+                  stellar_indices = all_file_names
+                  for index = 0L, n_elements(stellar_indices)-1 do begin
                     stellar_indices[index]=strmid(stellar_indices[index], positions[index] ,4) ; 4 since we cutting the array to get E.g. .[1568].fits
-                endfor
-               
-               ;3. Creating file name 
-                master_name= redpar.prefix_tag+'m'+redpar.prefix +strt(stellar_indices[0])+'_'+strt(n_elements(stellar_indices))+'.fits' ;recnums[0]+'_'+strtrim(string(n_elements(recnums)),2)
-                
-                ;4.  Remove CRs  : this is the stack approach
-                remove_cr_by_sigma, all_file_names, combine_stellar, redpar=redpar, master_name=master_name  ; The files themselves get updated. So files in the folder fitspec get updated
+                  endfor
+
+                  ;3. Creating file name
+                  master_name= redpar.prefix_tag+'m'+redpar.prefix +strt(stellar_indices[0])+'_'+strt(n_elements(stellar_indices))+'.fits'
+                  indir=redpar.rootdir+redpar.fitsdir+redpar.imdir+master_name
+                  if (n_elements(stellar_indices) eq 1) then begin
+                      spectrum = readfits(all_file_names[0], hd)
+                      writefits,  indir, spectrum, hd
+                  endif else if (n_elements(all_file_names) eq 2) then begin
+                      master_sp = readfits(all_file_names[0], /silent)
+                      n_pixels = (size(master_sp))[2]
+                      n_orders = (size(master_sp))[3]
+                      stellar_stack=make_array(n_pixels, n_orders, n_elements(all_file_names),/double )
+                      for index = 0L, n_elements(all_file_names)-1 do begin
+                        spectrum = readfits(all_file_names[idx], hd) ; Will read [2,4112,74]
+                        spectrum = reform(spectrum[1,*,*])
+                        stellar_stack [*,*,idx]= spectrum
+                      endfor
+                      if redpar.master_stellar eq 'mean' then begin
+                        master_stellar = mean(stellar_stack, /double, dimension=3)
+                      endif else begin
+                        ; else -> redpar.master_stellar eq 'median'
+                        master_stellar = median(stellar_stack, /double, dimension=3)
+                      endelse
+                      master_sp[1,*,*] = master_stellar 
+                      writefits,  indir, master_sp, hd
+                  endif else begin
+                    ;4.  Remove CRs  : this is the stack approach
+                    remove_cr_by_sigma, all_file_names, combine_stellar, redpar=redpar, master_name=master_name  ; The files themselves get updated. So files in the folder fitspec get updated
+                  endelse
+                endforeach
             endif
             
             ;---------------------------
@@ -210,7 +250,7 @@ PRO reduce_slicer,  $
             endfor
             
             ;--------------------------
-            ; Clean CRs when runnning individually and remove_crs:0.5 is set.
+            ; Clean CRs when runnning individually and remove_crs:5.0 is set.
             ;--------------------------
             if  redpar.remove_crs eq 5.0 then begin  ; before it had ~keyword_set(combine_stellar) and
       
@@ -232,7 +272,7 @@ PRO reduce_slicer,  $
                 foreach star_name_key,  stellar_exposures.Keys() do begin
                   all_file_names = stellar_exposures[star_name_key].ToArray()
                   print, all_file_names
-                  remove_cr_by_sigma, all_file_names, combine_stellar ; The files themselves get updated. So files in the folder fitspec get updated
+                  remove_cr_by_sigma, all_file_names, combine_stellar, redpar=redpar ; The files themselves get updated. So files in the folder fitspec get updated
                 endforeach 
                 
             endif
@@ -278,24 +318,29 @@ PRO reduce_slicer,  $
             ; Remove CRs | fft approach, order by order
             ;#########################
             ; SIDE EFFECT: If combine stellar set and fft approach set, this will apply fft to a master file (WARNNING master file could have already been removed CRs)
-            if  redpar.remove_crs eq 4 then begin ; Previously it was limited for individual only. Meaning I added  ~keyword_set(combine_stellar)
-      
-              print, ''
-              print, ' Cleaning all CRs from ' +structure.file_name
-              print, ''
-      
-              total_crs=0
-              for order = 0L, n_orders-1 do begin
-                order_crs = 0
-      
-                new_cube[1,*,order] = cr_remove_fft( new_cube[1,*,order] , redpar.sigma_multiplier, redpar.skirt_level, redpar.frac, order_crs) ; reliable as far as there are no CRs
-                ; order_crs gets changed within and we can use its values now
-                total_crs = total_crs +  order_crs
-              endfor
-       
-              history_str = 'CR-CLEANED :  ' + strt(total_crs) + ' crs found using FFT.'
-              print, history_str
-              sxaddpar, hd, 'HISTORY', history_str
+            if  (redpar.remove_crs eq 4 or redpar.automation) then begin ; Previously it was limited for individual only. Meaning I added  ~keyword_set(combine_stellar)
+              tempVar= sxpar(hd, "CR_MT")
+              cr_already_clean = isa( sxpar(hd, "CR_MT"), /number )
+              if cr_already_clean then begin
+                  print, ''
+                  print, ' Cleaning all CRs by FFT for ' + structure.file_name
+                  print, ''
+          
+                  total_crs=0
+                  for order = 0L, n_orders-1 do begin
+                    order_crs = 0
+                    new_cube[1,*,order] = cr_remove_fft( new_cube[1,*,order] , redpar.sigma_multiplier, redpar.skirt_level, redpar.frac, order_crs) ; reliable as far as there are no CRs
+                    ; order_crs gets changed within and we can use its values now
+                    total_crs = total_crs +  order_crs
+                  endfor
+           
+                   comment_cr_mt = "CR done by FFT After reduction"
+                   comment_num_cr = strt(total_crs)
+                   ; The statement "CR-CLEANED" serves as reference to identify if the file has been cleaned previouly. Do not remove.
+                   sxaddpar, hd, 'CR_MT', comment_cr_mt
+                   sxaddpar, hd, 'NUM_CRs', comment_num_cr
+                   print, "Done running FFT to remove CRs. Number of Crs found = " + comment_num_cr
+              endif else print, "NOT running FFT, CRs already removed for " +  structure.file_name
             endif
       
             ;##################
@@ -449,12 +494,12 @@ PRO reduce_slicer,  $
           for idx = 0L, nele-1 do begin
              spectrum = readfits(star_list[idx])
              spectrum_int = reform(spectrum[1,*,*])
-             spectrum_wav = reform(spectrum[0,*,*])
+             ;spectrum_wav = reform(spectrum[0,*,*])
              spectra [*,*,idx]= spectrum_int
-             wavelengths[*,*,idx] = spectrum_wav
+             ;wavelengths[*,*,idx] = spectrum_wav
           endfor
          spectra_res = mean(spectra, /double, dimension=3)
-         spectra_wav = mean(wavelengths, /double, dimension=3)
+         ;spectra_wav = mean(wavelengths, /double, dimension=3)
          result = make_array(2, n_int, n_orders, /double)
          result[0,*,*]= ref_fits[0,*,*]
          result[1,*,*]= spectra_res

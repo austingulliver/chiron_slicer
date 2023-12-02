@@ -105,17 +105,6 @@ pro reduce_ctio,  redpar, mode, flatset=flatset, thar=thar, $
   print, prefix + threcnums
   print,' '
 
-
-
-
-
-
-
-
-
-
-
-
   if redpar.debug ge 1 then stop, 'REDUCE_CTIO: press .C to continue'
   PRINT, ''
   PRINT, ''
@@ -128,17 +117,12 @@ pro reduce_ctio,  redpar, mode, flatset=flatset, thar=thar, $
   ;##################################################
   name = redpar.rootdir+redpar.flatdir+prefix+mode+'.sum'
 
-
-
-
   if keyword_set(flatset) then begin
     ;if redpar.debug then stop, 'REDUCE_CTIO: debug stop before flats, .c to continue'
     ADDFLAT, flatfnames,sum, redpar, im_arr, masterFlatName=name  ; crunch the flats (if redpar.flatnorm=0 then sum = wtd mean)               Creation of MASTER FLAT
     ; output : sum [#pixelsX, #pixelsY] , it returns bias substracted master flat image
     if (size(sum))[0] lt 2 then stop,  '>> ERROR << : Master Flat was not produced' ; no data!
-
-
-
+    
   endif else begin
 
     check_if_exist = FILE_TEST(name)
@@ -150,15 +134,6 @@ pro reduce_ctio,  redpar, mode, flatset=flatset, thar=thar, $
     print, 'REDUCE_CTIO: Restored Master flat has a binning of ', redpar.binning
   endelse
 
-
-
-
-
-
-
-
-
-
   PRINT, ''
   PRINT, ''
   print, " REDUCE-CTIO :           >>> Order Tracing <<<   "
@@ -169,129 +144,92 @@ pro reduce_ctio,  redpar, mode, flatset=flatset, thar=thar, $
   ;##############  Trace the Orders #################
   ;##################################################
 
-
   ;SLICERFLAT=1 means use narrow slit to define slicer order locations
   if redpar.slicerflat eq 0 or mode ne 'slicer' then begin
-    print, 'REDUCE_CTIO : Creating a -->NEW<-- Order tracing from scratch'
 
-    if (redpar.use_prev_tracing eq 1 ) then begin
-
-      ;We look for the closest VALID order tracing wrt to this night
-      ; 1) Get all the existing order traces  prefix contains the date already
-      ; 2) filter for the valid ones only
-      ; 3) restore the closest to this night
+      order_file_save=''
+      trace_orders = 1
       traces_dir= redpar.rootdir+redpar.orderdir
-      mask = traces_dir + '*'+mode +'.orc'
-      all_files = file_search(mask, count = count)
+        
+      if (redpar.use_prev_tracing eq 1 or redpar.automation eq 1) then begin 
+        mask = traces_dir + '*'+mode +'.orc'
+        all_files = file_search(mask, count = count)
+        if count ge 1 then begin
+            nights_nums_str    = all_files.substring( strlen(traces_dir)+3, strlen(traces_dir)+8  )
+            nights_nums        = double(nights_nums_str)
+            night_differences  = abs( double(redpar.date) - nights_nums) ; sorted in ascending from lowest to highest (we want the lowest nights since these are the closest )
+            night_diff_indices = sort(night_differences)
+            night_differences  = night_differences[night_diff_indices]
+            nights_nums        = round(nights_nums[night_diff_indices])
+            
+            if redpar.automation eq 1 then begin
+              if night_differences[0] eq 0.00 then begin
+                name_or_file = prefix.substring( 0,2) + strt(nights_nums[0]) +'.'+mode +'.orc'
+                modify_date = file_modtime(filepath(name_or_file,  ROOT_DIR=traces_dir))
+                curr_time = systime(/SECONDS)
+                time_diffe = abs(modify_date-curr_time)
+                if time_diffe le 86400 then begin
+                  order_file_save = traces_dir + name_or_file
+                endif
+              endif              
+            endif else begin
+              order_file_save=redpar.rootdir+redpar.orderdir+  prefix.substring( 0,2) + strt(nights_nums[0]) +'.'+mode +'.orc'
+            endelse
+           
+           if order_file_save ne '' then begin
+             rdsk, orc, order_file_save, 1
+             orc_sz = size(orc)
+             if orc_sz[1] ge redpar.nords and orc_sz[2] ge 4112 then  trace_orders=0 ; this will stop iterating and the continue with the
+           endif
+        endif
+      endif
+      
+      if trace_orders then begin
+        print, 'REDUCE_CTIO : Creating a -->NEW<-- Order tracing from scratch'
+        if order_ind ge 0 then begin ; If a default order file was passed as param
+          ctio_dord, ordfname, redpar, orc, ome
+        endif else ctio_dord, ordfname, redpar, orc, ome, image=sum  ; this is our case(no order definition passed as param)
+        ;sum : crunched flat passed as param
+        ;ordfname is passed empty and instead image param is passed
+        ; orc :(output)(array (# coeffs , # orders))] coefficients from the polynomial fits to the order peaks
+        ;  EXCEPT ! for the slicer mode. If the slicer mode is currently running then  the vairable orc  will
+        ; contain a 2-d array e.g. array with the  middles of all the orders for all the columns (4112 ) E.g.  74 x 4112
 
-
-
-      if count lt 1 then stop, 'REDUCE_CTIO : >> ERROR <<  You set the variable use_prev_tracing=1 but there are no previous files.'
-
-      nights_nums_str    = all_files.substring( strlen(traces_dir)+3, strlen(traces_dir)+8  )
-      nights_nums        = double(nights_nums_str)
-      night_differences  = abs( double(redpar.date) - nights_nums )
-      night_diff_indices = sort(night_differences) ; sorted in ascending from lowest to highest (we want the lowest nights since these are the closest )
-      nights_nums        = round(nights_nums[ night_diff_indices])
-
-      ; Open each one and find out if they are valid. If so they use that one.
-      found     = 0
-      night_idx = 0
-
-      while (found eq 0) do begin
-
-        if night_idx eq  n_elements(nights_nums)-1 then stop, 'REDUCE_CTIO : >> ERROR <<  You set the variable use_prev_tracing=1 but there are not VALID previous order tracing files.'
-
-        order_trace_file=redpar.rootdir+redpar.orderdir+  prefix.substring( 0,2) + strt(nights_nums[night_idx]) +'.'+mode +'.orc'
-        rdsk, orc, order_trace_file, 1
-
-        orc_sz = size(orc)
-
-        night_idx = night_idx +1
-
-        ; fix this
-        if orc_sz[1] ge redpar.nords and  orc_sz[2] ge 4112 then  found=1 ; this will stop iterating and the continue with the
-
-
-      endwhile
-
-      print, ''
-      print ,"-----------------------------------------------------------"
-      print, '>> WARNING <<  NO NEW order traces made. Order traces restored from night: '+strt(nights_nums[night_idx])
-      print,"-----------------------------------------------------------"
-      print, ''
-
-
-      ;          	   dirn =redpar.rootdir+redpar.orderdir+prefix+mode +'.orc'  ; Directoy of  actual
-      ;          	   print, 'REDUCE_CTIO: Order Coefficients are getting  RE-STORED from '+dirn
-      ;          	   rdsk, orc, dirn, 1
-
-    endif else begin
-      if order_ind ge 0 then begin ; If a default order file was passed as param
-        ctio_dord, ordfname, redpar, orc, ome
-      endif else ctio_dord, ordfname, redpar, orc, ome, image=sum  ; this is our case(no order definition passed as param)
-      ;sum : crunched flat passed as param
-      ;ordfname is passed empty and instead iamge param is passed
-      ; orc :(output)(array (# coeffs , # orders))] coefficients from the polynomial fits to the order peaks
-      ;  EXCEPT ! for the slicer mode. If the slicer mode is currently running then  the vairable orc  will
-      ; contain a 2-d array e.g. array with the  middles of all the orders for all the columns (4112 ) E.g.  74 x 4112
-
-      order_trace_file = redpar.rootdir+redpar.orderdir+prefix+mode+'.orc'
-      wdsk, orc, order_trace_file, /new
-      print, 'REDUCE_CTIO: The new Order Coefficients are stored in : '
-      print, order_trace_file
-      ;         if redpar.debug then stop, 'Debug stop after order location, .c to continue'
-    endelse
-
-
-
+        order_trace_file = redpar.rootdir+redpar.orderdir+prefix+mode+'.orc'
+        wdsk, orc, order_trace_file, /new
+        print, 'REDUCE_CTIO: The new Order Coefficients are stored in : '
+        print, order_trace_file
+      endif   
+      
   endif else begin
-
-    if (redpar.use_prev_tracing eq 1 ) then begin
-      if order_ind ge 0 then begin ; If a default order file was passed as param
-        ctio_dord, ordfname, redpar, orc, ome
-      endif else ctio_dord, ordfname, redpar, orc, ome, image=sum  ; this is our case(no order definition passed as param)
-      ;sum : crunched flat passed as param
-      ;ordfname is passed empty and instead iamge param is passed
-      ; orc :(output)(array (# coeffs , # orders))] coefficients from the polynomial fits to the order peaks
-      ;  EXCEPT ! for the slicer mode. If the slicer mode is currently running then  the vairable orc  will
-      ; contain a 2-d array e.g. array with the  middles of all the orders for all the columns (4112 ) E.g.  74 x 4112
-      name = redpar.rootdir+redpar.orderdir+prefix+mode+'.orc'
-      wdsk, orc, name, /new
-      print, 'REDUCE_CTIO: Order Coefficients are stored as '+name
-    endif else begin
-
-      ;         if redpar.debug then stop, 'Debug stop after order location, .c to continue'
-      print, 'REDUCE_CTIO: Order tracing got restored from :'
-      name = redpar.rootdir+redpar.orderdir+prefix+'narrow.orc'
-      print, name
-      rdsk, orc, name, 1
-      orc[0,*] += redpar.dpks[modeidx]
-      ;now subtract 2 outer orders since the slicer is larger than the slits:
-      redpar.nords -= 2
-      orc = orc[*,1:(redpar.nords - 1)]
-    endelse
-
+      if (redpar.use_prev_tracing eq 1 ) then begin
+        if order_ind ge 0 then begin ; If a default order file was passed as param
+          ctio_dord, ordfname, redpar, orc, ome
+        endif else ctio_dord, ordfname, redpar, orc, ome, image=sum  ; this is our case(no order definition passed as param)
+        ;sum : crunched flat passed as param
+        ;ordfname is passed empty and instead iamge param is passed
+        ; orc :(output)(array (# coeffs , # orders))] coefficients from the polynomial fits to the order peaks
+        ;  EXCEPT ! for the slicer mode. If the slicer mode is currently running then  the vairable orc  will
+        ; contain a 2-d array e.g. array with the  middles of all the orders for all the columns (4112 ) E.g.  74 x 4112
+        ;name = redpar.rootdir+redpar.orderdir+prefix+mode+'.orc'
+        ;wdsk, orc, name, /new
+   
+      endif else begin
+        print, 'REDUCE_CTIO: Order tracing got restored from :'
+        name = redpar.rootdir+redpar.orderdir+prefix+'narrow.orc'
+        print, name
+        rdsk, orc, name, 1
+        orc[0,*] += redpar.dpks[modeidx]
+        ;now subtract 2 outer orders since the slicer is larger than the slits:
+        redpar.nords -= 2
+        orc = orc[*,1:(redpar.nords - 1)]
+      endelse
   endelse
-
-
-
-
-
-
-
-
-
-
-
-
 
   ;##################################################
   ;##############  Get Flat Field   #################
   ;##################################################
   ;  Modifed to account for "flatting" taking place before and after  extraction
-
-
 
   if (redpar.flatnorm eq 0) then begin
     ff=1.0 ; Dividing stellar img by 1 will make no difference
@@ -480,12 +418,8 @@ pro reduce_ctio,  redpar, mode, flatset=flatset, thar=thar, $
       CTIO_SPEC,prefix,fname_master_stellar,out_mast_stellar,redpar, orc, xwid=xwid, flat=ff
       name_idx=name_idx+1
     endforeach
-
-
-
-
+    
     ;      stop, '  CHECK OF EXTRACTED MASTER STELLAR '
-
   endif else begin
     ;---------------------------
     ; Reducing Individually
@@ -496,10 +430,4 @@ pro reduce_ctio,  redpar, mode, flatset=flatset, thar=thar, $
     ENDFOR
 
   endelse
-
-
-
-
-
-
 end
