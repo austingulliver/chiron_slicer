@@ -56,6 +56,7 @@ PRO reduce_slicer,  $
   if redpar.automation then begin
     combine_an=1
     post_process=1
+    redpar.remove_crs = 5.0
   endif
   
   if keyword_set(combine_an) then combine_stellar=1
