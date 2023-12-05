@@ -52,7 +52,7 @@ PRO reduce_slicer,  $
   ;Reading input file 
   redpar = readpar(ctparfn)
   
-  ;if ~isa(nights, /number) then nights = get_nights_dir(nights)
+  if ~isa(nights, /number) then nights = get_nights_dir(nights)
   
   ;Check if pipeline should run in automation mode 
   if redpar.automation then begin
