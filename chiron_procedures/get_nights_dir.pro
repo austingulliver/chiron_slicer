@@ -5,7 +5,6 @@ function get_nights_dir, path
   nights = list()
   dirs = file_search(path+"*",count=nFiles)
   poss_nights = file_basename(find_all_dir(path))
-  idex = poss_nights.Matches('^ [0-9]+ $')
   poss_nights  = poss_nights[where(stregex(poss_nights,'^[0-9]{1,6}', /boolean))]
   foreach po_night, poss_nights do begin
     night = long(po_night)
