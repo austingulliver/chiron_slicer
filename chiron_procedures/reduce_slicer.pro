@@ -53,10 +53,11 @@ PRO reduce_slicer,  $
   if keyword_set(automation) then begin
     combine_an=1
     post_process=1
+    logsheets_paths=LIST()
   endif else begin
     automation = 0
   endelse
-  
+  logsheets_paths=LIST()
   if keyword_set(combine_an) then combine_stellar=1
   
   foreach night, nights do begin
@@ -79,14 +80,16 @@ PRO reduce_slicer,  $
         logmaker_v2, strt(night), /nofoc, prefix='chi', stellar_bary_correc=stellar_bary_correc, redpar = redpar
         ;   stellar_bary_correc(Output): is a list wich elements are strucutres with the form {file_name:obs_file[i] , correction:czi }
       endelse
-    endif
-    
-    if ~keyword_set(redpar) then begin
+    endif else begin
       ctparfn = getenv('CHIRON_CTIO_PATH')
       if ctparfn eq '' then message, 'Before running the pipeline you need to set the environment variable CHIRON_CTIO_PATH to be equal to the full path for your ctio.par file.'
       redpar = readpar(ctparfn)
-    endif
+    endelse
     
+    if keyword_set(automation) then begin
+      logsheets_paths.add, redpar.rootdir+redpar.logdir+strt(night)+'.log'
+    endif
+    logsheets_paths.add, redpar.rootdir+redpar.logdir+strt(night)+'.log'
     if keyword_set(combine_stellar) then n_iterations=1 else n_iterations=0
     
     for i = 0L, n_iterations do begin
@@ -510,6 +513,11 @@ PRO reduce_slicer,  $
        endif 
     endforeach
   endif 
+  
+  print, logsheets_paths
+  ;if keyword_set(automation) then begin
+  create_final_report, redpar=redpar, logsheets_paths=logsheets_paths
+  ;endif
   
   print, '**************************************************'
   print, '               End Of Scripts'
