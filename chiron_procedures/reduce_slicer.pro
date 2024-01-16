@@ -494,20 +494,30 @@ PRO reduce_slicer,  $
           n_int = sz[2]    
           n_orders = sz[3]      
           spectra = make_array(n_int, n_orders, nele, /double)
-          wavelengths = make_array(n_wav, n_orders, nele, /double)
-          for idx = 0L, nele-1 do begin
-             spectrum = readfits(star_list[idx])
-             spectrum_int = reform(spectrum[1,*,*])
-             ;spectrum_wav = reform(spectrum[0,*,*])
-             spectra [*,*,idx]= spectrum_int
-             ;wavelengths[*,*,idx] = spectrum_wav
+          wavelengths = make_array(n_wav, n_orders, /double)
+          result = make_array(2, n_int, n_orders, /double)
+          
+          ; Create x intervals 
+          for order = 0L, n_orders-1 do begin
+            inc_int = (ref_fits[0,3200-1,order] - ref_fits[0,0,order])/3200
+            xinterp = DINDGEN(3200, START= ref_fits[0,0,order], INCREMENT=inc_int)
+            wavelengths[*, order]= xinterp
           endfor
+          
+          ; Get interpolated intensities values
+          for num = 0L, nele-1 do begin
+            samp =  readfits(star_list[num])
+            for order_inn = 0L, n_orders-1 do begin
+              interp = INTERPOL(samp[1,*,order_inn], samp[0,*,order_inn], wavelengths[*, order_inn],  /SPLINE)
+              spectra [*,order,num]= interp
+            endfor  
+          endfor
+          
+         ; Calculate combine master
          spectra_res = mean(spectra, /double, dimension=3)
-         ;spectra_wav = mean(wavelengths, /double, dimension=3)
-         result = make_array(2, n_int, n_orders, /double)
-         result[0,*,*]= ref_fits[0,*,*]
+         result[0,*,*]= wavelengths
          result[1,*,*]= spectra_res
-         master_name= redpar.prefix_tag + 'mchi' + star_name + '.fits'
+         master_name= redpar.prefix_tag + 'mchi_inter_' + star_name + '.fits'
          indir=dir_name + "\" + master_name
          writefits, indir, result, hd
        endif 
@@ -515,9 +525,9 @@ PRO reduce_slicer,  $
   endif 
   
   print, logsheets_paths
-  ;if keyword_set(automation) then begin
-  create_final_report, redpar=redpar, logsheets_paths=logsheets_paths
-  ;endif
+  if keyword_set(automation) then begin
+    create_final_report, redpar=redpar, logsheets_paths=logsheets_paths
+  endif
   
   print, '**************************************************'
   print, '               End Of Scripts'
