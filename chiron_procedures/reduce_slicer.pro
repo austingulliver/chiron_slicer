@@ -29,10 +29,11 @@
 PRO reduce_slicer,  $
   nights, $
   no_log=no_log, $                            ; If set it wont create a new .log file
-  no_reduction = no_reduction, $               ; If set it wont reduce the spectra of the given night
+  no_reduction = no_reduction, $              ; If set it wont reduce the spectra of the given night
   combine_stellar = combine_stellar, $        ; If reduction step is run this determines if reduction should consider  individual frames or collect them to produce a master stellar
-  combine_an = combine_an, $  ;                               
+  combine_an = combine_an, $                  ; Activate combine across nights              
   post_process = post_process, $              ; Post processing includes shift found from  barycentric correction +  splice the spectra
+  automation = automation,     $              ; Activate automation process
   ;star_name=star_name                        ; Name of the Star. IT MUST BE INSERTED AS ONE WORD E.G 'HR2943'.  (as opposed to 'HR 2943' )
                                               ; depricated. Software now finds the name of the star directly from the headers.
 
@@ -46,21 +47,17 @@ PRO reduce_slicer,  $
   ; Constants/Variables + paths
   cms = 2.99792458d8 ; Constant. Workaround sometimes constants does not give back expected value-> Why?
   
-  ctparfn = getenv('CHIRON_CTIO_PATH')
-  if ctparfn eq '' then message, 'Before running the pipeline you need to set the environment variable CHIRON_CTIO_PATH to be equal to the full path for your ctio.par file.'
-  
-  ;Reading input file 
-  redpar = readpar(ctparfn)
-  
   if ~isa(nights, /number) then nights = get_nights_dir(nights)
   
   ;Check if pipeline should run in automation mode 
-  if redpar.automation then begin
+  if keyword_set(automation) then begin
     combine_an=1
     post_process=1
-    redpar.remove_crs = 5.0
-  endif
-  
+    logsheets_paths=LIST()
+  endif else begin
+    automation = 0
+  endelse
+  logsheets_paths=LIST()
   if keyword_set(combine_an) then combine_stellar=1
   
   foreach night, nights do begin
@@ -76,16 +73,23 @@ PRO reduce_slicer,  $
       print, '**************************************************'
   
       if keyword_set(no_bary) then begin
-        logmaker_v2, strt(night), /nofoc, prefix='chi'
+        logmaker_v2, strt(night), /nofoc, prefix='chi', redpar = redpar
       endif else begin
         ; Run bary Correction as well
         ; It is very important to get the name of the start Correct to run the barycorrection successfully
-        logmaker_v2, strt(night), /nofoc, prefix='chi', redpar =redpar, stellar_bary_correc=stellar_bary_correc
+        logmaker_v2, strt(night), /nofoc, prefix='chi', stellar_bary_correc=stellar_bary_correc, redpar = redpar
         ;   stellar_bary_correc(Output): is a list wich elements are strucutres with the form {file_name:obs_file[i] , correction:czi }
       endelse
-  
-    endif
+    endif else begin
+      ctparfn = getenv('CHIRON_CTIO_PATH')
+      if ctparfn eq '' then message, 'Before running the pipeline you need to set the environment variable CHIRON_CTIO_PATH to be equal to the full path for your ctio.par file.'
+      redpar = readpar(ctparfn)
+    endelse
     
+    if keyword_set(automation) then begin
+      logsheets_paths.add, redpar.rootdir+redpar.logdir+strt(night)+'.log'
+    endif
+    logsheets_paths.add, redpar.rootdir+redpar.logdir+strt(night)+'.log'
     if keyword_set(combine_stellar) then n_iterations=1 else n_iterations=0
     
     for i = 0L, n_iterations do begin
@@ -102,7 +106,7 @@ PRO reduce_slicer,  $
           print, '**************************************************'
       
           sorting_hat, strt(night), mode='slicer', /reduce, /getthid, /iod2fits, combine_stellar=combine_stellar ,$
-            thar_soln='wvc_slicer_171218.sav',redpar =redpar
+            thar_soln='wvc_slicer_171218.sav',automation = automation, redpar =redpar
         endif
       
         ;#####################################################
@@ -318,7 +322,7 @@ PRO reduce_slicer,  $
             ; Remove CRs | fft approach, order by order
             ;#########################
             ; SIDE EFFECT: If combine stellar set and fft approach set, this will apply fft to a master file (WARNNING master file could have already been removed CRs)
-            if  (redpar.remove_crs eq 4 or redpar.automation) then begin ; Previously it was limited for individual only. Meaning I added  ~keyword_set(combine_stellar)
+            if  (redpar.remove_crs eq 4 or automation) then begin ; Previously it was limited for individual only. Meaning I added  ~keyword_set(combine_stellar)
               tempVar= sxpar(hd, "CR_MT")
               cr_already_clean = isa( sxpar(hd, "CR_MT"), /number )
               if cr_already_clean then begin
@@ -490,25 +494,40 @@ PRO reduce_slicer,  $
           n_int = sz[2]    
           n_orders = sz[3]      
           spectra = make_array(n_int, n_orders, nele, /double)
-          wavelengths = make_array(n_wav, n_orders, nele, /double)
-          for idx = 0L, nele-1 do begin
-             spectrum = readfits(star_list[idx])
-             spectrum_int = reform(spectrum[1,*,*])
-             ;spectrum_wav = reform(spectrum[0,*,*])
-             spectra [*,*,idx]= spectrum_int
-             ;wavelengths[*,*,idx] = spectrum_wav
+          wavelengths = make_array(n_wav, n_orders, /double)
+          result = make_array(2, n_int, n_orders, /double)
+          
+          ; Create x intervals 
+          for order = 0L, n_orders-1 do begin
+            inc_int = (ref_fits[0,3200-1,order] - ref_fits[0,0,order])/3200
+            xinterp = DINDGEN(3200, START= ref_fits[0,0,order], INCREMENT=inc_int)
+            wavelengths[*, order]= xinterp
           endfor
+          
+          ; Get interpolated intensities values
+          for num = 0L, nele-1 do begin
+            samp =  readfits(star_list[num])
+            for order_inn = 0L, n_orders-1 do begin
+              interp = INTERPOL(samp[1,*,order_inn], samp[0,*,order_inn], wavelengths[*, order_inn],  /SPLINE)
+              spectra [*,order,num]= interp
+            endfor  
+          endfor
+          
+         ; Calculate combine master
          spectra_res = mean(spectra, /double, dimension=3)
-         ;spectra_wav = mean(wavelengths, /double, dimension=3)
-         result = make_array(2, n_int, n_orders, /double)
-         result[0,*,*]= ref_fits[0,*,*]
+         result[0,*,*]= wavelengths
          result[1,*,*]= spectra_res
-         master_name= redpar.prefix_tag + 'mchi' + star_name + '.fits'
+         master_name= redpar.prefix_tag + 'mchi_inter_' + star_name + '.fits'
          indir=dir_name + "\" + master_name
          writefits, indir, result, hd
        endif 
     endforeach
   endif 
+  
+  print, logsheets_paths
+  if keyword_set(automation) then begin
+    create_final_report, redpar=redpar, logsheets_paths=logsheets_paths
+  endif
   
   print, '**************************************************'
   print, '               End Of Scripts'

@@ -22,11 +22,19 @@ pro logmaker_v2, rawdir, $                        ; It is simply the name of the
   prefix = prefix, $
   noarchive = noarchive, $
   nofoc = nofoc, $
-  date = date, $                                  ; Needs be a year. Example: 2023
-  redpar = redpar, $                              
-  stellar_bary_correc = stellar_bary_correc       ; Used as output to return all the bary correction of given star
+  date = date, $                                  ; Needs be a year. Example: 2023                             
+  stellar_bary_correc = stellar_bary_correc, $    ; Used as output to return all the bary correction of given star
+  redpar = redpar
 ; star_name =star_name,$                          ; Name of the stellar object. This name HAS TO BE compatible with SIMBAD. Deprecated
 
+  ;*****************************************
+  ;Read redpar file 
+  ;*****************************************
+  
+  ctparfn = getenv('CHIRON_CTIO_PATH')
+  if ctparfn eq '' then message, 'Before running the pipeline you need to set the environment variable CHIRON_CTIO_PATH to be equal to the full path for your ctio.par file.'
+  redpar = readpar(ctparfn)
+  
   ;*****************************************
   ;Check for paths 
   ;*****************************************

@@ -51,7 +51,7 @@
 pro sorting_hat, night, run=run, iod2fits=iod2fits, reduce=reduce, $
 doptag=doptag, end_check=end_check, skip=skip, $
 thar_soln=thar_soln, getthid=getthid, mode = mode, obsnm=obsnm, $
-bin11 = bin11, flatsonly=flatsonly, tharonly=tharonly, combine_stellar=combine_stellar, redpar =redpar 	
+bin11 = bin11, flatsonly=flatsonly, tharonly=tharonly, combine_stellar=combine_stellar, automation= automation, redpar =redpar 	
 
 angstrom = '!6!sA!r!u!9 %!6!n'
 
@@ -282,11 +282,6 @@ createLogStructures,redpar,obnm,objnm, /doFromScratch   ; uncomment this for pro
 ;endif
 ;
 
-
-  
-
-
-
 ;#####################################################
 ;################## Reducing Data ####################
 ;#####################################################
@@ -317,12 +312,7 @@ if keyword_set(reduce) then begin
 
               
         endif 
-;        
-;        
-       
-        
-        
-        
+ 
         ;#####################################################
         ;################## Master Bias   ####################
         ;#####################################################
@@ -420,10 +410,10 @@ if keyword_set(reduce) then begin
             ;################## Actual Reduction #################
             ;##################################################### 
             if redpar.flat_from_scratch eq 0 then begin
-                  reduce_ctio, redpar, mode, star=star, thar=thar, date=night, combine_stellar=combine_stellars, mstr_stellar_names=mstr_stellar_names ; Since not flatset passed then it will try to restore master flat for the present night            
+                  reduce_ctio, redpar, mode, star=star, thar=thar, date=night, combine_stellar=combine_stellars, mstr_stellar_names=mstr_stellar_names, automation=automation ; Since not flatset passed then it will try to restore master flat for the present night            
                   
             endif else if redpar.flat_from_scratch eq 1 then begin
-                  reduce_ctio, redpar, mode, flatset=flatset, star=star, thar=thar, date=night, combine_stellar=combine_stellars, mstr_stellar_names=mstr_stellar_names ; Actual reduction code
+                  reduce_ctio, redpar, mode, flatset=flatset, star=star, thar=thar, date=night, combine_stellar=combine_stellars, mstr_stellar_names=mstr_stellar_names, automation=automation ; Actual reduction code
                   ;flatset : array containning the file numbers ONLY of quartz/flat files
                   ;thar : "   "    "                            ONLY thar and iodine files
                   ;start: "   "   "                             ONLY  start itself
@@ -751,10 +741,6 @@ if keyword_set(iod2fits) then begin
         
       endforeach
       
-
-      
-      
-      
      ;*******************************************************  
      ; 2) Reduces ALL  Stellar files. One by one
      ;*******************************************************     
@@ -875,23 +861,6 @@ if keyword_set(iod2fits) then begin
     
 endif ;iod2fits
 
-
-
-
-
-
-
-
-
-
-	
-	
-	
-	
-	
-	
-	
-	
 ;##############################################
 ;################# End Check ##################
 ;##############################################

@@ -1,5 +1,5 @@
 pro reduce_ctio,  redpar, mode, flatset=flatset, thar=thar, $
-  order_ind=order_ind,  star=star, date=date, combine_stellar=combine_stellar, mstr_stellar_names= mstr_stellar_names
+  order_ind=order_ind,  star=star, date=date, combine_stellar=combine_stellar, mstr_stellar_names= mstr_stellar_names, automation=automation
 
   ; Batch job to drive raw reduction for CTIO
   ; Based on 12-Mar-2011 DF revised for the e2v-4k chip
@@ -151,7 +151,7 @@ pro reduce_ctio,  redpar, mode, flatset=flatset, thar=thar, $
       trace_orders = 1
       traces_dir= redpar.rootdir+redpar.orderdir
         
-      if (redpar.use_prev_tracing eq 1 or redpar.automation eq 1) then begin 
+      if (redpar.use_prev_tracing eq 1 or automation eq 1) then begin 
         mask = traces_dir + '*'+mode +'.orc'
         all_files = file_search(mask, count = count)
         if count ge 1 then begin
@@ -162,7 +162,7 @@ pro reduce_ctio,  redpar, mode, flatset=flatset, thar=thar, $
             night_differences  = night_differences[night_diff_indices]
             nights_nums        = round(nights_nums[night_diff_indices])
             
-            if redpar.automation eq 1 then begin
+            if automation eq 1 then begin
               if night_differences[0] eq 0.00 then begin
                 name_or_file = prefix.substring( 0,2) + strt(nights_nums[0]) +'.'+mode +'.orc'
                 modify_date = file_modtime(filepath(name_or_file,  ROOT_DIR=traces_dir))
