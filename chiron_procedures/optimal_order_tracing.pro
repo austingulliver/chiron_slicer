@@ -842,9 +842,7 @@ debug_flag = 0
           
 
         ENDFOR
-        
-        
-        
+       
         ; >> Right side of Order
         ;-----------------------
 
@@ -865,15 +863,10 @@ debug_flag = 0
           ;the order is present.
           
           low = order_ys[ord_idx,forward_x] -slicer_width > 0
-          
           high = order_ys[ord_idx,forward_x] +slicer_width-1   < n_rows
-          
-          
-          
-                 
+          if high eq 1366 then high -=1
           i_swath = flat [ *, low : high ]          
-           prev_local_row = local_row  -(order_ys[ord_idx,forward_x] - order_ys[ord_idx,forward_x-1] )
-
+          prev_local_row = local_row  -(order_ys[ord_idx,forward_x] - order_ys[ord_idx,forward_x-1] )
         ENDFOR
         
         
