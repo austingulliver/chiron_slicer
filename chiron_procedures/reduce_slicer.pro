@@ -186,7 +186,7 @@ PRO reduce_slicer,  $
                       n_pixels = (size(master_sp))[2]
                       n_orders = (size(master_sp))[3]
                       stellar_stack=make_array(n_pixels, n_orders, n_elements(all_file_names),/double )
-                      for index = 0L, n_elements(all_file_names)-1 do begin
+                      for idx = 0L, n_elements(all_file_names)-1 do begin
                         spectrum = readfits(all_file_names[idx], hd) ; Will read [2,4112,74]
                         spectrum = reform(spectrum[1,*,*])
                         stellar_stack [*,*,idx]= spectrum
