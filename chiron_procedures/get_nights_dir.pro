@@ -2,14 +2,14 @@
 ; input; string array in 'y-m-dTh:m:s' format
 ; output: ut, >24h after midnight
 function get_nights_dir, path
-  nights = list()
-  dirs = file_search(path+"*",count=nFiles)
-  poss_nights = file_basename(find_all_dir(path))
-  poss_nights  = poss_nights[where(stregex(poss_nights,'^[0-9]{1,6}', /boolean))]
-  foreach po_night, poss_nights do begin
-    night = long(po_night)
-     IF night NE 0 THEN nights.add, night
-  endforeach 
+  nights =list()
+  poss_nights = Findfile(path, Count=count)
+  remove_d = poss_nights.Matches("(/|\\)[0-9]{6}")
+  print, remove_d
+  for i=0, Count-1 do begin
+    if remove_d[i] eq 1 then nights.add, poss_nights[i]
+  endfor
+
   print, "Nights found in " + path
   print, nights
   return, nights.toarray()
