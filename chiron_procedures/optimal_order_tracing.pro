@@ -768,7 +768,7 @@ function optimal_order_tracing, img, redpar
   ;------------------------------
   ; >> Constants
   ;------------------------------
-  debug    = 0; redpar.debug
+  debug    = redpar.debug
   flat     = img
   img_size = size(flat)      ;size of image passed: e.g. Master Flat  4112 x 1366 for the slicer mode
   n_columns   = img_size[1]     ;number of columns in image
