@@ -168,7 +168,7 @@ pro reduce_ctio,  redpar, mode, flatset=flatset, thar=thar, $
                 modify_date = file_modtime(filepath(name_or_file,  ROOT_DIR=traces_dir))
                 curr_time = systime(/SECONDS)
                 time_diffe = abs(modify_date-curr_time)
-                if time_diffe le 86400 then begin
+                if time_diffe le redpar.order_tracing_seconds then begin
                   order_file_save = traces_dir + name_or_file
                 endif
               endif              
