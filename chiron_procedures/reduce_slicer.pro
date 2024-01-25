@@ -52,13 +52,15 @@ PRO reduce_slicer,  $
   ;Check if pipeline should run in automation mode 
   if keyword_set(automation) then begin
     combine_an=1
-    post_process=1
     logsheets_paths=LIST()
   endif else begin
     automation = 0
   endelse
-  logsheets_paths=LIST()
-  if keyword_set(combine_an) then combine_stellar=1
+
+  if keyword_set(combine_an) then begin
+    combine_stellar=1
+    post_process=1
+  endif
   
   foreach night, nights do begin
     
@@ -89,7 +91,6 @@ PRO reduce_slicer,  $
     if keyword_set(automation) then begin
       logsheets_paths.add, redpar.rootdir+redpar.logdir+strt(night)+'.log'
     endif
-    logsheets_paths.add, redpar.rootdir+redpar.logdir+strt(night)+'.log'
     if keyword_set(combine_stellar) then n_iterations=1 else n_iterations=0
     
     for i = 0L, n_iterations do begin
@@ -487,44 +488,14 @@ PRO reduce_slicer,  $
         star_list=star_eles[star_name]
         nele = star_list.count()
         if nele gt 1 then begin 
-          print, star_list[0]
-          ref_fits =  readfits(star_list[0], hd)
-          sz = size(ref_fits)
-          n_wav = sz[2]   
-          n_int = sz[2]    
-          n_orders = sz[3]      
-          spectra = make_array(n_int, n_orders, nele, /double)
-          wavelengths = make_array(n_wav, n_orders, /double)
-          result = make_array(2, n_int, n_orders, /double)
-          
-          ; Create x intervals 
-          for order = 0L, n_orders-1 do begin
-            inc_int = (ref_fits[0,3200-1,order] - ref_fits[0,0,order])/3200
-            xinterp = DINDGEN(3200, START= ref_fits[0,0,order], INCREMENT=inc_int)
-            wavelengths[*, order]= xinterp
-          endfor
-          
-          ; Get interpolated intensities values
-          for num = 0L, nele-1 do begin
-            samp =  readfits(star_list[num])
-            for order_inn = 0L, n_orders-1 do begin
-              interp = INTERPOL(samp[1,*,order_inn], samp[0,*,order_inn], wavelengths[*, order_inn],  /SPLINE)
-              spectra [*,order,num]= interp
-            endfor  
-          endfor
-          
-         ; Calculate combine master
-         spectra_res = mean(spectra, /double, dimension=3)
-         result[0,*,*]= wavelengths
-         result[1,*,*]= spectra_res
-         master_name= redpar.prefix_tag + 'mchi_inter_' + star_name + '.fits'
-         indir=dir_name + "\" + master_name
-         writefits, indir, result, hd
+          result = wv_linearization_coaddition(star_list)
+          master_name= redpar.prefix_tag + 'mchi_inter_' + star_name + '.fits'
+          indir=dir_name + "\" + master_name
+          writefits, indir, result, hd
        endif 
     endforeach
   endif 
   
-  print, logsheets_paths
   if keyword_set(automation) then begin
     create_final_report, redpar=redpar, logsheets_paths=logsheets_paths
   endif
