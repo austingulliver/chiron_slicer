@@ -377,11 +377,11 @@ pro reduce_ctio,  redpar, mode, flatset=flatset, thar=thar, $
       combined_files = strtrim(string(combined_files), 1)
 
       ; ##########################################
-      ; Extra step to scale iamges before operation
+      ; Extra step to scale images before operation
       ; ##########################################
       ; At this point I have ther master flat as a cube
       avgs = avgs.toarray()
-      common_avg  = mean(avgs, /double) ; used as a master average. This is the common level for all iamges to scale to
+      common_avg  = mean(avgs, /double) ; used as a master average. This is the common level for all images to scale to
 
 
 
