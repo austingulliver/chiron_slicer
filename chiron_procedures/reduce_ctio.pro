@@ -161,7 +161,6 @@ pro reduce_ctio,  redpar, mode, flatset=flatset, thar=thar, $
             night_diff_indices = sort(night_differences)
             night_differences  = night_differences[night_diff_indices]
             nights_nums        = round(nights_nums[night_diff_indices])
-            
             if automation eq 1 then begin
               if night_differences[0] eq 0.00 then begin
                 name_or_file = prefix.substring( 0,2) + strt(nights_nums[0]) +'.'+mode +'.orc'
@@ -173,9 +172,8 @@ pro reduce_ctio,  redpar, mode, flatset=flatset, thar=thar, $
                 endif
               endif              
             endif else begin
-              order_file_save=redpar.rootdir+redpar.orderdir+  prefix.substring( 0,2) + strt(nights_nums[0]) +'.'+mode +'.orc'
+                order_file_save= traces_dir+  prefix.substring( 0,2) + strt(nights_nums[0]) +'.'+mode +'.orc'
             endelse
-           
            if order_file_save ne '' then begin
              rdsk, orc, order_file_save, 1
              orc_sz = size(orc)

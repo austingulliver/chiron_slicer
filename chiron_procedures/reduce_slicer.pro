@@ -56,13 +56,13 @@ PRO reduce_slicer,  $
   endif else begin
     automation = 0
   endelse
-
-  if keyword_set(combine_an) then begin
-    combine_stellar=1
-    post_process=1
-  endif
   
   foreach night, nights do begin
+    
+    if keyword_set(combine_an) then begin
+      combine_stellar=1
+      post_process=1
+    endif
     
     ;#####################################################
     ;# 1) Create .log file
@@ -464,19 +464,22 @@ PRO reduce_slicer,  $
     counter = 0
     foreach night, nights do begin
       str_file_type=  redpar.rootdir+ redpar.fitsdir+ strt(night) + "\post_processed\" + redpar.prefix_tag+'mchi'+strt(night)+'*.fits'
-      print,'Master file search ',str_file_type
+      print,'Master file search: ',str_file_type
       post_process_files = file_search(str_file_type, count = count_master)
-      foreach post_process_file, post_process_files do begin 
-        header = headfits(post_process_file)
-        star_name = strt(fxpar(header, 'OBJECT'))
-        star_name = star_name.replace( ' ', '') ; Get Rid of any dash
-        star_name = star_name.replace( '-', '') ; get rid of empty space
-        if star_eles.HasKey( star_name ) then begin
-          star_eles[ star_name ].add, post_process_file ; Add the obersevation number
-        endif else begin
-          star_eles[ star_name ]= list(post_process_file)
-        endelse
-      endforeach 
+      if count_master ne 0 then begin 
+          for i=0, count_master-1 do begin 
+            post_process_file=post_process_files[i]
+            header = headfits(post_process_file)
+            star_name = strt(fxpar(header, 'OBJECT'))
+            star_name = star_name.replace( ' ', '') ; Get Rid of any dash
+            star_name = star_name.replace( '-', '') ; get rid of empty space
+            if star_eles.HasKey( star_name ) then begin
+              star_eles[ star_name ].add, post_process_file ; Add the obersevation number
+            endif else begin
+              star_eles[ star_name ]= list(post_process_file)
+            endelse
+          endfor
+      endif
     endforeach 
     
     ;Create directory to save files 
