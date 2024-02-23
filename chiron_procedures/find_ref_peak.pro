@@ -131,6 +131,8 @@ FUNCTION find_ref_peak ,abs_path, redpar=redpar,  order_num=order_num, debug=deb
 
 if not keyword_set(order_num) then order_num =  1
 
+if not keyword_set(debug) then debug = 0
+
   ;Read file & smooth
   ;--------------------------------------------  
   rdsk,sp,abs_path,1                       ; File restored is the the one extracted where the orders still go 

@@ -542,7 +542,7 @@ print, ' '
       			      order_num= 1  ; Need to be the red order at index [1]; 
       			                    ; This will always be the first as well since this is a red order and even if less order are traced
       			                    ; we getting rid of blue order rather than the red. So this order is guarentee to be in here. 
-      			      current_ref_pixel = find_ref_peak(current_dir,  order_num=order_num) 
+      			      current_ref_pixel = find_ref_peak(current_dir,  order_num=order_num, debug=debug) 
 
       			      pixel_offset =  mean( [ref_pixel_2017[0]-current_ref_pixel [0] , ref_pixel_2017[1]-current_ref_pixel [1], $
       			                             ref_pixel_2017[2]-current_ref_pixel [2]  , ref_pixel_2017[3]-current_ref_pixel [3], $
@@ -625,13 +625,6 @@ endif ; getthid
 print, ' '
 print, ' '
 print, 'SORTING-HAT : -------------------------------End Wavelength Calibration '
-
-
-
-
-
-
-
 
 
 ;###############################################################

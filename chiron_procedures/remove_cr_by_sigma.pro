@@ -37,13 +37,13 @@ end
 ;
 ;
 ;-
-pro  remove_cr_by_sigma, paths, combine_stellar, redpar=redpar, master_name=master_name
+pro  remove_cr_by_sigma, paths, combine_stellar, redpar=redpar, master_name=master_name, automation=automation
   compile_opt idl2
 
   sigma = 3
 
   if n_elements(paths) lt 3 then begin
-    if redpar.automation then begin
+    if automation then begin
       return
     endif else begin
       print, ' '
