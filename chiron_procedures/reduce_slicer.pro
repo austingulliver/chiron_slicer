@@ -202,7 +202,7 @@ PRO reduce_slicer,  $
                       writefits,  indir, master_sp, hd
                   endif else begin
                     ;4.  Remove CRs  : this is the stack approach
-                    remove_cr_by_sigma, all_file_names, combine_stellar, redpar=redpar, master_name=master_name  ; The files themselves get updated. So files in the folder fitspec get updated
+                    remove_cr_by_sigma, all_file_names, combine_stellar, redpar=redpar, master_name=master_name, automation=automation  ; The files themselves get updated. So files in the folder fitspec get updated
                   endelse
                 endforeach
             endif
@@ -277,7 +277,7 @@ PRO reduce_slicer,  $
                 foreach star_name_key,  stellar_exposures.Keys() do begin
                   all_file_names = stellar_exposures[star_name_key].ToArray()
                   print, all_file_names
-                  remove_cr_by_sigma, all_file_names, combine_stellar, redpar=redpar ; The files themselves get updated. So files in the folder fitspec get updated
+                  remove_cr_by_sigma, all_file_names, combine_stellar, redpar=redpar, automation=automation ; The files themselves get updated. So files in the folder fitspec get updated
                 endforeach 
                 
             endif

@@ -30,8 +30,8 @@ function logmaker_calc, hd, OBJName=objname
          half_exp = 0.5 * (expotime / 3600.) ; converting from seconds to hours
     
          ; Year, month and day extracted from UTSHUT
-         ymd = stregex(date_and_time, '([0-9]+)-([0-9]+)-([0-9]+)',/SUBEXPR,/EXTRACT)
-         hms = stregex(date_and_time, '([0-9]+):([0-9]+):([0-9]+.[0-9]+)',/SUBEXPR,/EXTRACT)
+         ymd = stregex(date_and_time, '([0-9]+)-([0-9]+)-([0-9]+)', /EXTRACT)
+         hms = stregex(date_and_time, '([0-9]+):([0-9]+):([0-9]+.[0-9]+)', /SUBEXPR,/EXTRACT)
          hti  = ten(float(hms[1:*])) + half_exp
          mt = sixty(hti)
          hms_u = (cgNumber_Formatter(mt[0], DECIMALS=0)).extract('[0-9]+') + ":" + (cgNumber_Formatter(mt[1], DECIMALS=0)).extract('[0-9]+') + ":" + cgNumber_Formatter(mt[2], DECIMALS=3)
