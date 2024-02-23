@@ -1,5 +1,5 @@
 
-function find_noise_level, spectrum 
+function find_noise_level, spectrum, debug = debug  
     ; It finds the noise level assuming the noise is more-less constant at a given X value. Returns
     ; a range (two x values) of where to expect that noise.
     ; Spectrum given as intensity vs  pixel 
@@ -23,16 +23,18 @@ function find_noise_level, spectrum
       
       
       ;Plotting (Testing purposes)
-      
-;      p0= plot(spectrum)
-;      px0 = plot([0,len],[y0, y0], color='blue',thick =3, /overplot)
-;      px0 = plot([0,len],[y1, y1], color='blue', thick=3, /overplot)
+      if debug eq 1 then begin
+          x_range = [0, n_elements(spectrum)]
+          p0= plot(spectrum, title='Identifying noise level from find_noise_level in find_ref_peak.pro', xtitle='Number of data points' , ytitle='Intensity', xrange=x_range)
+          px0 = plot([0,len],[y0, y0], color='blue',thick =3, /overplot)
+          px0 = plot([0,len],[y1, y1], color='blue', thick=3, /overplot)
+      endif
 ;    
     RETURN, [y0, y1]
 END
 
 
-function find_spec_peak, datax, datay,minima = minima
+function find_spec_peak, datax, datay, minima = minima, debug = debug
   ; adapted for emission spectra
 
   ;set compile options
@@ -47,7 +49,7 @@ function find_spec_peak, datax, datay,minima = minima
   
  ; p1=(data_y)
 
-  noise_level =find_noise_level(datay);median(data_y)
+  noise_level =find_noise_level(datay, debug=debug);median(data_y)
   above_noise =7.0 ; The number of times the line has to be above noise level 
   
   max_peak = max(data_y)
@@ -64,17 +66,23 @@ function find_spec_peak, datax, datay,minima = minima
   for i=1, n_elements(data_y)-2 do begin
     ;previous point less than i-th point and next point less than i-th point
     if (  (data_y[i-1] le data_y[i]) AND (data_y[i] ge data_y[i+1])  ) then  begin
-      
-      
+        
       IF data_y[i] gt noise_level[1] + (( noise_level[1]- noise_level[0] )*above_noise )  then   max_points.add, i
     
-      
-      
     endif
   endfor
+  
+  max_points= max_points.toarray()
+  
+  if debug eq 1 then begin
+     x_range = [0, n_elements(datay)]
+     p1= plot(datay, title='Output from Find Spec Peaks in find_ref_peak.pro', xtitle='Number of data points' , ytitle='Intensity', xrange=x_range)
+     px1 = plot(max_points,datay[max_points], color='blue', linestyle=0, /overplot, /symbol)
+  
+  endif
 
   ;return an array of the indices where the extrema occur
-  return, max_points.toarray()
+  return, max_points
 
 end
 
@@ -104,15 +112,18 @@ FUNCTION validate_one_peak, pixel_list, spec
 END
 
 
-FUNCTION find_ref_peak ,abs_path, redpar=redpar,  order_num=order_num
+FUNCTION find_ref_peak ,abs_path, redpar=redpar,  order_num=order_num, debug=debug 
 ;+              
 ; :Input:
-; 
+; abs_path: Path to reference ThidFile. Example achi171218.1003
+; redpar: Variable containing information from input file 
+; order_num: Order number to start from. For  achi171218.1003 is always equals to 1 
 ; :Output:
+; Returns 3 pixels which are meant to be compared with another spectrum
 ; 
 ; :Summary:
 ;  Opens the achi files input (is not a fits a file, file contains spectrum in pixels),
-;  ,applies and smoothing algorithim (moving avg of 3),  
+;  applies and smoothing algorithim (moving avg of 3),  
 ;  
 ;  Ajusted to read the indexed order 70 (Blue Order)
 ;
@@ -138,7 +149,7 @@ if not keyword_set(order_num) then order_num =  1
   ;yvals = smooth_spec 
   yvals =spec 
   xvals = indgen( n_elements(yvals) )
-  local_maxmin_index = find_spec_peak(xvals, yvals) ; expect back an array with the pixel number where peaks in the spectrum where found 
+  local_maxmin_index = find_spec_peak(xvals, yvals, debug = debug) ; expect back an array with the pixel number where peaks in the spectrum where found 
                                                     ; The peaks were found under certain criteria 
   
 
@@ -191,11 +202,11 @@ if not keyword_set(order_num) then order_num =  1
   
   ;Define 1 peak per range (Validation)
   ;--------------------------------------------  
-  peak_1=validate_one_peak(ref_pixel_1,spec )
-  peak_2=validate_one_peak(ref_pixel_2,spec )
-  peak_3=validate_one_peak(ref_pixel_3,spec )
-  peak_4=validate_one_peak(ref_pixel_4,spec )
-  peak_5=validate_one_peak(ref_pixel_5,spec )
+  peak_1=validate_one_peak(ref_pixel_1, spec)
+  peak_2=validate_one_peak(ref_pixel_2, spec)
+  peak_3=validate_one_peak(ref_pixel_3, spec)
+  peak_4=validate_one_peak(ref_pixel_4, spec)
+  peak_5=validate_one_peak(ref_pixel_5, spec)
   
   
   ;Gaussian fitting 

@@ -75,11 +75,11 @@ PRO reduce_slicer,  $
       print, '**************************************************'
   
       if keyword_set(no_bary) then begin
-        logmaker_v2, strt(night), /nofoc, prefix='chi', redpar = redpar
+        logmaker_v2, strt(night), /nofoc, prefix='chi', redpar = redpar, debug = debug 
       endif else begin
         ; Run bary Correction as well
         ; It is very important to get the name of the start Correct to run the barycorrection successfully
-        logmaker_v2, strt(night), /nofoc, prefix='chi', stellar_bary_correc=stellar_bary_correc, redpar = redpar
+        logmaker_v2, strt(night), /nofoc, prefix='chi', stellar_bary_correc=stellar_bary_correc, redpar = redpar, debug=debug
         ;   stellar_bary_correc(Output): is a list wich elements are strucutres with the form {file_name:obs_file[i] , correction:czi }
       endelse
     endif else begin
@@ -107,7 +107,7 @@ PRO reduce_slicer,  $
           print, '**************************************************'
       
           sorting_hat, strt(night), mode='slicer', /reduce, /getthid, /iod2fits, combine_stellar=combine_stellar ,$
-            thar_soln='wvc_slicer_171218.sav',automation = automation, redpar =redpar
+            thar_soln='wvc_slicer_171218.sav',automation = automation, redpar =redpar, debug=debug
         endif
       
         ;#####################################################
