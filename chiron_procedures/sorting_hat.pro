@@ -51,7 +51,7 @@
 pro sorting_hat, night, run=run, iod2fits=iod2fits, reduce=reduce, $
 doptag=doptag, end_check=end_check, skip=skip, $
 thar_soln=thar_soln, getthid=getthid, mode = mode, obsnm=obsnm, $
-bin11 = bin11, flatsonly=flatsonly, tharonly=tharonly, combine_stellar=combine_stellar, automation= automation, redpar =redpar 	
+bin11 = bin11, flatsonly=flatsonly, tharonly=tharonly, combine_stellar=combine_stellar, automation= automation, redpar =redpar, debug=debug
 
 angstrom = '!6!sA!r!u!9 %!6!n'
 
@@ -483,7 +483,7 @@ print, ' '
     	   ;Make  changes to WVC structure if needs    	 
     	   
     	   initwvc[2]=round(redpar.nords);redpar.nords;74. ;73.   ;Number of Orders
-    	   initwvc[3]=138 - round(redpar.nords)  ;For nords= 73 this =65 ; before kept as 65 ;Physical Order Base ; OBASE. Note this has to much with what is input into THID.
+    	   initwvc[3]=138 - round(redpar.nords)  ;For nords= 73 this =65 ; before kept as 65 ;Physical Order Base ; OBASE. Note this has too much with what is input into THID.
     	   ;When adding  (Num of Ordes) + (Base Orders) =  Always 139 (Physically is 138 but addition does not account for obase )
 
     	   
@@ -508,13 +508,13 @@ print, ' '
     	   
     	   
     	   order_num= 1 ; This will always remain constant since is wrt to 'achi171218.1003' an this is meant to remain constant as well 
-    	   ref_pixel_2017 = find_ref_peak(dir_2017, redpar=redpar, order_num=order_num) ; returns an array with three elements
-                                            	   ; peak 1 : found withint the range  r1=[ 600, 800 ]
-                                            	   ; peak 2 : found withint the range  r2=[1975,2050]
-                                            	   ; peak 3 : found withint the range  r3=[3820,3920]
+    	   ref_pixel_2017 = find_ref_peak(dir_2017, redpar=redpar, order_num=order_num, debug=debug) ; returns an array with three elements
+                                            	   ; peak 1 : found withint the range  r1=[2125,2174]
+                                            	   ; peak 2 : found withint the range  r2=[2240,2270]
+                                            	   ; peak 3 : found withint the range  r3=[2560,2590]
+                                            	   ; peak 4 : found withint the range  r4=[3160,3195]
+                                            	   ; peak 5 : found withint the range  r5=[3340,3380]
     	         	   
-    	   
-    	   
     	   !p.multi=[0,1,1]    	   
     	   for i=0,num_thar-1 do begin ; For each ThAr file encountered 
     	        
@@ -565,28 +565,33 @@ print, ' '
           			  mlam = 65.*[8662.4d,8761.9d] ; has to be modified for now treated as dummy because wvc is passed         			  
           			  ;thid, t, obase, mlam, wvc, thid, init=initwvc, /orev             			
             			 
-            			 
+            			num_attempts=0
 
-          			  if thid.nlin lt 700d then begin         
-          			     print, 'SORTING_HAT: Not enough lines found in the recent wavelenght calibration '            			  
-            			   print, 'SORTING_HAT: Lines found :  '+strt(thid.nlin)
-            			   ; IF fails I want to see the img myself
-            			   rdsk,sp_2017,dir_2017,1
-            			   rdsk,sp_current,current_dir,1
-            			   p1=plot(sp_current[*,0],  title ='Black is current, Blue is 2017')
-            			   p2=plot( sp_2017[*,0],color='blue',linestyle=2,   /overplot)
-            			   B = ''
-            			   print, 'SORTING_HAT: The Pixel shift failed to predict the shift maginitude. Try with the following integer values +/-5  ' 
-            			   ; Read input from the terminal:
-            			   READ, B, PROMPT='Do you want to try again? If YES insert pixel number if not then press x : '
-            			   if B eq 'x' then begin 
-            			     stop, 'ERROR : Thid.pro did not work as expected.  INTERVENTION NEEDED!'   
-            			   endif else  begin
-            			     pixel_offset = fix(B)
-            			     GOTO, try_again
-            			     
-            			     
-            			   endelse
+          			  if thid.nlin lt 700d then begin
+          			     print, 'SORTING_HAT: Not enough lines found in the recent wavelenght calibration '
+          			     print, 'SORTING_HAT: Lines found :  '+strt(thid.nlin)    
+          			     ; If not enough lines found then try again with pixel offset equals to zero otherwise need user input   
+                     if num_attempts eq 0 then begin 
+                         print, "Trying again with pixel_offset = 0.0"
+                         pixel_offset = 0.0
+                         GOTO, try_again 
+                     endif else begin 
+                			   ; IF fails I want to see the img myself
+                			   rdsk,sp_2017,dir_2017,1
+                			   rdsk,sp_current,current_dir,1
+                			   p1=plot(sp_current[*,0],  title ='Black is current, Blue is 2017')
+                			   p2=plot( sp_2017[*,0],color='blue',linestyle=2,   /overplot)
+                			   B = ''
+                			   print, 'SORTING_HAT: The Pixel shift failed to predict the shift maginitude. Try with the following integer values +/-5  ' 
+                			   ; Read input from the terminal:
+                			   READ, B, PROMPT='Do you want to try again? If YES insert pixel number if not then press x : '
+                			   if B eq 'x' then begin 
+                			     stop, 'ERROR : Thid.pro did not work as expected.  INTERVENTION NEEDED!'   
+                			   endif else  begin
+                			     pixel_offset = fix(B)
+                			     GOTO, try_again  
+                			   endelse
+                		 endelse
             			            			   
           			  endif else begin
           			     print, 'SORTING_HAT: Thid.pro successfully identified '+strt(thid.nlin) + ' lines. '
