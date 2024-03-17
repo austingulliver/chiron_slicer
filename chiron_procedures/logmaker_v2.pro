@@ -224,7 +224,7 @@ pro logmaker_v2, rawdir, $                        ; It is simply the name of the
    
   ;                (#obs,   objname,   bin,   slit ,    ra ,  dec     time1     time2     ccdTe,   airmas    jd    bary      intensity )
   ;extended_form = '(a10,     a15,       a8,    a10 ,   a14,   a14,     a28,      a12,     a12,      a10,     a17,    a14,    a10    )' 
-  extended_form = '(a10,     a15,       a8,    a10 ,   a14,   a14,     a28,      a12,     a12,      a10,     a17,    a14,       a17)' ; got rid of max intensity for now
+  extended_form = '(a10,     a15,       a8,    a10 ,   a14,   a14,     a28,      a12,     a12,      a10,     a17,    a14,       a20)' ; got rid of max intensity for now
   
   ;*****************************************
   ;Extract Focus Information
@@ -476,7 +476,7 @@ pro logmaker_v2, rawdir, $                        ; It is simply the name of the
               
               ccd_temp_i =strt(sxpar(header,'CCDTEMP'))      
               air_mass_i = strt(sxpar(header,'AIRMASS'))
-              max_intensity_i = strt(sxpar(header,'EMAVGSQ'))   
+              max_intensity_i = STRING(sxpar(header,'EMAVGSQ'), FORMAT='%0.4f') 
               
               IF STRLEN(ccd_temp_i) GT 0 THEN  ccd_temp[i]      = ccd_temp_i ELSE  ccd_temp[i] = '0.0' ; 0.0 Default value if not in header 
               IF STRLEN(air_mass_i) GT 0 THEN  air_mass[i]      = air_mass_i ELSE  air_mass[i] = '1.0'
