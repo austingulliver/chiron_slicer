@@ -26,16 +26,16 @@
 
 
 
-PRO reduce_slicer,  $
-  nights, $
-  no_log=no_log, $                            ; If set it wont create a new .log file
-  no_reduction = no_reduction, $              ; If set it wont reduce the spectra of the given night
-  combine_stellar = combine_stellar, $        ; If reduction step is run this determines if reduction should consider  individual frames or collect them to produce a master stellar
-  combine_an = combine_an, $                  ; Activate combine across nights              
-  post_process = post_process, $              ; Post processing includes shift found from  barycentric correction +  splice the spectra
-  automation = automation,     $              ; Activate automation process
-  ;star_name=star_name                        ; Name of the Star. IT MUST BE INSERTED AS ONE WORD E.G 'HR2943'.  (as opposed to 'HR 2943' )
-                                              ; depricated. Software now finds the name of the star directly from the headers.
+PRO reduce_slicer,                            $
+  nights,                                     $        ; If set then nights 
+  years=years,                                $        ; If nights is a path then this variable selects the folder corresponding to given years. If not set then all folders are slected.
+  no_log=no_log,                              $        ; If set it wont create a new .log file
+  no_reduction = no_reduction,                $        ; If set it wont reduce the spectra of the given night
+  combine_stellar = combine_stellar,          $        ; If reduction step is run this determines if reduction should consider individual frames or collect them to produce a master stellar
+  combine_an = combine_an,                    $        ; If set activate combine across nights 
+  stars_nm_cb_an =stars_nm_cb_an,             $        ; Name of stars to combine across nights. Must be given as an array  and star names need to be one word E.G 'HR2943'.  (as opposed to 'HR 2943')
+  post_process = post_process,                $        ; Post processing includes shift found from  barycentric correction +  splice the spectra
+  automation = automation,                    $        ; If set activate automation process
 
 ; Definning constants in a common block can be referenced by any program unit that declares that common block.
   constants                              
@@ -47,7 +47,7 @@ PRO reduce_slicer,  $
   ; Constants/Variables + paths
   cms = 2.99792458d8 ; Constant. Workaround sometimes constants does not give back expected value-> Why?
   
-  if ~isa(nights, /number) then nights = get_nights_dir(nights)
+  if ~isa(nights, /number) then nights = get_nights_dir(nights, years)
   
   ;Check if pipeline should run in automation mode 
   if keyword_set(automation) then begin
@@ -58,8 +58,8 @@ PRO reduce_slicer,  $
   endelse
   
   foreach night, nights do begin
-    
     if keyword_set(combine_an) then begin
+      ; For combine across nights it is necessary for combine_stellar and post_process to be True. 
       combine_stellar=1
       post_process=1
     endif
@@ -149,7 +149,7 @@ PRO reduce_slicer,  $
             ;--------------------------
             ; I create the master file before looking for it but to do so I have to find individual files all over again
             ; It might seem like repeated logic but it's needed
-            bary_indices = where(float(baryCorrec) ne 0.0, c_bary )
+            bary_indices = where(float(baryCorrec) ne 0.0 and slit eq redpar.modes[1] , c_bary )
             obnm = obnm[ bary_indices]
             objnm = objnm[ bary_indices]
       
@@ -158,8 +158,7 @@ PRO reduce_slicer,  $
                 stellar_exp_by_star = dictionary()
                 for index = 0L, n_elements(obnm)-1 do begin
                   refined_key = objnm[index]
-                  refined_key = refined_key.replace( ' ', '') ; Get Rid of any dash
-                  refined_key = refined_key.replace( '-', '') ; get rid of empty space
+                  refined_key = clean_key_dictionary(refined_key)
                   file_name= redpar.rootdir+ redpar.fitsdir+ redpar.imdir +redpar.prefix_tag +strtrim(redpar.prefix+strt(obnm[index])+'.fits')
                   if stellar_exp_by_star.HasKey( refined_key ) then begin
                     stellar_exp_by_star[ refined_key ].add,  file_name ; Add the obersevation number
@@ -243,7 +242,7 @@ PRO reduce_slicer,  $
             endfor
           endif else begin
             ; >> For all individual files
-            bary_indices = where(float(baryCorrec) ne 0.0, c_bary )
+            bary_indices = where(float(baryCorrec) ne 0.0 and slit eq redpar.modes[1], c_bary)
             if c_bary le 0 then stop, 'reduce_slicer:  STOP : No barycentric corrections were identified from the .log file. '
             obnm = obnm[ bary_indices]
             objnm = objnm[ bary_indices]
@@ -264,8 +263,7 @@ PRO reduce_slicer,  $
                 foreach structure, stellar_bary_correc do begin
                   file_name= redpar.rootdir+ redpar.fitsdir+ redpar.imdir +redpar.prefix_tag +strtrim(structure.file_name,2)
                   refined_key = structure.star_name
-                  refined_key = refined_key.replace( ' ', '') ; Get Rid of any dash
-                  refined_key = refined_key.replace( '-', '') ; get rid of empty space
+                  refined_key = clean_key_dictionary(refined_key)
                   if stellar_exposures.HasKey( refined_key ) then begin
                     stellar_exposures[ refined_key ].Add,  file_name ; Add the obersevation number
                   endif else begin
@@ -458,45 +456,78 @@ PRO reduce_slicer,  $
         endif
     endfor  
   endforeach
+  ;#####################################################
+  ;# 5) Coaddition across nights
+  ;#####################################################
   
-  if keyword_set (combine_an) then begin
-    star_eles= dictionary()
-    counter = 0
-    foreach night, nights do begin
-      str_file_type=  redpar.rootdir+ redpar.fitsdir+ strt(night) + "\post_processed\" + redpar.prefix_tag+'mchi'+strt(night)+'*.fits'
-      print,'Master file search: ',str_file_type
-      post_process_files = file_search(str_file_type, count = count_master)
-      if count_master ne 0 then begin 
-          for i=0, count_master-1 do begin 
-            post_process_file=post_process_files[i]
-            header = headfits(post_process_file)
-            star_name = strt(fxpar(header, 'OBJECT'))
-            star_name = star_name.replace( ' ', '') ; Get Rid of any dash
-            star_name = star_name.replace( '-', '') ; get rid of empty space
-            if star_eles.HasKey( star_name ) then begin
-              star_eles[ star_name ].add, post_process_file ; Add the obersevation number
-            endif else begin
-              star_eles[ star_name ]= list(post_process_file)
-            endelse
-          endfor
+  if keyword_set(combine_an) then begin
+      star_eles= dictionary()
+      counter = 0
+      print, "****************** All stars Names ******************"
+      foreach night, nights do begin
+        str_file_type=  redpar.rootdir+ redpar.fitsdir+ strt(night) + "\post_processed\" + redpar.prefix_tag+'mchi'+strt(night)+'*.fits'
+        post_process_files = file_search(str_file_type, count = count_master)
+        if count_master ne 0 then begin 
+            for i=0, count_master-1 do begin 
+              post_process_file=post_process_files[i]
+              header = headfits(post_process_file)
+              star_name = strt(fxpar(header, 'OBJECT'))
+              star_name = clean_key_dictionary(star_name)
+              print, star_name + " found in " + file_basename(post_process_file, ".fits")
+              if ~keyword_set(stars_nm_cb_an) then begin
+                  if star_eles.HasKey( star_name ) then begin
+                    star_eles[ star_name ].add, post_process_file ; Add the obersevation number
+                  endif else begin
+                    star_eles[ star_name ]= list(post_process_file)
+                  endelse
+              endif else if total(stars_nm_cb_an eq star_name) eq 1 then begin
+                  if star_eles.HasKey( star_name ) then begin
+                  star_eles[ star_name ].add, post_process_file ; Add the obersevation number
+                endif else begin
+                  star_eles[ star_name ]= list(post_process_file)
+                endelse
+              endif
+            endfor
+        endif
+      endforeach 
+      
+      ;Create directory to save files 
+      dir_name = redpar.rootdir+redpar.fitsdir+"combine_across_nights"
+      file_mkdir, dir_name
+      ;If custom stars for combine across nights -> print the name for them
+      if keyword_set(stars_nm_cb_an) then begin
+        print, "****************** Stars Selected for combine across nights stellar ******************"
+        print, star_eles.keys()
       endif
-    endforeach 
-    
-    ;Create directory to save files 
-    dir_name = redpar.rootdir+redpar.fitsdir+"combine_across_nights"
-    file_mkdir, dir_name
-    
-    
-    foreach star_name, star_eles.keys() do begin
-        star_list=star_eles[star_name]
-        nele = star_list.count()
-        if nele gt 1 then begin 
-          result = wv_linearization_coaddition(star_list)
-          master_name= redpar.prefix_tag + 'mchi_inter_' + star_name + '.fits'
-          indir=dir_name + "\" + master_name
-          writefits, indir, result, hd
-       endif 
-    endforeach
+      foreach star_name, star_eles.keys() do begin
+          star_list=star_eles[star_name]
+          nele = star_list.count()
+          if nele gt 1 then begin 
+            result = wv_linearization_coaddition(star_list)
+            master_name= redpar.prefix_tag + 'mchi_' + star_name + '.fits'
+            indir=dir_name + "\" + master_name
+            ; Creating new header
+            template_hd = headfits(star_list[0])
+            ; Extracting master files names used for combine
+            names_an = file_basename(star_list.toarray(), ".fits")
+            list_names = strjoin(names_an, ", ")
+            ; Deleting unnecessary headers
+            sxdelpar, template_hd, 'HISTORY'
+            sxdelpar, template_hd, 'NUM_CRS'
+            sxdelpar, template_hd, 'CR_MT'
+            sxdelpar, template_hd, 'RESOLUTN'
+            sxdelpar, template_hd, 'THARFNAM'
+            sxdelpar, template_hd, 'VERSIOND'
+            sxdelpar, template_hd, 'IMDIR'
+            sxdelpar, template_hd, 'THIDNLIN'
+            ;Adding new header names
+            fxaddpar, template_hd, 'DATE_CB_AN_CREATED', SYSTIME()
+            fxaddpar, template_hd, 'NFILES_CB_AN', strt(nele), 'Number of files used for combine across nights.'
+            fxaddpar, template_hd, 'WMFILES_CB_AN', list_names
+            ;Saving combined master spectrum
+            writefits, indir, result, template_hd
+         endif 
+      endforeach
   endif 
   
   if keyword_set(automation) then begin
