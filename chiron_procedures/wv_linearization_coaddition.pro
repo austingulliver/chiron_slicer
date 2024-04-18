@@ -39,24 +39,6 @@ function wv_linearization_coaddition, star_list
   spectra_res = mean(spectra, /double, dimension=3) ;Note the method always uses mean
   result[0,*,*]= wavelengths
   result[1,*,*]= spectra_res
-  
-  
-;  temp =  readfits(star_list[0])
-;  p=plot(temp[0,*,0],temp[1,*,0], color='black', title=strt(fxpar(hd, 'OBJECT')))
-;  for order_t = 1L, n_orders-1 do begin
-;    p=plot(temp[0,*,order_t],temp[1,*,order_t], color='black', /overplot)
-;  endfor
-  
-;  for num = 1L, nele-1 do begin
-;    temp =  readfits(star_list[num])
-;    for order_t = 0L, n_orders-1 do begin
-;       p=plot(temp[0,*,order_t],temp[1,*,order_t], color='black', /overplot  ) ;, title=t)
-;    endfor
-;  endfor
-  
-;  for order_t = 0L, n_orders-1 do begin
-;    p=plot(result[0,*,order_t],result[1,*,order_t], color='blue', /overplot  ) ;, title=t)
-;  endfor
-  
+   
   return, result   
 end

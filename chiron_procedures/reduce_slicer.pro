@@ -456,6 +456,7 @@ PRO reduce_slicer,                            $
         endif
     endfor  
   endforeach
+ 
   ;#####################################################
   ;# 5) Coaddition across nights
   ;#####################################################
@@ -510,7 +511,7 @@ PRO reduce_slicer,                            $
             template_hd = headfits(star_list[0])
             ; Extracting master files names used for combine
             names_an = file_basename(star_list.toarray(), ".fits")
-            list_names = strjoin(names_an, ", ")
+            
             ; Deleting unnecessary headers
             sxdelpar, template_hd, 'HISTORY'
             sxdelpar, template_hd, 'NUM_CRS'
@@ -520,10 +521,14 @@ PRO reduce_slicer,                            $
             sxdelpar, template_hd, 'VERSIOND'
             sxdelpar, template_hd, 'IMDIR'
             sxdelpar, template_hd, 'THIDNLIN'
-            ;Adding new header names
-            fxaddpar, template_hd, 'DATE_CB_AN_CREATED', SYSTIME()
-            fxaddpar, template_hd, 'NFILES_CB_AN', strt(nele), 'Number of files used for combine across nights.'
-            fxaddpar, template_hd, 'WMFILES_CB_AN', list_names
+            ;Adding information to header
+            
+            sxaddpar, template_hd, 'HISTORY', "Date created comb-acr-n file: "   + SYSTIME()
+            sxaddpar, template_hd, 'HISTORY', "Num masters used for comb-acr-n: "  + strt(nele)
+            foreach name, names_an do begin
+              sxaddpar, template_hd, 'HISTORY', "File used for comb-acr-n: " + name
+            endforeach
+             
             ;Saving combined master spectrum
             writefits, indir, result, template_hd
          endif 
