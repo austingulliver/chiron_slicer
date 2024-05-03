@@ -43,9 +43,7 @@ function optimal_order_tracing, img, redpar
   ;------------------------------  
   
 
-  
-  
-  templates = define_templates(flat , redpar) ; n orders structure  with middle, up and down for every order (central column)
+  templates = define_templates(flat, middle_column,  redpar) ; n orders structure  with middle, up and down for every order (central column)
   
 
   if debug gt 0 then stop, " ** Templates recognizition  Sucessfull *** "

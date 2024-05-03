@@ -36,7 +36,7 @@
 
 pro CTIO_spec,prefix,spfname,outfname,redpar, orc, xwid=xwid, flat=flat, cosmics=cosmics, thar=thar
 
-  debug=redpar.debug
+  debug=1
   if n_params() lt 5 then begin
     print,'syntax: ctio_spec,prefix,spfname,outfname,redpar,orc[,xwid,flat,thar,cosmics ]'
     retall
@@ -100,7 +100,7 @@ pro CTIO_spec,prefix,spfname,outfname,redpar, orc, xwid=xwid, flat=flat, cosmics
 
     head=frame_hdr ; this works as input and output
     ; I need to pass the header reference of the original file as input.
-    im = getimage(cleaned_frame, redpar, header=head)
+    im = get_image(cleaned_frame, redpar, header=head)
     ; It will output the header 'head'
 
 
@@ -118,12 +118,7 @@ pro CTIO_spec,prefix,spfname,outfname,redpar, orc, xwid=xwid, flat=flat, cosmics
 
 
 
-  endif else im = getimage(spfname, redpar, header=head)  ; Retrieve the image as normal.
-
-
-
-
-
+  endif else im = get_image(spfname, redpar, header=head)  ; Retrieve the image as normal.
 
   if (size(im))[0] lt 2 then begin
     print, 'CTIO_SPEC: Image is not found. Returning from CTIO_SPEC.'
@@ -149,15 +144,6 @@ pro CTIO_spec,prefix,spfname,outfname,redpar, orc, xwid=xwid, flat=flat, cosmics
     im = double(im)/flat
   endif
 
-
-
-
-
-
-
-
-
-
   ;*******************************************************
   ;   Extract Spectrum
   ;*******************************************************
@@ -169,21 +155,16 @@ pro CTIO_spec,prefix,spfname,outfname,redpar, orc, xwid=xwid, flat=flat, cosmics
   endif else begin
     ; Stellar Spectrum
     ;getspec, im, orc, xwid, spec, gain=redpar.gain, ron=redpar.ron, redpar = redpar, cosmics=cosmics, optspec=optspec, diff=replace, sky=sky ;  APPLYING CR
+    
+    if redpar.scatter_light gt 0 then begin
+      im =substract_scatter_light(im, orc, redpar = redpar)
+    endif
+    
     getspec, im, orc, xwid, spec, gain=redpar.gain, ron=redpar.ron, redpar = redpar, optspec=optspec, diff=replace, sky=sky
 
   endelse
 
-
   spec_o = spec ;save the original spec
-
-
-
-
-
-
-
-
-
 
 
   ;*******************************************************
@@ -197,14 +178,6 @@ pro CTIO_spec,prefix,spfname,outfname,redpar, orc, xwid=xwid, flat=flat, cosmics
 
   specsz = size(spec)
   nords = specsz[2]
-
-
-
-
-
-
-
-
 
 
   ;*******************************************************
@@ -222,11 +195,11 @@ pro CTIO_spec,prefix,spfname,outfname,redpar, orc, xwid=xwid, flat=flat, cosmics
 
 
     for i=0, nords-1 do begin
-      if redpar.debug ge 1 and redpar.debug le 2 then begin
-        fname = fdir+'/'+redpar.prefix+redpar.seqnum+'_Ord'+strt(i)
-        if file_test(fname) then spawn, 'mv '+fname+' '+nextnameeps(fname+'_old')
-        ps_open, fname, /encaps, /color
-      endif;debug plots
+      ;if redpar.debug ge 1 and redpar.debug le 2 then begin
+      ;  fname = fdir+'/'+redpar.prefix+redpar.seqnum+'_Ord'+strt(i)
+      ;  if file_test(fname) then spawn, 'mv '+fname+' '+nextnameeps(fname+'_old')
+      ;  ps_open, fname, /encaps, /color
+      ;endif;debug plots
 
       if redpar.debug ge 1 then begin
         plot, spec_o[*,i], title=redpar.prefix+redpar.seqnum+' Order '+strt(i)+' Extracted', /xsty, /ysty, ytitle='Flux'
@@ -241,17 +214,10 @@ pro CTIO_spec,prefix,spfname,outfname,redpar, orc, xwid=xwid, flat=flat, cosmics
       endif
     endfor
 
-  endif;debug plots
-  ; END Plotting - Debug
-
-
-
-
-
-
-
-
-
+  endif
+  ;*******************************************************
+  ;   END Plotting - Debugging
+  ;*******************************************************
 
   print,'CTIO_SPEC: Extracted File >> ' + outfname
   extracted=size( spec )
@@ -263,15 +229,7 @@ pro CTIO_spec,prefix,spfname,outfname,redpar, orc, xwid=xwid, flat=flat, cosmics
 
   spec=rotate(spec,2) ; Spectrum get rotated
   wdsk,spec,outfname,1,/new			;write image to disk
-  ;writefits,  'C:\Users\mrstu\Desktop\School\research_Physics\yale_software\chiron\files_sent_dr_gulliver\median_tharSpec/181103_1003_extracted_spec.fits', spec
-
   wdsk,head,outfname,2
-
-
-  ; DEBUG
-  ;   plot, intspec[*,0]
-  ;   tvscl, congrid(intspec,n_elements(intspec[*,0], 8*n_elements(intspec[0,*]))
-  ;   stop, 'CTIO-SPEC DEBUG: spectrum plot'
 
   return
 end

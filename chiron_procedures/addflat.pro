@@ -19,7 +19,7 @@ print, "ADDFLAT: Number of frames used to create master flat :  "+string(numwf) 
 
 if redpar.flatnorm le 2 then print, "ADDFLAT: Flat files are NOT being normalized combining flats " else print,  "ADDFLAT: Flat files ARE normalized before combining flats"
 sum = 0
-im = getimage(flatfiles[0], redpar, header=header)            ; read the first image
+im = get_image(flatfiles[0], redpar, header=header)            ; read the first image
 if (size(im))[0] lt 2 then return                             ; file not found
 geom = chip_geometry(flatfiles[0], hdr=header, redpar=redpar) ; returns CCD geometry in a structure of the same first img
 sz = size(im)
@@ -38,7 +38,7 @@ avgs =list() ; average of each image
 
 print, 'ADDFLAT: Reading all flats. Please wait ........'
 for j = 0, numwf-1 do begin ; For each flat file
-  	im = getimage(flatfiles[j], redpar, header=header, geom=geom) ; read  image, correct for bias and non-linearity      
+  	im = get_image(flatfiles[j], redpar, header=header, geom=geom) ; read  image, correct for bias and non-linearity      
   	
     
     if (redpar.flatnorm le 2) then begin 

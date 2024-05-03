@@ -17,7 +17,7 @@
 
 
 
-function all_order_peaks, flat, redpar, method_str= method_str
+function all_order_peaks, flat, order_num, redpar, method_str= method_str
   compile_opt idl2
 
         debug=0
@@ -35,9 +35,8 @@ function all_order_peaks, flat, redpar, method_str= method_str
         above_noise_level=5.0 ; Defines how many times bgger(wrt to the Background) the intensity values should get picked
                                ; Found experimentally. Change if neccesary 
                               
-        middle = flat[  round(n_rows/2.0),*]
+        middle = flat[order_num, *]
         middle= reform(middle)
-        
         
         noise_level = background_level(middle, noise_width=redpar.ron, section_width=redpar.xwids[redpar.mode] ,  noise_str='band_fragments', debug=debug) ; Has the same with as readout noise
                       ; ron(input) : Read out noise of the frame                                    
