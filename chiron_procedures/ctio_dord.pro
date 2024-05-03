@@ -13,7 +13,7 @@ pro ctio_dord,  ordfname, redpar, orc,ome, image=image
 ;     OME  (optional output vector (# orders))] each entry gives the mean of the
 ;           absolute value of the difference between order locations and the polynomial
 ;           fit to these locations.
-; 6-Oct-11 AT  Added redpar as argument to use getimage.pro 
+; 6-Oct-11 AT  Added redpar as argument to use get_image.pro 
 
 
 if n_params() lt 3 then begin
@@ -24,7 +24,7 @@ end
   print,'CTIO_DORD: Entering routine.'
 
   if ~keyword_set(image) then begin ; read order-location image from the disk
-     image = getimage(ordfname, redpar, header=head)  
+     image = get_image(ordfname, redpar, header=head)  
      if (size(image))[0] lt 2 then begin
        print, 'CTIO_DORD: Image is not found. Returning from all'
        retall

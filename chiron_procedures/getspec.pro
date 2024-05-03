@@ -56,15 +56,7 @@ if n_params() lt 4 then begin
   retall
 endif
 
-
-
-
-
-
 mode = strt(redpar.modes[redpar.mode])
-
-
-
 
 if (mode eq 'slicer') then begin
   
@@ -94,43 +86,27 @@ if (mode eq 'slicer') then begin
   ;*******************************************************
   ; For the slicer mode only the extraction takes place in here rather than invoking getarc.pro 
   for orderNum=0,redpar.nords -1  do begin
-        
-        
-         ; Already giving back vector (double) which corresponds to the boxcar extraction 
-         ; of that order.
-       getarc_slicer,  im, orc, orderNum, redpar, arc, ybi, yti       
-       spec[*,orderNum] = arc
-       ybarr[*, orderNum] = ybi   ; used for testing puposes  array associated with bottom edge of the order
-       ytarr[*, orderNum] = yti   ; used for testing puposes  array associated with top edge of the order
+     ; Already giving back vector (double) which corresponds to the boxcar extraction 
+     ; of that order.
+     getarc_slicer,  im, orc, orderNum, redpar, arc, ybi, yti       
+     spec[*,orderNum] = arc
+     ybarr[*, orderNum] = ybi   ; used for testing puposes  array associated with bottom edge of the order
+     ytarr[*, orderNum] = yti   ; used for testing puposes  array associated with top edge of the order
   endfor
-  
-  
-  
-  
-  
+ 
   ; Objective -> find :   spec = dblarr(ncol,nord) E.g.  4112 x 74
-  
-  
-
+ 
 endif else begin
   
       ;*******************************************************
       ; MODES OTHER THAN  Slicer 
       ;*******************************************************
-
-
-    
-       
-       
-       
              
       ;  trace,25,'GETSPEC: Entering routine.'
       ;*******************************************************
       ;   Constants
       ;*******************************************************
 
-
-      
       ;  >> This was previosuly implemented. It applies for any order other than the slicer
       
       im=double(im)
@@ -142,11 +118,6 @@ endif else begin
       spec = dblarr(ncol,nord)            ;init spectrum
       orcend = dblarr(ncoef,nord+2)       ;init extended orcs
 
-
-
-
-      
-    
       ;GETARC needs order location coefficients (orc) on both sides of arc swath to
       ;  be extracted. In order to extract the lowest and highest orders specified
       ;  in orc, we need to extend orc one extra order on each end. We shall do so
@@ -184,15 +155,9 @@ endif else begin
       orcend(*,0) = orclo
       orcend(*,nord+1) = orchi
     
-    
-    
-    
-    
       ;Loop through orders extracting spectrum and maybe subtracting background.
     
       if redpar.debug ge 2 then print,'GETSPEC: Extracting spectrum.'
-    
-    
     
       ;*******************************************************
       ;   Remove CR  ONE frame at the time
@@ -209,14 +174,6 @@ endif else begin
       ybarr = dblarr(imsz[1], orcsz[2])
       ytarr = dblarr(imsz[1], orcsz[2])
     
-    
-    
-    
-    
-    
-    
-    
-    
       ;*******************************************************
       ;   Boxcar extraction
       ;*******************************************************
@@ -228,10 +185,6 @@ endif else begin
         ;add variable order width:
         ;if redpar.slcrxtrawid[0] gt 0 and onum gt redpar.slcrxtrawid[1] and redpar.mode eq 1 then $
         ;xwd = redpar.xwids[redpar.mode] + redpar.slcrxtrawid[0] else xwd = redpar.xwids[redpar.mode]
-    
-    
-    
-    
     
         ; getarc, im, orcend, onum, xwd, arc, pix, debug = redpar.debug, ybi, yti
         ; Output --> arc : boxcar extracted pixels for corresponding order
@@ -254,15 +207,9 @@ endif else begin
         spec[*,onum-1] = double(arc) * pix
       endfor
     
-    
-    
-    
-    
-    
-    
-      ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-      ;;;;;;;;;;;;;;;; Debugging ;;;;
-      ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+      ;*********************************
+      ;      Debugging SECTION
+      ;*********************************
     
       if redpar.debug ge 1 and redpar.debug le 2 then begin
         fdir = redpar.plotsdir + 'arcs/'
@@ -332,8 +279,5 @@ endif else begin
   
   
 endelse
-
-
-
 
 END

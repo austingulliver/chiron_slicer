@@ -22,7 +22,7 @@
 ;--------------------------------------------------------
 ;-
 
-function getimage, file, redpar, header=header, geom=geom
+function get_image, file, redpar, header=header, geom=geom
 
 ; test if the file exists
 ;   name = redpar.rootdir + redpar.rawdir + file ; omit rootdir and datdir
@@ -166,7 +166,7 @@ if namps eq 4 then begin
 		   ;print, size(bobsmed)
 		   ;print, 'size of the image after BIAS us susbtracted'
 		   ;print, size(im)
-		   ;print, 'GETIMAGE: SUBTRACTED MEDIAN BIAS FRAME:'
+		   ;print, 'get_image: SUBTRACTED MEDIAN BIAS FRAME:'
 		   ;print, fname
 	   endif
         
