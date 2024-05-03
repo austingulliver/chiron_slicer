@@ -93,7 +93,7 @@ function substract_scatter_light, im, orc, redpar=redpar
   
   ;Remove scatter light
   for i= 0, n_orc_col-1 do begin
-    wp=plot(im[i, *] , color="black")
+   ; wp=plot(im[i, *] , color="black")
     for j = 0, n_orc_o-2 do begin
       low_index = scatter_light[i, j]
       high_index =scatter_light[i, j+1]
@@ -114,7 +114,7 @@ function substract_scatter_light, im, orc, redpar=redpar
       earse_temp_selec = reform(copy_im[i, x_range])
       ;wp=plot(x_range,  copy_im[i, x_range] , color="green", /overplot)
     endfor
-    wp=plot(copy_im[i, *] , color="green", /overplot)
+    ;wp=plot(copy_im[i, *] , color="green", /overplot)
   endfor
   return, copy_im
 end
