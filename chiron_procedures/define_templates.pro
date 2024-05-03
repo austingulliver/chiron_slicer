@@ -15,7 +15,7 @@
 function define_templates, flat, order_num, redpar
 
       print, 'OPTIMAL_ORDER_TRACING: Defining templates to be used for cross-correlation. Please Wait ....'
-      debug = 2 ; Make it greater than 1 for detailed plotting
+      debug = 0 ; Make it greater than 1 for detailed plotting
       
       y_peaks=all_order_peaks(flat, order_num, redpar, method_str='from_scratch')  ; Finds the all peaks of each order. Note it will return the 76 orders but
       ; we will get rid of some of them
