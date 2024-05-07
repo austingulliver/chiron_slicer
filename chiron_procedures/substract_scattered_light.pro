@@ -1,4 +1,4 @@
-function substract_scatter_light, im, orc, redpar=redpar
+function substract_scattered_light, im, orc, outfname, redpar=redpar
   ;Define constants
   order_width_t =  redpar.xwids[redpar.mode ] - round(redpar.pixel_not_extracted)
   scatter_light = list()
@@ -116,6 +116,18 @@ function substract_scatter_light, im, orc, redpar=redpar
     endfor
     ;wp=plot(copy_im[i, *] , color="green", /overplot)
   endfor
+  
+  ;Save scattered light 
+  base_name = file_basename(outfname)
+  dir_name = file_dirname(outfname)
+  sca_light_dir_nm = dir_name + "\scattered_light"
+  spawn, 'mkdir '+sca_light_dir_nm
+  MKHDR, scattered_light_hd, scatter_light_vals
+  history_str1 = 'Scattered light values'
+  sxaddpar, scattered_light_hd, 'HISTORY', history_str1
+  writefits, sca_light_dir_nm+"\"+base_name+".fits" , scatter_light_vals, scattered_light_hd
+  
+  
   return, copy_im
 end
 
