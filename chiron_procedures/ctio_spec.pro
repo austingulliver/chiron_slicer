@@ -156,8 +156,8 @@ pro CTIO_spec,prefix,spfname,outfname,redpar, orc, xwid=xwid, flat=flat, cosmics
     ; Stellar Spectrum
     ;getspec, im, orc, xwid, spec, gain=redpar.gain, ron=redpar.ron, redpar = redpar, cosmics=cosmics, optspec=optspec, diff=replace, sky=sky ;  APPLYING CR
     
-    if redpar.scatter_light gt 0 then begin
-      im =substract_scatter_light(im, orc, redpar = redpar)
+    if redpar.scattered_light gt 0 then begin
+      im =substract_scattered_light(im, orc, outfname, redpar = redpar)
     endif
     
     getspec, im, orc, xwid, spec, gain=redpar.gain, ron=redpar.ron, redpar = redpar, optspec=optspec, diff=replace, sky=sky
