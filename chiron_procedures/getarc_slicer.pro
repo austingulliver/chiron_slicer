@@ -31,6 +31,10 @@ pro getarc_slicer,  im, orc, orderNum, redpar, arc, ybi, yti
   ; The min and max value of min(ybi),max(yti) implicently define the swath to be considered
 
 
+  print, "Min max order "+ strt(orderNum)
+  print,  min(ybi)
+  print, max(yti)
+  print, "***********************"
   for row=min(ybi),max(yti) do begin    ;loop through valid rows
     srow=im[*,row]        ;get CCD row : vector  along the dispersion direction. Contains some pixels than actually are within the order ( the others are background)
 

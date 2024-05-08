@@ -44,8 +44,8 @@ spawn, 'cd', pwddir   ;Updated to a Windows command
 
 if  host eq 'Drius22' then begin
   ephemeris = 'C:\Users\mrstu\idlworkspace_yalecalibration\chiron_procedures\JPLEPH.405'
-endif else if pwddir eq 'C:\Users\gulliver' then begin
-  ephemeris = 'C:\F disk\chiron_reduc_pipeline\chiron_procedures\JPLEPH.405'
+endif else if pwddir eq 'C:\Users\agull' then begin
+  ephemeris = 'D:\F disk\chiron_reduc_pipeline\chiron_procedures\JPLEPH.405'
 endif else if host eq 'DESKTOP-41NKOUC' then begin 
   ephemeris =  'C:\Users\aleja\Desktop\Desktop\Job\Gulliver\Reduction-Pipeline-Software\chiron_reduc_pipeline\chiron_procedures\JPLEPH.405'
 endif else   stop, ' Set up the environment variable  path ephemeris in JNUTATION into the code to continue.'
