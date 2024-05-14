@@ -37,21 +37,8 @@ endif
 N = reform([1,0,0,0,1,0,0,0,1],3,3) ;initiallize
 Ndot = dblarr(3,3) & eqeq = 0.d0 & eqDot = 0.d0	;init
 
-
-
-spawn, 'hostname', host
-spawn, 'cd', pwddir   ;Updated to a Windows command
-
-if  host eq 'Drius22' then begin
-  ephemeris = 'C:\Users\mrstu\idlworkspace_yalecalibration\chiron_procedures\JPLEPH.405'
-endif else if pwddir eq 'C:\Users\gulliver' then begin
-  ephemeris = 'C:\F disk\chiron_reduc_pipeline\chiron_procedures\JPLEPH.405'
-endif else if host eq 'DESKTOP-41NKOUC' then begin 
-  ephemeris =  'C:\Users\aleja\Desktop\Desktop\Job\Gulliver\Reduction-Pipeline-Software\chiron_reduc_pipeline\chiron_procedures\JPLEPH.405'
-endif else   stop, ' Set up the environment variable  path ephemeris in JNUTATION into the code to continue.'
-
-
-
+ephemeris = getenv('CHIRON_JPLEPH_PATH')
+if ephemeris eq '' then message, 'Before running the pipeline you need to set the environment variable CHIRON_JPLEPH_PATH to be equal to the full path for your jpleph.405 file.'
 
 if vartype(jld) ne 'DOUBLE' then begin
     message,'Julian Date Must be specified DOUBLE precision',/info

@@ -14,18 +14,8 @@ target = strupcase(targ) & center = strupcase(cent)
 if target  eq 'SSB' then target = 'SOLARBARY'
 if center  eq 'SSB' then center = 'SOLARBARY'
 
-
-spawn, 'hostname', host
-spawn, 'cd', pwddir   ;Updated to a Windows command
-
-if  host eq 'Drius22' then begin
-  ephemeris = 'C:\Users\mrstu\idlworkspace_yalecalibration\chiron_procedures\JPLEPH.405'
-endif else if pwddir eq 'C:\Users\gulliver' then begin
-  ephemeris = 'C:\F disk\chiron_reduc_pipeline\chiron_procedures\JPLEPH.405'
-endif else if host eq 'DESKTOP-41NKOUC' then begin
-  ephemeris = 'C:\Users\aleja\Desktop\Desktop\Job\Gulliver\Reduction-Pipeline-Software\chiron_reduc_pipeline\chiron_procedures\JPLEPH.405'
-endif else   stop, ' Set up the environment variable  path ephemeris in JNUTATION into the code to continue.'
-
+ephemeris = getenv('CHIRON_JPLEPH_PATH')
+if ephemeris eq '' then message, 'Before running the pipeline you need to set the environment variable CHIRON_JPLEPH_PATH to be equal to the full path for your jpleph.405 file.'
 
 if (file_test(ephemeris))(0) eq '' then stop,ephemeris+' not found. Wrong directory?'   ; Outdated; findfile(ephemeris)
 jdrange = [jdt-0.5d0,jdt+0.5d0]   ; Must feed ephem range over which to interp.
