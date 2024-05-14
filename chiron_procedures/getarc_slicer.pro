@@ -32,14 +32,11 @@ pro getarc_slicer,  im, orc, orderNum, redpar, arc, ybi, yti
   
   ; Make sure max and min are within allow indices
   if max_s gt nrows-1 then begin
+    print, "Changing max_s from " + strt(max_s) + " to " + strt(nrows-1)
     max_s=nrows-1
   endif
-  if min_s lt 0 then begin
-    min_s=0
-  endif
-    
-
-  for row=min(ybi),max(yti) do begin    ;loop through valid rows
+  
+  for row=min_s, max_s do begin    ;loop through valid rows
     srow=im[*,row]        ;get CCD row : vector  along the dispersion direction. Contains some pixels than actually are within the order ( the others are background)
 
     ;>>  masking the pixels that are background
