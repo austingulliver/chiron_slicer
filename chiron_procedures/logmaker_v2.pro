@@ -83,7 +83,7 @@ pro logmaker_v2, rawdir, $                        ; It is simply the name of the
     log_archive = logpath + 'archive\' ; archive path 
     if ~file_test(log_archive) then spawn, 'mkdir '+ string(34B) + log_archive + string(34B) ; If archive directory does not exist create one.
     arc_logfile = nextname(log_archive + rawdir +'.log' +  '_old', '')
-    command = 'copy ' + logname + ' ' + arc_logfile
+    command = 'copy ' + '"' + logname + '"' + ' ' + '"' + arc_logfile + '"'
     spawn, command ; copy existing log file to archive
     print, "File " + rawdir + '.log' + ' already exists. To preserve the information its content will be copied to ' + arc_logfile
   endif
