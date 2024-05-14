@@ -30,3 +30,4 @@ research/*
 *.tar
 *.gzip
 /chiron/tous/mir7/logsheets/*
+*.bat

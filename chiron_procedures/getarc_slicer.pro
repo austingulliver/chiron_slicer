@@ -10,26 +10,34 @@
 pro getarc_slicer,  im, orc, orderNum, redpar, arc, ybi, yti
 
   ; recall orc for slicer is order_ys[ # of orders , # of columns] E.g 74 x 4112
-  
-  
-  
   order_width =  redpar.xwids[redpar.mode ] - round(redpar.pixel_not_extracted )
   ; >>Define some constants
   im=double(im)
-  ncol=n_elements(im[*,0])        ;number of columns
-  ix=findgen(ncol)                ;vector of column indicies. E.g 4112
-  arc=ix*0.0                      ;dimension arc vector   (Vector 4112 filled with 0s)
+  ncol=n_elements(im[*,0])               ;number of columns
+  nrows=n_elements(im[0,*])              ;number of rows
+  ix=findgen(ncol)                       ;vector of column indicies. E.g 4112
+  arc=ix*0.0                             ;dimension arc vector   (Vector 4112 filled with 0s)
+  middle_points =  orc[orderNum, * ]     ;order middle points
 
-
-  yti = reform( orc[orderNum, * ] +  round((order_width/2.0) - 1 ) ) ; The y index values of the TOP edge of the order
+  yti = reform( middle_points + round((order_width/2.0) - 1 ) ) ; The y index values of the TOP edge of the order
   ; If full slicer then  round((order_width/2.0) - 1 ) = 5
 
-  ybi = reform( orc[orderNum, * ]   - round(order_width/2.0)  )  ; The y index values of the BOTTOM edge of the order
+  ybi = reform( middle_points - round(order_width/2.0)  )  ; The y index values of the BOTTOM edge of the order
   ; If full slicer then round(order_width/2.0) = 6
 
 
   ; The min and max value of min(ybi),max(yti) implicently define the swath to be considered
-
+  min_s = min(ybi)
+  max_s = max(yti)
+  
+  ; Make sure max and min are within allow indices
+  if max_s gt nrows-1 then begin
+    max_s=nrows-1
+  endif
+  if min_s lt 0 then begin
+    min_s=0
+  endif
+    
 
   for row=min(ybi),max(yti) do begin    ;loop through valid rows
     srow=im[*,row]        ;get CCD row : vector  along the dispersion direction. Contains some pixels than actually are within the order ( the others are background)
