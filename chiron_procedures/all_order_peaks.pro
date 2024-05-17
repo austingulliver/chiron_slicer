@@ -45,14 +45,14 @@ function all_order_peaks, flat, order_num, redpar, method_str= method_str
         
        
             
-        idx_peaks = find_peaks(middle, noise_level ,read_out_noise=redpar.ron, above_noise=above_noise_level) ; The value of 10.0 was experimentally found
+        idx_peaks = find_peaks(middle, noise_level ,read_out_noise=redpar.ron, above_noise=above_noise_level) 
         
       
         if debug eq 1 then print, 'Number of peaks detected : '+string(n_elements(idx_peaks))      
         peak_intensities = middle[idx_peaks]  
         
   
-        if debug gt 0 then begin
+       if debug gt 0 then begin
             p=plot(middle, title= 'Debug-Plot', xtitle='Cross-dispersion direction', ytitle='electrons count')     
             p=plot(noise_level, color='red', /overplot)
             upper_noise_level= noise_level+ ( redpar.ron * above_noise_level )
@@ -82,134 +82,138 @@ function all_order_peaks, flat, order_num, redpar, method_str= method_str
                 print, 'Order number :' +strt(order_counter)
               endif
   
-  
               ;if  ref eq 164 then stop, 'stopped continue '
-  
               ;if order_counter lt 18 then pixel_window= 6 else  pixel_window= 8  ; hack to get red orders  just right
               pixel_window= 6 
-  
               low_ref  = ref-pixel_window > 0
               upper_ref = ref+pixel_window <  (n_columns-1)
-  
-  
               indices_of_idx =where( (idx_peaks ge low_ref) and (idx_peaks le upper_ref) , n_group  )
               peaks_group = list() ; new group at every iteration
-  
   
               ; >> MORE THAN 3 peaks : need to get rid of some
               ; *******************************************
               if n_group gt 3 then begin
-  
-                ; Find the closest to one another
-                selected_idx = idx_peaks[indices_of_idx]
-  
-                diff_indices= INTARR(n_elements(selected_idx)-1) ; empt yarray
-  
-                for index = 0L, n_elements(selected_idx)-2 do begin
-                  diff_indices[index]  = selected_idx[index+1] - selected_idx[index]
-                endfor
-  
-                ; need to know which indices to include based on how close they are
-                sorted_diff_indices =  sort( diff_indices)   ; ascending. I am onlty interested in 2 diff (the very first 2 once sorted )
-  
-  
-                peaks_group.add, selected_idx[ sorted_diff_indices[0] ]
-                peaks_group.add, selected_idx[ sorted_diff_indices[0] +1 ]
-  
-                peaks_group.add, selected_idx[ sorted_diff_indices[1] ]
-                peaks_group.add, selected_idx[ sorted_diff_indices[1] +1 ]
-  
-  
-                ; need to get rid of the repeated one
-                for i= 0L, peaks_group.count()-2 do begin
-                  to_delete_idx= peaks_group.where( peaks_group[i], count=c)
-                  if c gt 1 then begin
-                    peaks_group.REMOVE, to_delete_idx[0]
-                    break
-                  endif
-                endfor
-  
-                if debug gt 0 then begin
-                  print, 'Peaks_group : '
-                  print, peaks_group
-                endif
-  
-  
-  
-  
+                    
+                    ; Try with X proximity to eliminate any non peak value
+                    selected_idx = idx_peaks[indices_of_idx]
+                    diff_indices= INTARR(n_elements(selected_idx)-1) ; empt yarray   
+                    for index = 0L, n_elements(selected_idx)-2 do begin
+                      diff_indices[index]  = selected_idx[index+1] - selected_idx[index]
+                    endfor      
+                    
+                    ; need to know which indices to include based on how close they are
+                    sorted_diff_indices =  sort( diff_indices)   ; ascending. I am only interested in 2 diff (the very first 2 once sorted )    
+                    peaks_group.add, selected_idx[ sorted_diff_indices[0] ]
+                    peaks_group.add, selected_idx[ sorted_diff_indices[0] +1 ]
+                    peaks_group.add, selected_idx[ sorted_diff_indices[1] ]
+                    peaks_group.add, selected_idx[ sorted_diff_indices[1] +1 ]
+                    
+                    ; need to get rid of the repeated one
+                    for i= 0L, peaks_group.count()-2 do begin
+                      to_delete_idx= peaks_group.where( peaks_group[i], count=c)
+                      if c gt 1 then begin
+                        peaks_group.REMOVE, to_delete_idx[0]
+                        break
+                      endif
+                    endfor
+                    
+                    ;Try with Y proximity if X did not work.
+                    if n_elements(peaks_group) gt 3 then begin 
+                      curr_peaks_gp =  peaks_group.toarray()
+                      y_vals_curr_peaks_gp = middle[curr_peaks_gp]
+                      idx_y_vals_curr_peaks_gp = sort( y_vals_curr_peaks_gp)
+                      p_sel = [0,0,0]
+                      curr_stdev = 9999e9
+                      p_win = 0
+                      while p_win+2 ne n_elements(peaks_group) do begin
+                        temp_sel = y_vals_curr_peaks_gp[idx_y_vals_curr_peaks_gp[p_win:p_win+2] ] 
+                        inner_stdev = stddev(temp_sel)
+                        if inner_stdev lt curr_stdev then begin
+                          p_sel = idx_y_vals_curr_peaks_gp[p_win:p_win+2]
+                        endif
+                        p_win+=1
+                      endwhile
+                      curr_peaks_gp = curr_peaks_gp[p_sel]
+                      peaks_group = curr_peaks_gp.tolist()
+                    endif 
+                    
+                    if debug gt 0 then begin
+                      print, 'Peaks_group : '
+                      print, peaks_group
+                    endif
+    
                 ; >> LESS THAN 3 peaks : need to get rid of some
                 ; *******************************************
               endif else if n_group lt 3 then begin
-                ;  We make the assumption that the peak closest to indices_of_idx is the middle peak
-                ; then we add a peak based on where the second peak is . E.g. If second peak is greater than middle then add the lower peak
-                
-                if n_group eq 0 then stop, '>> Error << : No peaks were found for the present order. Please use a previous order tracing file. '
-                  
-                if n_group eq 1 then begin 
-                      ; >> EXACT 1 peak : add 2 peaks
-                      ; *******************************************
-                      selected_idx = idx_peaks[indices_of_idx]
-                      peaks_group.add, selected_idx[0]
-                      peaks_group.add, selected_idx[0]  + 3 ; since is slicer we make the followign assumption : the three peaks are within 6 pixels
-                      peaks_group.add, selected_idx[0]  - 3
-                      
-                endif else begin
-                      ; >> EXACT 2 peaks : add 1 peak
-                      ; *******************************************
-                      selected_idx = idx_peaks[indices_of_idx]
-                      ; Here, I can assume there are only 2 peaks
-                      if abs(selected_idx[0] -ref ) lt abs(selected_idx[1] -ref ) then middle_pk = 0 else   middle_pk = 1
-
-                      ; Depengin on what middle peak is we add by left or right
-                      if  middle_pk eq 0 then begin  ; >  middle  peak is:  selected_idx[0]
-
-                        if selected_idx[1] gt selected_idx[0] then  begin ; this means that the second peak is by the right. so we need to add a peak by the LEFT
-                          peaks_group.add, selected_idx[0]
-                          peaks_group.add, selected_idx [1]
-                          peaks_group.add, selected_idx[0] -abs( selected_idx[1] - selected_idx[0] )
-                        endif else begin ; this mean that the 2nd peak is by the left so we need to add a peak by the RIGHT
-                          peaks_group.add, selected_idx[0]
-                          peaks_group.add, selected_idx [1]
-                          peaks_group.add, selected_idx[0]  + abs( selected_idx[1] - selected_idx[0] )
-                        endelse
-
-                      endif else begin    ; >  middle  peak is:  selected_idx[1]
-
-                        if selected_idx[0] gt selected_idx[1] then  begin ; this means that the second peak is by the right. so we need to add a peak by the LEFT
-                          peaks_group.add, selected_idx[0]
-                          peaks_group.add, selected_idx [1]
-                          peaks_group.add, selected_idx[1] -abs( selected_idx[1] - selected_idx[0] )
-                        endif else begin ; this mean that the 2nd peak is by the left so we need to add a peak by the RIGHT
-                          peaks_group.add, selected_idx[0]
-                          peaks_group.add, selected_idx [1]
-                          peaks_group.add, selected_idx[1]  + abs( selected_idx[1] - selected_idx[0] )
-                        endelse
-
-                      endelse
-
-                      if debug  gt 0 then begin
-                        print, 'Peaks_group : '
-                        print, peaks_group
-                      endif
+                    ;  We make the assumption that the peak closest to indices_of_idx is the middle peak
+                    ; then we add a peak based on where the second peak is . E.g. If second peak is greater than middle then add the lower peak
                     
-                endelse
+                    if n_group eq 0 then stop, '>> Error << : No peaks were found for the present order. Please use a previous order tracing file. '
+                      
+                    if n_group eq 1 then begin 
+                          ; >> EXACT 1 peak : add 2 peaks
+                          ; *******************************************
+                          selected_idx = idx_peaks[indices_of_idx]
+                          peaks_group.add, selected_idx[0]
+                          peaks_group.add, selected_idx[0]  + 3 ; since is slicer we make the followign assumption : the three peaks are within 6 pixels
+                          peaks_group.add, selected_idx[0]  - 3
+                          
+                    endif else begin
+                          ; >> EXACT 2 peaks : add 1 peak
+                          ; *******************************************
+                          selected_idx = idx_peaks[indices_of_idx]
+                          ; Here, I can assume there are only 2 peaks
+                          if abs(selected_idx[0] -ref ) lt abs(selected_idx[1] -ref ) then middle_pk = 0 else   middle_pk = 1
+    
+                          ; Depengin on what middle peak is we add by left or right
+                          if  middle_pk eq 0 then begin  ; >  middle  peak is:  selected_idx[0]
+    
+                            if selected_idx[1] gt selected_idx[0] then  begin ; this means that the second peak is by the right. so we need to add a peak by the LEFT
+                              peaks_group.add, selected_idx[0]
+                              peaks_group.add, selected_idx [1]
+                              peaks_group.add, selected_idx[0] -abs( selected_idx[1] - selected_idx[0] )
+                            endif else begin ; this mean that the 2nd peak is by the left so we need to add a peak by the RIGHT
+                              peaks_group.add, selected_idx[0]
+                              peaks_group.add, selected_idx [1]
+                              peaks_group.add, selected_idx[0]  + abs( selected_idx[1] - selected_idx[0] )
+                            endelse
+    
+                          endif else begin    ; >  middle  peak is:  selected_idx[1]
+    
+                            if selected_idx[0] gt selected_idx[1] then  begin ; this means that the second peak is by the right. so we need to add a peak by the LEFT
+                              peaks_group.add, selected_idx[0]
+                              peaks_group.add, selected_idx [1]
+                              peaks_group.add, selected_idx[1] -abs( selected_idx[1] - selected_idx[0] )
+                            endif else begin ; this mean that the 2nd peak is by the left so we need to add a peak by the RIGHT
+                              peaks_group.add, selected_idx[0]
+                              peaks_group.add, selected_idx [1]
+                              peaks_group.add, selected_idx[1]  + abs( selected_idx[1] - selected_idx[0] )
+                            endelse
+    
+                          endelse
+    
+                          if debug  gt 0 then begin
+                            print, 'Peaks_group : '
+                            print, peaks_group
+                          endif
+                    endelse
                
                 ; >> EXACT 3 peaks : need to get rid of some
                 ; *******************************************
-  
               endif else begin
-                peaks_group.add, idx_peaks[ indices_of_idx[0] ]
-                peaks_group.add, idx_peaks[ indices_of_idx[1] ]
-                peaks_group.add, idx_peaks[ indices_of_idx[2] ]
-  
-                if debug  gt 0 then begin
-                  print, 'Peaks_group : '
-                  print, peaks_group
-                endif
+                    peaks_group.add, idx_peaks[ indices_of_idx[0] ]
+                    peaks_group.add, idx_peaks[ indices_of_idx[1] ]
+                    peaks_group.add, idx_peaks[ indices_of_idx[2] ]
+      
+                    if debug  gt 0 then begin
+                      print, 'Peaks_group : '
+                      print, peaks_group
+                    endif
               endelse
   
               every_3_ref = (order_counter*3)+1
-              fixed_peak_indices[every_3_ref-1:every_3_ref+1] = peaks_group.toarray()
+              peaks_group_array = peaks_group.toarray()
+              fixed_peak_indices[every_3_ref-1:every_3_ref+1] = peaks_group_array
               order_counter = order_counter+1
             
         endforeach ; iterating over the middle ref peak of a n order 
