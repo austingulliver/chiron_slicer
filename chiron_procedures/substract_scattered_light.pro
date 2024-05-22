@@ -17,7 +17,7 @@ function substract_scattered_light, im, orc, outfname, redpar=redpar
     scatter_min = list()
     scatter_low = list() 
     scatter_high= list()
-    ;p=plot(spec_vals ,color="black")
+    p=plot(spec_vals ,color="black")
     for n_order=0, n_orc_o-1 do begin
         lower_val_l=-1
         higher_val_l=-1
@@ -35,8 +35,68 @@ function substract_scattered_light, im, orc, outfname, redpar=redpar
         higher_val=max([higher_val_l, lower_val_l])
         interval_loc = indgen(higher_val - lower_val + 1, start = lower_val)
         interval_loc_min = min(spec_vals[interval_loc], ind)
+        
+        idx_min = interval_loc[ind]
+        search_min = indgen(12, start = idx_min-6)
+        interval_loc_min_n= min(spec_vals[search_min], ind_n)
+        
+        if n_order lt 30 then begin 
+          max_size=1
+        endif else if (n_order ge 30 and n_order le 50 ) then begin
+          max_size=6
+        endif else begin
+          max_size=10
+        endelse
+        n_sep_points=3
+        curr_idx_s= search_min[ind_n]
+        scatter_l_interval=list(curr_idx_s)
+        
+        
+        ;Search left
+        while(n_sep_points gt 0 and max_size gt 0) do begin
+          avg_local = avg(spec_vals[scatter_l_interval.toarray()])
+          upper_b =avg_local + (avg_local*0.5)
+          lower_b = avg_local - (avg_local*0.5)
+          
+          
+          
+          curr_idx_s-=1
+          if spec_vals[curr_idx_s] lt upper_b and spec_vals[curr_idx_s] gt lower_b then begin
+            scatter_l_interval.add, curr_idx_s ,0
+            max_size-=1
+          endif else begin
+            n_sep_points-=1
+          endelse 
+          print, "Index value: " + strt(curr_idx_s) 
+          print, "Value: " + strt(spec_vals[curr_idx_s]) 
+        endwhile
+        curr_idx_s= search_min[ind_n]
+        n_sep_points=3
+        ;Search right
+        while(n_sep_points gt 0 and max_size gt 0) do begin
+          avg_local = avg(spec_vals[scatter_l_interval.toarray()])
+          upper_b =avg_local + (avg_local*0.5)
+          lower_b = avg_local - (avg_local*0.5)
+          curr_idx_s+=1
+          if spec_vals[curr_idx_s] lt upper_b and spec_vals[curr_idx_s] gt lower_b then begin
+            scatter_l_interval.add, curr_idx_s ,0
+            max_size-=1
+          endif else begin
+            n_sep_points-=1
+          endelse
+        endwhile
+        scatter_l_interval= scatter_l_interval.toarray()
+        
+        p=plot(scatter_l_interval, spec_vals[scatter_l_interval], '+g' , /overplot)
+        
+        
+        
+        
+        
+        
         ;p=plot([cal_vals[n_order]],[spec_vals[cal_vals[n_order]]],'+b',  /overplot)
-        ;p=plot(interval_loc, spec_vals[interval_loc], color="yellow", /overplot)
+        ;p=plot(search_min, spec_vals[search_min], color="yellow", /overplot)
+        ;p=plot([search_min[ind_n]], [interval_loc_min_n],  '+g',  /overplot)
         scatter_min.add,  interval_loc[ind]
         scatter_low.add, lower_val
         scatter_high.add, higher_val
@@ -46,9 +106,9 @@ function substract_scattered_light, im, orc, outfname, redpar=redpar
     scatter_high = scatter_high.toarray() 
     scatter_light.add, scatter_min
     scatter_light_vals.add, spec_vals[scatter_min]
-     ;p=plot(scatter_low, spec_vals[scatter_low],  '+b',  /overplot)
-     ;p=plot(scatter_high, spec_vals[scatter_high],  '+g',  /overplot)
-     ;p=plot(scatter_min, spec_vals[scatter_min],  '+r',  /overplot)
+    ;p=plot(scatter_low, spec_vals[scatter_low],  '+b',  /overplot)
+    ;p=plot(scatter_high, spec_vals[scatter_high],  '+g',  /overplot)
+    ;p=plot(scatter_min, spec_vals[scatter_min],  '+r',  /overplot)
      ;rint,"ram"
   endfor
   scatter_light = scatter_light.toarray()
