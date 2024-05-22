@@ -79,6 +79,7 @@ endif ;run not specified
 
 if strpos(run,'.') lt 0 then run=run+'.' ; add the point
 redpar.prefix = run                      ; E.g chiYYMMDD.
+redpar.prefix_out = run.Replace(".","_")
 
 
 
@@ -755,7 +756,7 @@ if keyword_set(iod2fits) then begin
             			  
             			  ; Match intensity with wavelength for all valid files of current date
             			  ;*******************************************************                 			  
-            			  file_path = iodspec_path+pretag+run+obnm[x1[i]]
+            			  file_path = iodspec_path+pretag+redpar.prefix_out+obnm[x1[i]]
             				rdsk,sp,file_path,1   ; Reading previously saved spectra (intensities only)
             				rdsk,hd,file_path,2   ; Reading header of file above
             				sz=size(sp)  &   ncol=sz[1]    &    nord=sz[2]
@@ -769,7 +770,7 @@ if keyword_set(iod2fits) then begin
                     
             				spec[0,*,*]=w          				     ; Wavelengths for all oders
             				spec[1,*,*]=sp                     ; Intensities for all orders (Spectrum )
-            				outfile=pretag+run+ strtrim(string(obnm[i]),1)+ '.fits' ; Final fits file name.  
+            				outfile=pretag+redpar.prefix_out+ strtrim(string(obnm[i]),1)+ '.fits' ; Final fits file name.  
             				
             				
             				
