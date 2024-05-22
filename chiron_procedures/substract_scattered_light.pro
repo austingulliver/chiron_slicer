@@ -121,7 +121,7 @@ function substract_scattered_light, im, orc, outfname, redpar=redpar
   base_name = file_basename(outfname)
   dir_name = file_dirname(outfname)
   sca_light_dir_nm = '"' + dir_name + "\scattered_light" + '"'
-  sca_light_file_nm = '"' + dir_name + "\scattered_light" + "\" + base_name + ".fits" + '"'
+  sca_light_file_nm = dir_name + "\scattered_light" + "\" + base_name + ".fits"
   spawn, 'mkdir '+sca_light_dir_nm
   MKHDR, scattered_light_hd, scatter_light_vals
   history_str1 = 'Scattered light values'

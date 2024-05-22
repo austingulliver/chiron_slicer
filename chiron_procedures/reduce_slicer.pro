@@ -128,6 +128,7 @@ PRO reduce_slicer,                            $
             ; When not doing reduction ONLY postprocessing
             redpar.imdir = strt(night)+'\' ; setting some extra variables that will get used.
             redpar.prefix ='chi'+strt(night) +'.'
+            redpar.prefix_out = 'chi'+strt(night) +'_'
       
             redpar.logdir =  redpar.logdir  + '20'+strmid(strt(night), 0, 2)+'\'
           endif
@@ -210,7 +211,7 @@ PRO reduce_slicer,                            $
             ;Search for master and place in stellar_bary_correc
             ;---------------------------
             ; Search for master file just created
-            str_file_type=  redpar.rootdir+ redpar.fitsdir+ redpar.imdir +redpar.prefix_tag+'m'+redpar.prefix+'*.fits'
+            str_file_type=  redpar.rootdir+ redpar.fitsdir+ redpar.imdir +redpar.prefix_tag+'m'+redpar.prefix_out+'*.fits'
             print,'Master file search ',str_file_type
             post_process_files = file_search(str_file_type, count = count_master) ; look for the data files. Name of the file itself
       
@@ -250,7 +251,7 @@ PRO reduce_slicer,                            $
             stellar_bary_correc=list()
       
             for index = 0L, n_elements(obnm)-1 do begin
-              stellar_bary_correc.Add, {file_name:redpar.prefix+strt(obnm[index])+'.fits' , correction:baryCorrec[index], star_name:objnm[index] } ; Meant to be output
+              stellar_bary_correc.Add, {file_name:redpar.prefix_out+strt(obnm[index])+'.fits' , correction:baryCorrec[index], star_name:objnm[index] } ; Meant to be output
             endfor
             
             ;--------------------------
