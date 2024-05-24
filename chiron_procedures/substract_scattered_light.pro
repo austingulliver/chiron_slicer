@@ -42,10 +42,10 @@ function substract_scattered_light, im, orc, outfname, redpar=redpar
         
         if n_order lt 30 then begin 
           max_size=1
-        endif else if (n_order ge 30 and n_order le 50 ) then begin
-          max_size=6
+        endif else if (n_order ge 30 and n_order le 60 ) then begin
+          max_size=4
         endif else begin
-          max_size=10
+          max_size=11
         endelse
         n_sep_points=3
         curr_idx_s= search_min[ind_n]
