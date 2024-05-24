@@ -221,7 +221,8 @@ PRO reduce_slicer,                            $
             print,'count_master is ',count_master
             for index = 0L, count_master-1 do begin ; For the number of master files present.
               file_name =post_process_files[index]
-              file_name =file_name.extract("[0-9]{4}_[0-9]+")
+              file_name =file_name.extract("[0-9]{4}_[0-9]+.fits$")
+              file_name =file_basename(file_name,'.fits')
               split = strsplit(file_name, '_', /extract)
               obnm_matches = indgen( LONG(split[1]) )+LONG(split[0])
       
