@@ -160,7 +160,7 @@ PRO reduce_slicer,                            $
                 for index = 0L, n_elements(obnm)-1 do begin
                   refined_key = objnm[index]
                   refined_key = clean_key_dictionary(refined_key)
-                  file_name= redpar.rootdir+ redpar.fitsdir+ redpar.imdir +redpar.prefix_tag +strtrim(redpar.prefix+strt(obnm[index])+'.fits')
+                  file_name= redpar.rootdir+ redpar.fitsdir+ redpar.imdir +redpar.prefix_tag +strtrim(redpar.prefix_out+strt(obnm[index])+'.fits')
                   if stellar_exp_by_star.HasKey( refined_key ) then begin
                     stellar_exp_by_star[ refined_key ].add,  file_name ; Add the obersevation number
                   endif else begin
@@ -177,7 +177,7 @@ PRO reduce_slicer,                            $
                   endfor
 
                   ;3. Creating file name
-                  master_name= redpar.prefix_tag+'m'+redpar.prefix +strt(stellar_indices[0])+'_'+strt(n_elements(stellar_indices))+'.fits'
+                  master_name= redpar.prefix_tag+'m'+redpar.prefix_out +strt(stellar_indices[0])+'_'+strt(n_elements(stellar_indices))+'.fits'
                   indir=redpar.rootdir+redpar.fitsdir+redpar.imdir+master_name
                   if (n_elements(stellar_indices) eq 1) then begin
                       spectrum = readfits(all_file_names[0], hd)
