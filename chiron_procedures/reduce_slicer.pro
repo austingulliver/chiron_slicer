@@ -128,6 +128,7 @@ PRO reduce_slicer,                            $
             ; When not doing reduction ONLY postprocessing
             redpar.imdir = strt(night)+'\' ; setting some extra variables that will get used.
             redpar.prefix ='chi'+strt(night) +'.'
+            redpar.prefix_out = 'chi'+strt(night) +'_'
       
             redpar.logdir =  redpar.logdir  + '20'+strmid(strt(night), 0, 2)+'\'
           endif
@@ -159,7 +160,7 @@ PRO reduce_slicer,                            $
                 for index = 0L, n_elements(obnm)-1 do begin
                   refined_key = objnm[index]
                   refined_key = clean_key_dictionary(refined_key)
-                  file_name= redpar.rootdir+ redpar.fitsdir+ redpar.imdir +redpar.prefix_tag +strtrim(redpar.prefix+strt(obnm[index])+'.fits')
+                  file_name= redpar.rootdir+ redpar.fitsdir+ redpar.imdir +redpar.prefix_tag +strtrim(redpar.prefix_out+strt(obnm[index])+'.fits')
                   if stellar_exp_by_star.HasKey( refined_key ) then begin
                     stellar_exp_by_star[ refined_key ].add,  file_name ; Add the obersevation number
                   endif else begin
@@ -176,7 +177,7 @@ PRO reduce_slicer,                            $
                   endfor
 
                   ;3. Creating file name
-                  master_name= redpar.prefix_tag+'m'+redpar.prefix +strt(stellar_indices[0])+'_'+strt(n_elements(stellar_indices))+'.fits'
+                  master_name= redpar.prefix_tag+'m'+redpar.prefix_out +strt(stellar_indices[0])+'_'+strt(n_elements(stellar_indices))+'.fits'
                   indir=redpar.rootdir+redpar.fitsdir+redpar.imdir+master_name
                   if (n_elements(stellar_indices) eq 1) then begin
                       spectrum = readfits(all_file_names[0], hd)
@@ -210,7 +211,7 @@ PRO reduce_slicer,                            $
             ;Search for master and place in stellar_bary_correc
             ;---------------------------
             ; Search for master file just created
-            str_file_type=  redpar.rootdir+ redpar.fitsdir+ redpar.imdir +redpar.prefix_tag+'m'+redpar.prefix+'*.fits'
+            str_file_type=  redpar.rootdir+ redpar.fitsdir+ redpar.imdir +redpar.prefix_tag+'m'+redpar.prefix_out+'*.fits'
             print,'Master file search ',str_file_type
             post_process_files = file_search(str_file_type, count = count_master) ; look for the data files. Name of the file itself
       
@@ -220,7 +221,8 @@ PRO reduce_slicer,                            $
             print,'count_master is ',count_master
             for index = 0L, count_master-1 do begin ; For the number of master files present.
               file_name =post_process_files[index]
-              file_name =file_name.extract("[0-9]{4}_[0-9]+")
+              file_name =file_name.extract("[0-9]{4}_[0-9]+.fits$")
+              file_name =file_basename(file_name,'.fits')
               split = strsplit(file_name, '_', /extract)
               obnm_matches = indgen( LONG(split[1]) )+LONG(split[0])
       
@@ -250,7 +252,7 @@ PRO reduce_slicer,                            $
             stellar_bary_correc=list()
       
             for index = 0L, n_elements(obnm)-1 do begin
-              stellar_bary_correc.Add, {file_name:redpar.prefix+strt(obnm[index])+'.fits' , correction:baryCorrec[index], star_name:objnm[index] } ; Meant to be output
+              stellar_bary_correc.Add, {file_name:redpar.prefix_out+strt(obnm[index])+'.fits' , correction:baryCorrec[index], star_name:objnm[index] } ; Meant to be output
             endfor
             
             ;--------------------------

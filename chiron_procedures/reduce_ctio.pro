@@ -19,9 +19,11 @@ pro reduce_ctio,  redpar, mode, flatset=flatset, thar=thar, $
   ;>> Define the number of pixels used in the cross dispersion direction for a given order.
   xwid = redpar.xwids[redpar.mode] -  redpar.pixel_not_extracted ; Set up this parameter in ctio.par
 
-  ;2. Prefix added to FITS headers:
-  prefix=redpar.prefix   ; e.g. 'chi111003'
-  if strpos(prefix,'.') lt 0 then prefix=prefix+'.' ; add the point
+  ;2. Prefix added to FITS headers(prefix for input files is . and perfix for ouput files _):
+  prefix=redpar.prefix   ; 
+  prefix_out=redpar.prefix.Replace(".", "_")
+  if strpos(prefix,'.') lt 0 then prefix=prefix+'.' 
+  if strpos(prefix_out,'_') lt 0 then prefix=prefix+'_'
 
   ; First check if all relevant input parameters are specified
 
@@ -37,7 +39,7 @@ pro reduce_ctio,  redpar, mode, flatset=flatset, thar=thar, $
   indir=redpar.rootdir+redpar.rawdir+redpar.imdir ;e.g. /mir7/raw/090102/
 
   ;6. OUTPUT Directory Path and Output Prefix (ie, tapename for run)
-  outdir= redpar.rootdir + redpar.iodspecdir + date + '/'
+  outdir= redpar.rootdir + redpar.iodspecdir + date + '\'
   if ~file_test(outdir) then spawn, 'mkdir '+outdir
 
 
@@ -66,8 +68,9 @@ pro reduce_ctio,  redpar, mode, flatset=flatset, thar=thar, $
   recnums = strt(star, f='(I4.4)')  ; convert to string with leading zeros
   spnums = prefix + recnums
   spfnames = indir + prefix + recnums +'.fits' ; string array of spectrum(STARS) file names
-  outprefix = redpar.prefix_tag +  prefix
-  outfnames= outdir + outprefix  + recnums
+  outprefix_thor = redpar.prefix_tag +  prefix
+  outprefix_files = redpar.prefix_tag +  prefix_out
+  outfnames= outdir + outprefix_files  + recnums
 
 
 
@@ -85,7 +88,7 @@ pro reduce_ctio,  redpar, mode, flatset=flatset, thar=thar, $
     thnrec = n_elements(threc)
     threcnums = strtrim(string(threc,format='(I4.4)'),2) ;convert to strings
     thspfnames = indir + prefix + threcnums + '.fits'  ;string array of (ThAR) file names
-    thoutfnames = outdir + outprefix  + threcnums
+    thoutfnames = outdir + outprefix_thor  + threcnums
   endif else threcnums = 'none'
 
   print,''
@@ -403,7 +406,7 @@ pro reduce_ctio,  redpar, mode, flatset=flatset, thar=thar, $
       ;  XXX corresponds to the observation number of the first exposure used to create  the master
       ; stellar and LLL is the number of exposures used to create the master stellar.
 
-      mstr_stellar_names.Add, 'm'+prefix +recnums[0]+'_'+strtrim(string(n_elements(recnums)),2)
+      mstr_stellar_names.Add, 'm'+prefix_out +recnums[0]+'_'+strtrim(string(n_elements(recnums)),2)
       fname_master_stellar = indir + mstr_stellar_names[name_idx]+'.fits'    ; Saved in corresponding raw directory
       out_mast_stellar= outdir + redpar.prefix_tag+mstr_stellar_names[name_idx]
 
