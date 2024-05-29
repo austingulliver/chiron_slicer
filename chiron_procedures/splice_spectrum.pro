@@ -27,6 +27,23 @@ if keyword_set(maskArtifact) then begin
    n_order_to_mask= n_orders-60 ; 63 is the number of red orders (orders that don't have the artifact)
    
    for order_idx = 0L, n_order_to_mask-1 do begin
+      copy_data_cube = data_cube
+       
+       ;sub_dataset_y = data_cube[1,artifact_indices[0]:artifact_indices[1], order_idx]
+       ;sub_dataset_y= reform(sub_dataset_y)
+       ;sub_dataset_x = data_cube[0,artifact_indices[0]:artifact_indices[1], order_idx]
+       ;sub_dataset_x= reform(sub_dataset_x)
+       ;to_interpolate= artifact_indices[0] + indgen( artifact_indices[1]- (artifact_indices[0] -1) )
+       
+       ;ncoeff_3 = POLY_FIT( to_interpolate, sub_dataset_y, 1, /double,  status=status)
+       ;fit_y_3= poly(to_interpolate,ncoeff_3)
+       ;wp=plot(to_interpolate, fit_y_3, color="blue")
+       ;wp=plot(to_interpolate, sub_dataset_y, color="green", /overplot)
+       
+       
+       
+       
+       
         
         ; Mask with NaN before interpolate 
         data_cube[1,artifact_indices[0]:artifact_indices[1], order_idx] =!VALUES.F_NAN
@@ -38,9 +55,11 @@ if keyword_set(maskArtifact) then begin
         x=indgen(n_elements(data_cube[1,*, order_idx]))
         result =interpol( order,x, to_interpolate, /NaN )
         
+        wp=plot(copy_data_cube[0,artifact_indices[0]:artifact_indices[1], order_idx], copy_data_cube[1,artifact_indices[0]:artifact_indices[1], order_idx], color="blue")
+        wp=plot(copy_data_cube[0,artifact_indices[0]:artifact_indices[1], order_idx], result, color="green", /overplot)
+        
         ; Assign interpolated values 
         data_cube[1,artifact_indices[0]:artifact_indices[1], order_idx] =result 
-    
 
    endfor
    
