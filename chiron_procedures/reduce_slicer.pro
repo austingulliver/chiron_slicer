@@ -314,9 +314,18 @@ PRO reduce_slicer,                            $
               print, ''
               print, ' Removing artifact for night '+strt(night)+'......'
               print, ''
+              position_artifact= list()
       
-              new_cube= splice_spectrum( new_cube, /maskArtifact)
-      
+              new_cube= splice_spectrum( new_cube, position_artifact=position_artifact, redpar=redpar, /maskArtifact)
+              
+              print, '......Done removing artifact......'
+              foreach order_artifact, position_artifact do begin          
+                str_pos_artifact = "[" + strt(order_artifact[1]) + " , " + strt(order_artifact[2]) + "]" 
+                artifact_n= 'ARTIFACT_ORDER_'+strt(order_artifact[0])
+                sxaddpar, hd, 'HISTORY', str_pos_artifact
+                print, str_pos_artifact
+              endforeach
+              print, '..................................'
             endif
      
             ;#########################
@@ -399,7 +408,7 @@ PRO reduce_slicer,                            $
               ;recall radial velocity is in [m/s] . cms is brought from different procedure. CMS is the speed of light in [m/s]
               ;Make remark in header
               history_str = ' Wavelength (bary)corrected by a factor of : '+ strt(structure.correction) + ' [m/s]'
-              sxaddpar, hd, 'HISTORY', history_str
+              sxaddpar, hd, 'BCV', history_str
       
       
             endif else   print, "REDUCE_SLICER :  The Spectra has NOT been shifted to compensate for the barycentric correction "
