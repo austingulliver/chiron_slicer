@@ -10,13 +10,13 @@
 ;  pixel_to_cut : Number of pixels to cut if splice_type=pixel_cut
 ;-
 
-function splice_spectrum, data_cube, splice_type=splice_type, redpar=redpar, pixel_to_cut = pixel_to_cut, maskArtifact=maskArtifact
+function splice_spectrum, data_cube, position_artifact=position_artifact, splice_type=splice_type, redpar=redpar, pixel_to_cut = pixel_to_cut, maskArtifact=maskArtifact
   compile_opt idl2
 
 size_cube= size(data_cube)
 n_orders= size_cube[3]
 n_wavelengths= size_cube[2]
-
+threshold = 1000
 
 artifact_indices =[646,764];[ 680,730]
 
@@ -24,43 +24,104 @@ if keyword_set(maskArtifact) then begin
    ; Identify the order where the mask is needed
    ; All blue orders(indexed orders after 63). Orders at this point are reversed so
    ; we need to count backwards.
-   n_order_to_mask= n_orders-60 ; 63 is the number of red orders (orders that don't have the artifact)
+   n_order_to_mask= n_orders-59 ; 63 is the number of red orders (orders that don't have the artifact)
    
    for order_idx = 0L, n_order_to_mask-1 do begin
-      copy_data_cube = data_cube
-       
-       ;sub_dataset_y = data_cube[1,artifact_indices[0]:artifact_indices[1], order_idx]
-       ;sub_dataset_y= reform(sub_dataset_y)
-       ;sub_dataset_x = data_cube[0,artifact_indices[0]:artifact_indices[1], order_idx]
-       ;sub_dataset_x= reform(sub_dataset_x)
-       ;to_interpolate= artifact_indices[0] + indgen( artifact_indices[1]- (artifact_indices[0] -1) )
-       
-       ;ncoeff_3 = POLY_FIT( to_interpolate, sub_dataset_y, 1, /double,  status=status)
-       ;fit_y_3= poly(to_interpolate,ncoeff_3)
-       ;wp=plot(to_interpolate, fit_y_3, color="blue")
-       ;wp=plot(to_interpolate, sub_dataset_y, color="green", /overplot)
-       
-       
-       
-       
-       
-        
+        copy_data_cube = data_cube
+        sub_section = data_cube[1,artifact_indices[0]:artifact_indices[1], order_idx]
+        sub_section=reform(sub_section)
         ; Mask with NaN before interpolate 
-        data_cube[1,artifact_indices[0]:artifact_indices[1], order_idx] =!VALUES.F_NAN
+        copy_data_cube[1,artifact_indices[0]:artifact_indices[1], order_idx] =!VALUES.F_NAN
         
-        order=reform(data_cube[1,*, order_idx])
+        order=reform(copy_data_cube[1,*, order_idx])
         
         ; Interpolate
         to_interpolate= artifact_indices[0] + indgen( artifact_indices[1]- (artifact_indices[0] -1) )
-        x=indgen(n_elements(data_cube[1,*, order_idx]))
+        x=indgen(n_elements(copy_data_cube[1,*, order_idx]))
         result =interpol( order,x, to_interpolate, /NaN )
+        ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; Assign interpolated values
+        ;copy_data_cube[1,artifact_indices[0]:artifact_indices[1], order_idx] =result
+        ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+        sub_res = abs(result - sub_section)
+        ;p=plot(data_cube[1,*, order_idx], color ="black")
         
-        wp=plot(copy_data_cube[0,artifact_indices[0]:artifact_indices[1], order_idx], copy_data_cube[1,artifact_indices[0]:artifact_indices[1], order_idx], color="blue")
-        wp=plot(copy_data_cube[0,artifact_indices[0]:artifact_indices[1], order_idx], result, color="green", /overplot)
-        
-        ; Assign interpolated values 
-        data_cube[1,artifact_indices[0]:artifact_indices[1], order_idx] =result 
-
+        if order_idx eq 0 then begin
+          max_local = max(sub_res, idx_max)
+        endif else begin 
+          search_range_idx = idx_max-6 + indgen(12)
+          search_range = sub_res[search_range_idx]
+          max_local = max(search_range, idx_max)
+          idx_max = search_range_idx[idx_max]
+        endelse 
+        if max_local gt threshold then begin
+              idx_sr=7
+              search = 1
+              prev_stddev = 0.0
+              left_array = []
+              ;Search Left
+              while search do begin
+                curr_idx = idx_max-idx_sr
+                ser_array= sub_section[curr_idx:idx_max]
+                curr_stddev = stddev(ser_array)
+                substraction =abs(prev_stddev - curr_stddev)
+                temp =[prev_stddev,curr_stddev]
+                maximum = max(temp)
+                inner_thr = substraction/maximum
+                poss_array = curr_idx + indgen( idx_max- (curr_idx -1) )
+                ;print, "***********************"
+                ;print, inner_thr
+                ;print,  poss_array
+                ;print, "***********************" 
+                if inner_thr ge 0.6 then begin
+                  prev_stddev = curr_stddev
+                endif else begin
+                  left_array = poss_array
+                  search=0
+                endelse
+                 idx_sr+=7
+              endwhile
+              idx_sr=7
+              search = 1
+              prev_stddev = 0.0
+              right_array=[]
+              ;Search Right
+              while search do begin
+                curr_idx = idx_max+idx_sr
+                ser_array= sub_section[idx_max:curr_idx]
+                curr_stddev = stddev(ser_array)
+                substraction =abs(prev_stddev - curr_stddev)
+                temp =[prev_stddev,curr_stddev]
+                maximum = max(temp)
+                inner_thr = substraction/maximum
+                poss_array = idx_max+1 + indgen( curr_idx- (idx_max -1) )
+                ;print, "***********************"
+                ;print, inner_thr
+                ;print,  poss_array
+                ;print, "***********************"
+                if inner_thr ge 0.6 then begin
+                  prev_stddev = curr_stddev
+                endif else begin
+                  right_array = poss_array
+                  search=0
+                endelse
+                idx_sr+=7
+              endwhile
+              res_arr_raw = [left_array, right_array]
+              res_arr = artifact_indices[0]+res_arr_raw
+              position_artifact.add, [order_idx, min(res_arr), max(res_arr)]
+              if redpar.set_artifact_vals eq 0 then begin
+                data_cube[1,res_arr,order_idx] = 0L
+              endif else begin
+                subcopy_data_cube = data_cube
+                subcopy_data_cube[1,res_arr, order_idx] =!VALUES.F_NAN
+                subcopy_data_cube = reform(subcopy_data_cube[1,*, order_idx])
+                order=reform(copy_data_cube[1,*, order_idx])
+                data_cube[1,res_arr,order_idx] = interpol( subcopy_data_cube,x, res_arr, /NaN )
+              endelse
+            
+              ;p=plot(data_cube[1,*, order_idx], color ="black")
+              ;p=plot(res_arr, data_cube[1,res_arr,order_idx ], '+r', /overplot)              
+        endif
    endfor
    
    
