@@ -1,5 +1,5 @@
-path_to_orc_file= "C:\Users\aleja\Desktop\Desktop\Job\Gulliver\Reduction-Pipeline-Software\chiron_reduc_pipeline\chiron\tous\mir7\orders\chi190517.slicer.orc" ; 73 x 4112
-path_to_master_flat= "C:\Users\aleja\Desktop\Desktop\Job\Gulliver\Reduction-Pipeline-Software\chiron_reduc_pipeline\chiron\tous\mir7\flats\chi190517.slicer.sum" ; 4112 x 1366
+path_to_orc_file= "....\chiron\tous\mir7\orders\chi190517.slicer.orc" ; 73 x 4112
+path_to_master_flat= "....\chiron\tous\mir7\flats\chi190517.slicer.sum" ; 4112 x 1366
 
 
 rdsk, orc, path_to_orc_file, 1
